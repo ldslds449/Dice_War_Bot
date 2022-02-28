@@ -29,7 +29,7 @@ class Variable:
     self.extract_summon_lu_size_wh = None
     self.extract_level_dice_lu_size_wh = None
 
-    self.zoom_ratio = 1
+    self.zoom_ratio = 1.0
     self.col = 5 # constant
     self.row = 3 # constant
     self.board_size = self.row * self.col # constant

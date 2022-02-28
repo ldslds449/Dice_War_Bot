@@ -85,7 +85,7 @@ class UI:
         if type(s) is tuple:
           int_list = list(s)
           return ' '.join([str(x) for x in int_list])
-        elif type(s) is int:
+        else:
           return str(s)
       self.setting_stringVar[0].set(dealString(self.bg_task.variable.getBoardDiceLeftTopXY()))
       self.setting_stringVar[1].set(dealString(self.bg_task.variable.getBoardDiceOffsetXY()))
