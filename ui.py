@@ -108,9 +108,9 @@ class UI:
     if self.bg_task is None:
       raise Exception('getSettingInputField:: Need to set task variable first')
     else:
-      def dealString(s):
+      def dealString(s, type = int):
         s_split = s.split(' ')
-        int_list = [int(x) for x in s_split]
+        int_list = [type(x) for x in s_split]
         return int_list[0] if len(int_list) == 1 else tuple(int_list)
       self.bg_task.variable.setBoardDiceLeftTopXY(dealString(self.setting_stringVar[0].get()))
       self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar[1].get()))
@@ -127,7 +127,7 @@ class UI:
       self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar[12].get()))
       self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar[13].get()))
       self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar[14].get()))
-      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[15].get()))
+      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[15].get(), float))
 
   def setTask(self, bg_task):
     self.bg_task = bg_task
