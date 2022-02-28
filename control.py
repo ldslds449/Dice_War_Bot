@@ -89,9 +89,9 @@ class DiceControl(Control):
     scalar = self.variable.getZoomRatio();
     if type(value) is tuple:
       list_value = list(value)
-      return tuple(int(x*scalar) for x in list_value)
+      return tuple(int(x/scalar) for x in list_value)
     elif type(value) is int:
-      return int(value*scalar)
+      return int(value/scalar)
     else:
       raise Exception(f'modifyZoom:: do not support this type --- {type(value)}')
 

@@ -34,6 +34,8 @@ class Variable:
     self.row = 3 # constant
     self.board_size = self.row * self.col # constant
     self.party_dice_size = 5 # constant
+    self.emoji_size = 5 # constant
+    self.config_file_name = 'config.ini' # constant
 
   ### set ###
 
@@ -146,3 +148,9 @@ class Variable:
 
   def getPartyDiceSize(self):
     return self.party_dice_size
+
+  def getEmojiSize(self):
+    return self.emoji_size
+
+  def getConfigFileName(self):
+    return self.config_file_name

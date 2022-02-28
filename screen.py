@@ -44,15 +44,17 @@ def getScreenShot(hwnd_target: int, zoom_ratio: float):
     bmpinfo = saveBitMap.GetInfo()
     bmpstr = saveBitMap.GetBitmapBits(True)
 
-    im = Image.frombuffer(
-        'RGB',
-        (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
-        bmpstr, 'raw', 'BGRX', 0, 1)
+    if bmpinfo['bmWidth'] != 1 or bmpinfo['bmHeight'] != 1:
+        im = Image.frombuffer(
+            'RGB',
+            (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
+            bmpstr, 'raw', 'BGRX', 0, 1)
+    else:
+        im = None
 
     win32gui.DeleteObject(saveBitMap.GetHandle())
     saveDC.DeleteDC()
     mfcDC.DeleteDC()
     win32gui.ReleaseDC(hdesktop, hwndDC)
 
-    # if result == None: Success
-    return (result == None, im)
+    return ((im is not None), im)

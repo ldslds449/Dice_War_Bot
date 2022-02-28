@@ -1,19 +1,23 @@
 import sys
-from tkinter import Variable
 import win32gui
 import win32con
 import random as rd
+from tkinter import Variable
+from enum import Enum
 
 from screen import *
 from control import *
 from detect import *
-from ui import *
 from variable import *
 
+class Emulator(Enum):
+  BLUESTACKS = 0
+  NOX = 1
+
 class Task:
-  def __init__(self):
+  def __init__(self, _emu_mode: Emulator):
+    self.emu_mode = _emu_mode
     self.getWindowID()
-    self.detect = Detect("./image")
 
     self.board_dice = []
     self.detect_board_dice_img = []
@@ -41,12 +45,21 @@ class Task:
     self.variable.setExtractLevelDiceLuSizeWH((3, 3))
     self.variable.setZoomRatio(1)
     
-    self.diceControl = DiceControl(ControlMode.WIN32API, self.hwndChild)
+    self.detect = Detect("./image", self.variable)
+    self.diceControl = DiceControl(ControlMode.WIN32API, self.windowID)
     self.diceControl.setVariable(self.variable)
 
   def getWindowID(self):
-    self.hwnd = win32gui.FindWindow(None, "BlueStacks")
-    self.hwndChild = win32gui.GetWindow(self.hwnd, win32con.GW_CHILD)
+    if self.emu_mode == Emulator.BLUESTACKS:
+      hwnd = win32gui.FindWindow(None, "BlueStacks")
+      hwndChild = win32gui.GetWindow(hwnd, win32con.GW_CHILD)
+      self.windowID = hwndChild
+    elif self.emu_mode == Emulator.NOX:
+      hwnd = win32gui.FindWindow(None, "夜神模擬器")
+      self.windowID = hwnd
+    # check if is valid
+    if self.windowID == 0:
+      raise RuntimeError('Window Not Found !!!')
 
   def forAllDiceOnBoard(self, function):
     for i in range(self.variable.getBoardSize()):
@@ -59,7 +72,7 @@ class Task:
     srcidx = location[mergeDice][rdidx] + 1
     self.diceControl.dragPressDice(srcidx)
     time.sleep(0.2)
-    _, canMergeImage = getScreenShot(self.hwndChild, self.variable.getZoomRatio())
+    _, canMergeImage = getScreenShot(self.windowID, self.variable.getZoomRatio())
     time.sleep(0.2)
     canMergeImage = self.detect.Image2OpenCV(canMergeImage)
     self.diceControl.dragUpDice(srcidx)
@@ -103,7 +116,7 @@ class Task:
     offset_x = self.variable.getBoardDiceOffsetXY()[0]
     offset_y = self.variable.getBoardDiceOffsetXY()[1]
     
-    r, im = getScreenShot(self.hwndChild, self.variable.getZoomRatio())
+    r, im = getScreenShot(self.windowID, self.variable.getZoomRatio())
     im = self.detect.Image2OpenCV(im)
 
     self.board_dice = []
@@ -136,7 +149,7 @@ class Task:
       (self.variable.getSummonDiceXY()[0], self.variable.getSummonDiceXY()[1], 
       self.variable.getExtractSummonLuSizeWH()[0], self.variable.getExtractSummonLuSizeWH()[1]), ExtractMode.CENTER))
     sp_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
-      (self.variable.getLevelSpXY()[0], self.variable.getSummonDiceXY()[1],
+      (self.variable.getLevelSpXY()[0], self.variable.getLevelSpXY()[1],
       self.variable.getExtractSpLuSizeWH()[0], self.variable.getExtractSpLuSizeWH()[1]), ExtractMode.CENTER))
     level_lu = []
     for i in range(self.variable.getPartyDiceSize()):

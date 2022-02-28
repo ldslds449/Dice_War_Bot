@@ -3,10 +3,11 @@ import cv2
 import glob
 import os
 import numpy as np
-from skimage.metrics import structural_similarity
+# from skimage.metrics import structural_similarity
 from typing import Tuple
 from enum import Enum
 from PIL import Image, ImageTk
+from variable import *
 
 class ExtractMode(Enum):
   LEFTTOP = 0
@@ -17,7 +18,9 @@ class DetectDiceMode(Enum):
   TEMPLATE = 1
 
 class Detect:
-  def __init__(self, dice_folder):
+  def __init__(self, dice_folder, variable: Variable):
+    self.variable = variable
+
     self.dice_image_rgb = []
     self.dice_image_gray = []
     self.dice_image_gray_resize = []
@@ -36,12 +39,12 @@ class Detect:
       image_pil = Image.open(f)
       self.dice_image_rgb.append(image_rgb)
       self.dice_image_gray.append(image_gray)
-      self.dice_image_gray_resize.append(cv2.resize(self.dice_image_gray[-1], (50, 50)))
+      self.dice_image_gray_resize.append(cv2.resize(self.dice_image_gray[-1], variable.getExtractDiceSizeWH()))
       self.dice_image_hsv.append(cv2.cvtColor(image_rgb.copy(), cv2.COLOR_BGR2HSV))
-      self.dice_image_hsv_resize.append(cv2.resize(self.dice_image_hsv[-1], (50, 50)))
+      self.dice_image_hsv_resize.append(cv2.resize(self.dice_image_hsv[-1], variable.getExtractDiceSizeWH()))
       self.dice_image_PIL.append(image_pil)
-      self.dice_image_tk.append(ImageTk.PhotoImage(image_pil))
-      self.dice_image_tk_resize.append(ImageTk.PhotoImage(image_pil.resize((40, 40))))
+      self.dice_image_tk.append(self.Image2TK(image_pil))
+      self.dice_image_tk_resize.append(self.Image2TK(image_pil.resize(variable.getExtractDiceSizeWH())))
       self.dice_name.append(name)
       self.dice_name_idx_dict[name] = i
 
@@ -144,3 +147,46 @@ class Detect:
 
   def OpenCV2Image(self, img):
     return Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+
+  def Image2TK(self, img):
+    return ImageTk.PhotoImage(img)
+
+  def OpenCV2TK(self, img):
+    return ImageTk.PhotoImage(self.OpenCV2Image(img))
+
+  def drawTestImage(self, img):
+    def tupleAdd(a, b):
+      return (a[0]+b[0], a[1]+b[1])
+
+    # color
+    color = (0, 0, 255) # red
+
+    # draw board dice
+    for i in range(self.variable.getBoardSize()):
+      row = i // self.variable.getCol()
+      col = i % self.variable.getCol()
+      leftCorner = tupleAdd(self.variable.getBoardDiceLeftTopXY(), 
+        (self.variable.getBoardDiceOffsetXY()[0]*col, self.variable.getBoardDiceOffsetXY()[1]*row))
+      leftCorner = tupleAdd(leftCorner, 
+        (-self.variable.getExtractDiceSizeWH()[0]//2, -self.variable.getExtractDiceSizeWH()[1]//2))
+      cv2.rectangle(img, leftCorner, 
+        tupleAdd(leftCorner, self.variable.getExtractDiceSizeWH()), color, 2)
+
+    # draw level
+    for i in range(self.variable.getPartyDiceSize()):
+      cv2.circle(img, tupleAdd(self.variable.getLevelDiceLeftXY(), 
+        (self.variable.getLevelDiceOffsetX()*i, 0)), 5, color, -1)
+
+    # draw summon
+    cv2.circle(img, self.variable.getSummonDiceXY(), 5, color, -1)
+
+    # draw sp
+    cv2.circle(img, self.variable.getLevelSpXY(), 5, color, -1)
+
+    # draw emoji
+    cv2.circle(img, self.variable.getEmojiDialogXY(), 5, color, -1)
+    for i in range(self.variable.getEmojiSize()):
+      cv2.circle(img, tupleAdd(self.variable.getEmojiLeftXY(), 
+        (self.variable.getEmojiOffsetX()*i, 0)), 5, color, -1)
+
+    return img
