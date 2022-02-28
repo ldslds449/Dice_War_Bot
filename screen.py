@@ -1,60 +1,86 @@
+import cv2
 import win32gui
 import win32ui
 import win32con
+import io
+import cv2
+import numpy as np
 from PIL import Image
 from typing import Tuple
 
-def getWindowSizeInfo(hwnd_target: int):
-    left, top, right, bot = win32gui.GetWindowRect(hwnd_target)
-    w = right - left
-    h = bot - top
-    return (left, top, w, h)
+from control import *
 
-def resizeWindow(hwnd_target: int, size: Tuple[int,int]):
-    old_info = getWindowSizeInfo(hwnd_target)
-    w_offset = size[0] - old_info[2]
-    h_offset = size[1] - old_info[3]
-    win32gui.MoveWindow(hwnd_target, 
-        old_info[0] - w_offset//2, 
-        old_info[1] - h_offset//2, 
-        size[0], size[1], True)
+class Screen:
+    def __init__(self, _mode: ControlMode, _hwnd: int = None, _port: int = None):
+        self.mode = _mode
+        self.hwnd = _hwnd
+        self.port = _port
+        if self.mode == ControlMode.WIN32API:
+            if self.mode is None:
+                raise Exception('Need hwnd in WIN32API mode')
+        elif self.mode == ControlMode.ADB:
+            if self.port is None:
+                raise Exception('Need port in ADB mode')
 
-# return isSuccess, image
-def getScreenShot(hwnd_target: int, zoom_ratio: float):
+    def getWindowSizeInfo(self):
+        left, top, right, bot = win32gui.GetWindowRect(self.hwnd)
+        w = right - left
+        h = bot - top
+        return (left, top, w, h)
 
-    left, top, w, h = getWindowSizeInfo(hwnd_target)
-    # windows zoom setting
-    left = int(left * zoom_ratio)
-    top = int(top * zoom_ratio)
-    w = int(w * zoom_ratio)
-    h = int(h * zoom_ratio)
+    def resizeWindow(self, size: Tuple[int,int]):
+        old_info = self.getWindowSizeInfo()
+        w_offset = size[0] - old_info[2]
+        h_offset = size[1] - old_info[3]
+        win32gui.MoveWindow(self.hwnd, 
+            old_info[0] - w_offset//2, 
+            old_info[1] - h_offset//2, 
+            size[0], size[1], True)
 
-    hdesktop = win32gui.GetDesktopWindow()
-    hwndDC = win32gui.GetWindowDC(hdesktop)
-    mfcDC  = win32ui.CreateDCFromHandle(hwndDC)
-    saveDC = mfcDC.CreateCompatibleDC()
+    # return isSuccess, image
+    def getScreenShot(self, zoom_ratio: float):
+        if self.mode == ControlMode.WIN32API:
+            left, top, w, h = self.getWindowSizeInfo()
+            # windows zoom setting
+            left = int(left * zoom_ratio)
+            top = int(top * zoom_ratio)
+            w = int(w * zoom_ratio)
+            h = int(h * zoom_ratio)
 
-    saveBitMap = win32ui.CreateBitmap()
-    saveBitMap.CreateCompatibleBitmap(mfcDC, w, h)
+            hdesktop = win32gui.GetDesktopWindow()
+            hwndDC = win32gui.GetWindowDC(hdesktop)
+            mfcDC  = win32ui.CreateDCFromHandle(hwndDC)
+            saveDC = mfcDC.CreateCompatibleDC()
 
-    saveDC.SelectObject(saveBitMap)
+            saveBitMap = win32ui.CreateBitmap()
+            saveBitMap.CreateCompatibleBitmap(mfcDC, w, h)
 
-    result = saveDC.BitBlt((0, 0), (w, h), mfcDC, (left, top), win32con.SRCCOPY)
+            saveDC.SelectObject(saveBitMap)
 
-    bmpinfo = saveBitMap.GetInfo()
-    bmpstr = saveBitMap.GetBitmapBits(True)
+            result = saveDC.BitBlt((0, 0), (w, h), mfcDC, (left, top), win32con.SRCCOPY)
 
-    if bmpinfo['bmWidth'] != 1 or bmpinfo['bmHeight'] != 1:
-        im = Image.frombuffer(
-            'RGB',
-            (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
-            bmpstr, 'raw', 'BGRX', 0, 1)
-    else:
-        im = None
+            bmpinfo = saveBitMap.GetInfo()
+            bmpstr = saveBitMap.GetBitmapBits(True)
 
-    win32gui.DeleteObject(saveBitMap.GetHandle())
-    saveDC.DeleteDC()
-    mfcDC.DeleteDC()
-    win32gui.ReleaseDC(hdesktop, hwndDC)
+            if bmpinfo['bmWidth'] != 1 or bmpinfo['bmHeight'] != 1:
+                im = Image.frombuffer(
+                    'RGB',
+                    (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
+                    bmpstr, 'raw', 'BGRX', 0, 1)
+            else:
+                im = None
 
-    return ((im is not None), im)
+            win32gui.DeleteObject(saveBitMap.GetHandle())
+            saveDC.DeleteDC()
+            mfcDC.DeleteDC()
+            win32gui.ReleaseDC(hdesktop, hwndDC)
+
+            return ((im is not None), im)
+        elif self.mode == ControlMode.ADB:
+            command = f'adb -s 127.0.0.1:{self.port} shell screencap -p'
+            result = ADB.sh(command)
+            image_bytes = result.replace(b'\r\n', b'\n')
+            img = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
+            img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            img = img.resize((int(img.width*zoom_ratio), int(img.height*zoom_ratio)))
+            return (True, img)

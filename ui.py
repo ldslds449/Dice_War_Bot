@@ -1,6 +1,7 @@
 import tkinter as tk
 import threading
 import time
+import os
 from PIL import Image, ImageTk
 from tkinter import ttk
 from tkinter import *
@@ -62,15 +63,18 @@ class UI:
     getSettingLabel('Extract Summon Luminance Size WH: ', 13)
     getSettingLabel('Extract Level Dice Luminance Size WH: ', 14)
     getSettingLabel('Zoom Ratio: ', 15)
-    btn_screenshot = tk.Button(self.frame_setting_btn, text='ScreenShot', width=15, height=2, font=('Arial', 12))
-    btn_screenshot.bind('<Button>', self.btn_screenshot_event)
-    btn_screenshot.pack(fill='both', side=RIGHT)
     btn_save_config = tk.Button(self.frame_setting_btn, text='Save', width=15, height=2, font=('Arial', 12))
     btn_save_config.bind('<Button>', self.btn_save_config_event)
-    btn_save_config.pack(fill='both', side=RIGHT)
+    btn_save_config.grid(row=0, column=0)
     btn_load_config = tk.Button(self.frame_setting_btn, text='Load', width=15, height=2, font=('Arial', 12))
     btn_load_config.bind('<Button>', self.btn_load_config_event)
-    btn_load_config.pack(fill='both', side=RIGHT)
+    btn_load_config.grid(row=0, column=1)
+    btn_screenshot = tk.Button(self.frame_setting_btn, text='ScreenShot', width=15, height=2, font=('Arial', 12))
+    btn_screenshot.bind('<Button>', self.btn_screenshot_event)
+    btn_screenshot.grid(row=1, column=0)
+    btn_draw = tk.Button(self.frame_setting_btn, text='Draw', width=15, height=2, font=('Arial', 12))
+    btn_draw.bind('<Button>', self.btn_draw)
+    btn_draw.grid(row=1, column=1)
     self.label_screenshot = tk.Label(self.frame_setting_view)
     self.label_screenshot.pack(fill='both')
 
@@ -101,6 +105,7 @@ class UI:
 
   def initAll(self):
     self.setSettingInputField()
+    self.btn_load_config_event(None)
 
   def setSettingInputField(self):
     if self.bg_task is None:
@@ -167,13 +172,18 @@ class UI:
       self.btn_run.config(text='Start')
 
   def btn_screenshot_event(self, _):
-    success, im = getScreenShot(self.bg_task.windowID, self.bg_task.variable.getZoomRatio())
+    success, im = self.bg_task.screen.getScreenShot(self.bg_task.variable.getZoomRatio())
     if success:
       self.screenshot_image = self.bg_task.detect.Image2OpenCV(im)
-      labeled_screenshot = self.bg_task.detect.drawTestImage(self.screenshot_image.copy())
-      self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(labeled_screenshot))
-      # draw label
+      self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image))
+  
+  def btn_draw(self, _):
+    self.getSettingInputField()
+    labeled_screenshot = self.bg_task.detect.drawTestImage(self.screenshot_image.copy())
+    self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(labeled_screenshot))
+
   def btn_save_config_event(self, _):
+    self.getSettingInputField()
     config = ConfigParser()
     config.add_section('Coordinate')
     config.set('Coordinate', 'BoardDiceLeftTopXY', self.setting_stringVar[0].get())
@@ -198,25 +208,26 @@ class UI:
       config.write(f)
 
   def btn_load_config_event(self, _):
-    config = ConfigParser()
-    config.read(self.bg_task.variable.getConfigFileName())
+    if os.path.exists(self.bg_task.variable.getConfigFileName()):
+      config = ConfigParser()
+      config.read(self.bg_task.variable.getConfigFileName())
 
-    self.setting_stringVar[0].set(config.get('Coordinate', 'BoardDiceLeftTopXY', fallback='0 0'))
-    self.setting_stringVar[1].set(config.get('Coordinate', 'BoardDiceOffsetXY', fallback='0 0'))
-    self.setting_stringVar[2].set(config.get('Coordinate', 'LevelDiceLeftXY', fallback='0 0'))
-    self.setting_stringVar[3].set(config.get('Coordinate', 'LevelDiceOffsetX', fallback='0'))
-    self.setting_stringVar[4].set(config.get('Coordinate', 'EmojiDialogXY', fallback='0 0'))
-    self.setting_stringVar[5].set(config.get('Coordinate', 'EmojiLeftXY', fallback='0 0'))
-    self.setting_stringVar[6].set(config.get('Coordinate', 'EmojiOffsetX', fallback='0'))
-    self.setting_stringVar[7].set(config.get('Coordinate', 'SummonDiceXY', fallback='0 0'))
-    self.setting_stringVar[8].set(config.get('Coordinate', 'LevelSpXY', fallback='0 0'))
-    self.setting_stringVar[9].set(config.get('Coordinate', 'MergeFloatLocationXY', fallback='0 0'))
-    self.setting_stringVar[10].set(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
-    self.setting_stringVar[11].set(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
-    self.setting_stringVar[12].set(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
-    self.setting_stringVar[13].set(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
-    self.setting_stringVar[14].set(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
-    self.setting_stringVar[15].set(config.get('Window', 'ZoomRatio', fallback='1'))
+      self.setting_stringVar[0].set(config.get('Coordinate', 'BoardDiceLeftTopXY', fallback='0 0'))
+      self.setting_stringVar[1].set(config.get('Coordinate', 'BoardDiceOffsetXY', fallback='0 0'))
+      self.setting_stringVar[2].set(config.get('Coordinate', 'LevelDiceLeftXY', fallback='0 0'))
+      self.setting_stringVar[3].set(config.get('Coordinate', 'LevelDiceOffsetX', fallback='0'))
+      self.setting_stringVar[4].set(config.get('Coordinate', 'EmojiDialogXY', fallback='0 0'))
+      self.setting_stringVar[5].set(config.get('Coordinate', 'EmojiLeftXY', fallback='0 0'))
+      self.setting_stringVar[6].set(config.get('Coordinate', 'EmojiOffsetX', fallback='0'))
+      self.setting_stringVar[7].set(config.get('Coordinate', 'SummonDiceXY', fallback='0 0'))
+      self.setting_stringVar[8].set(config.get('Coordinate', 'LevelSpXY', fallback='0 0'))
+      self.setting_stringVar[9].set(config.get('Coordinate', 'MergeFloatLocationXY', fallback='0 0'))
+      self.setting_stringVar[10].set(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
+      self.setting_stringVar[11].set(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
+      self.setting_stringVar[12].set(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
+      self.setting_stringVar[13].set(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
+      self.setting_stringVar[14].set(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
+      self.setting_stringVar[15].set(config.get('Window', 'ZoomRatio', fallback='1'))
 
   def changeImage(self, label: tk.Label, img):
     label.configure(image=img)
@@ -240,6 +251,8 @@ class UI:
   def onClosing(self):
     if self.isRunning:
       self.isRunning = False
+    if self.bg_task.ctrl_mode == ControlMode.ADB:
+      ADB.disconnect()
     self.window.destroy()
 
   def RUN(self):

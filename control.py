@@ -6,6 +6,7 @@ from enum import Enum
 from typing import List, Tuple
 
 from variable import *
+from adb import *
 
 class ControlMode(Enum):
   WIN32API = 0
@@ -28,8 +29,7 @@ class Control:
     if self.mode == ControlMode.WIN32API:
       result = win32api.PostMessage(commands[0], commands[1], commands[2], commands[3])
     elif self.mode == ControlMode.ADB:
-      p = subprocess.Popen(commands[0], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      result = p.stdout.read()
+      result = ADB.sh(commands[0])
     return result
 
   # pos: x, y
@@ -78,8 +78,8 @@ class Control:
       self.sh(command)
 
 class DiceControl(Control):
-  def __init__(_mode: ControlMode, _hwnd = None, _port = None):
-    Control.__init__(_mode, _hwnd, _port)
+  def __init__(self, _mode: ControlMode, _hwnd = None, _port = None):
+    super(DiceControl, self).__init__(_mode, _hwnd, _port)
 
   def setVariable(self, _variable: Variable):
     self.variable = _variable

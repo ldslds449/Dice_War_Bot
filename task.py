@@ -15,9 +15,9 @@ class Emulator(Enum):
   NOX = 1
 
 class Task:
-  def __init__(self, _emu_mode: Emulator):
+  def __init__(self, _emu_mode: Emulator = Emulator.BLUESTACKS, _ctrl_mode: ControlMode = ControlMode.ADB):
     self.emu_mode = _emu_mode
-    self.getWindowID()
+    self.ctrl_mode = _ctrl_mode
 
     self.board_dice = []
     self.detect_board_dice_img = []
@@ -44,9 +44,21 @@ class Task:
     self.variable.setExtractSummonLuSizeWH((3, 3))
     self.variable.setExtractLevelDiceLuSizeWH((3, 3))
     self.variable.setZoomRatio(1)
-    
+
+    # init
+    id = None
+    port = None
+    if self.ctrl_mode == ControlMode.WIN32API:
+      self.getWindowID()
+      id = self.windowID
+    elif self.ctrl_mode == ControlMode.ADB:
+      port = 4498
+      # connect to device
+      ADB.connect(port)
+
     self.detect = Detect("./image", self.variable)
-    self.diceControl = DiceControl(ControlMode.WIN32API, self.windowID)
+    self.screen = Screen(self.ctrl_mode, _hwnd=id, _port=port)
+    self.diceControl = DiceControl(self.ctrl_mode, _hwnd=id, _port=port)
     self.diceControl.setVariable(self.variable)
 
   def getWindowID(self):
@@ -72,7 +84,7 @@ class Task:
     srcidx = location[mergeDice][rdidx] + 1
     self.diceControl.dragPressDice(srcidx)
     time.sleep(0.2)
-    _, canMergeImage = getScreenShot(self.windowID, self.variable.getZoomRatio())
+    _, canMergeImage = self.screen.getScreenShot(self.variable.getZoomRatio())
     time.sleep(0.2)
     canMergeImage = self.detect.Image2OpenCV(canMergeImage)
     self.diceControl.dragUpDice(srcidx)
@@ -116,7 +128,7 @@ class Task:
     offset_x = self.variable.getBoardDiceOffsetXY()[0]
     offset_y = self.variable.getBoardDiceOffsetXY()[1]
     
-    r, im = getScreenShot(self.windowID, self.variable.getZoomRatio())
+    r, im = self.screen.getScreenShot(self.variable.getZoomRatio())
     im = self.detect.Image2OpenCV(im)
 
     self.board_dice = []
