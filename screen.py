@@ -2,6 +2,7 @@ import win32gui
 import win32ui
 import win32con
 from PIL import Image
+from typing import Tuple
 
 def getWindowSizeInfo(hwnd_target: int):
     left, top, right, bot = win32gui.GetWindowRect(hwnd_target)
@@ -9,9 +10,24 @@ def getWindowSizeInfo(hwnd_target: int):
     h = bot - top
     return (left, top, w, h)
 
-def getScreenShot(hwnd_target: int):
+def resizeWindow(hwnd_target: int, size: Tuple[int,int]):
+    old_info = getWindowSizeInfo(hwnd_target)
+    w_offset = size[0] - old_info[2]
+    h_offset = size[1] - old_info[3]
+    win32gui.MoveWindow(hwnd_target, 
+        old_info[0] - w_offset//2, 
+        old_info[1] - h_offset//2, 
+        size[0], size[1], True)
+
+# return isSuccess, image
+def getScreenShot(hwnd_target: int, zoom_ratio: float):
 
     left, top, w, h = getWindowSizeInfo(hwnd_target)
+    # windows zoom setting
+    left = int(left * zoom_ratio)
+    top = int(top * zoom_ratio)
+    w = int(w * zoom_ratio)
+    h = int(h * zoom_ratio)
 
     hdesktop = win32gui.GetDesktopWindow()
     hwndDC = win32gui.GetWindowDC(hdesktop)
@@ -38,4 +54,5 @@ def getScreenShot(hwnd_target: int):
     mfcDC.DeleteDC()
     win32gui.ReleaseDC(hdesktop, hwndDC)
 
-    return (result, im)
+    # if result == None: Success
+    return (result == None, im)

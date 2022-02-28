@@ -58,7 +58,7 @@ class Detect:
 
       img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
       img_hist = cv2.calcHist([img_hsv], channels, None, histSize, ranges, accumulate=False)
-      img_hsv_norm = img_hsv.copy()
+      # img_hsv_norm = img_hsv.copy()
       # cv2.normalize(img_hsv, img_hsv_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 
       dice_template = zip(self.dice_name, self.dice_image_hsv_resize) if candidate is None else []
@@ -71,10 +71,9 @@ class Detect:
       result = []
       for name, dice in dice_template:
         dice_hist = cv2.calcHist([dice], channels, None, histSize, ranges, accumulate=False)
-        dice_norm = dice.copy()
+        # dice_norm = dice.copy()
         # cv2.normalize(img_hsv, dice_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
         res = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_INTERSECT)
-        # w, h = dice.shape[::-1]
         result.append((name, res))
 
       result = sorted(result, key=lambda x : x[1], reverse=True)
