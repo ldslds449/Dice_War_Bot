@@ -1,29 +1,25 @@
 import win32con
 import win32api
 import time
-import subprocess
-from enum import Enum
+import math
 from typing import List, Tuple
 
 from variable import *
 from adb import *
-
-class ControlMode(Enum):
-  WIN32API = 0
-  ADB = 1
+from mode import ControlMode
 
 class Control:
-  def __init__(self, _mode: ControlMode, _hwnd = None, _port = None):
+  def __init__(self, _mode: ControlMode, _hwnd = None, _ip = None, _port = None):
     self.mode = _mode
     if self.mode == ControlMode.WIN32API:
       self.hwnd = _hwnd
       if self.hwnd is None:
         raise Exception('Need hwnd parameter in WIN32API mode')
     elif self.mode == ControlMode.ADB:
-      self.ip = '127.0.0.1'
+      self.ip = _ip
       self.port = _port
-      if self.port is None:
-        raise Exception('Need port parameter in ADB mode')
+      if self.port is None or self.ip is None:
+        raise Exception('Need ip and port parameter in ADB mode')
 
   def sh(self, *commands):
     if self.mode == ControlMode.WIN32API:
@@ -72,14 +68,14 @@ class Control:
     elif self.mode == ControlMode.ADB:
       offset_x = src[0] - dst[0]
       offset_y = src[1] - dst[1]
-      dist = offset_x**2 + offset_y**2
-      duration = (dist // 50) * 50
+      dist = int(math.sqrt(abs(offset_x)**2 + abs(offset_y)**2))
+      duration = int((dist // 3) * 4)
       command = f'adb -s {self.ip}:{self.port} shell input swipe {src[0]} {src[1]} {dst[0]} {dst[1]} {duration}'
       self.sh(command)
 
 class DiceControl(Control):
-  def __init__(self, _mode: ControlMode, _hwnd = None, _port = None):
-    super(DiceControl, self).__init__(_mode, _hwnd, _port)
+  def __init__(self, _mode: ControlMode, _hwnd = None, _ip = None, _port = None):
+    super(DiceControl, self).__init__(_mode, _hwnd, _ip, _port)
 
   def setVariable(self, _variable: Variable):
     self.variable = _variable
@@ -90,7 +86,7 @@ class DiceControl(Control):
     if type(value) is tuple:
       list_value = list(value)
       return tuple(int(x/scalar) for x in list_value)
-    elif type(value) is int:
+    elif type(value) is int or type(value) is float:
       return int(value/scalar)
     else:
       raise Exception(f'modifyZoom:: do not support this type --- {type(value)}')
@@ -125,8 +121,7 @@ class DiceControl(Control):
     src_xy = self.getBoardDiceXY(src-1) # rescale [1~15] to [0~14]
     self.drag_press(src_xy, self.modifyZoom(self.variable.getMergeFloatLocationXY()))
 
-  def dragUpDice(self, src: int):
-    src_xy = self.getBoardDiceXY(src-1) # rescale [1~15] to [0~14]
+  def dragUpDice(self):
     self.drag_up(self.modifyZoom(self.variable.getMergeFloatLocationXY()))
 
   def summonDice(self):

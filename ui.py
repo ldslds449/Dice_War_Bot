@@ -1,15 +1,14 @@
 import tkinter as tk
 import threading
 import time
-import os
 from PIL import Image, ImageTk
 from tkinter import ttk
 from tkinter import *
-from configparser import ConfigParser
 
 from task import *
 from screen import *
 from task import *
+from action import *
 
 class UI:
   def __init__(self, emu_mode = Emulator.BLUESTACKS):
@@ -100,7 +99,7 @@ class UI:
 
     self.window.protocol("WM_DELETE_WINDOW", self.onClosing)
 
-    self.bg_task = Task(emu_mode)
+    self.bg_task = Task(MyAction(), emu_mode)
     self.initAll()
 
   def initAll(self):
@@ -184,50 +183,11 @@ class UI:
 
   def btn_save_config_event(self, _):
     self.getSettingInputField()
-    config = ConfigParser()
-    config.add_section('Coordinate')
-    config.set('Coordinate', 'BoardDiceLeftTopXY', self.setting_stringVar[0].get())
-    config.set('Coordinate', 'BoardDiceOffsetXY', self.setting_stringVar[1].get())
-    config.set('Coordinate', 'LevelDiceLeftXY', self.setting_stringVar[2].get())
-    config.set('Coordinate', 'LevelDiceOffsetX', self.setting_stringVar[3].get())
-    config.set('Coordinate', 'EmojiDialogXY', self.setting_stringVar[4].get())
-    config.set('Coordinate', 'EmojiLeftXY', self.setting_stringVar[5].get())
-    config.set('Coordinate', 'EmojiOffsetX', self.setting_stringVar[6].get())
-    config.set('Coordinate', 'SummonDiceXY', self.setting_stringVar[7].get())
-    config.set('Coordinate', 'LevelSpXY', self.setting_stringVar[8].get())
-    config.set('Coordinate', 'MergeFloatLocationXY', self.setting_stringVar[9].get())
-    config.set('Coordinate', 'ExtractDiceSizeWH', self.setting_stringVar[10].get())
-    config.set('Coordinate', 'ExtractDiceLuSizeWH', self.setting_stringVar[11].get())
-    config.set('Coordinate', 'ExtractSpLuSizeWH', self.setting_stringVar[12].get())
-    config.set('Coordinate', 'ExtractSummonLuSizeWH', self.setting_stringVar[13].get())
-    config.set('Coordinate', 'ExtractLevelDiceLuSizeWH', self.setting_stringVar[14].get())
-    config.add_section('Window')
-    config.set('Window', 'ZoomRatio', self.setting_stringVar[15].get())
-
-    with open(self.bg_task.variable.getConfigFileName(), 'w') as f:
-      config.write(f)
+    self.bg_task.variable.saveToConfigFile()
 
   def btn_load_config_event(self, _):
-    if os.path.exists(self.bg_task.variable.getConfigFileName()):
-      config = ConfigParser()
-      config.read(self.bg_task.variable.getConfigFileName())
-
-      self.setting_stringVar[0].set(config.get('Coordinate', 'BoardDiceLeftTopXY', fallback='0 0'))
-      self.setting_stringVar[1].set(config.get('Coordinate', 'BoardDiceOffsetXY', fallback='0 0'))
-      self.setting_stringVar[2].set(config.get('Coordinate', 'LevelDiceLeftXY', fallback='0 0'))
-      self.setting_stringVar[3].set(config.get('Coordinate', 'LevelDiceOffsetX', fallback='0'))
-      self.setting_stringVar[4].set(config.get('Coordinate', 'EmojiDialogXY', fallback='0 0'))
-      self.setting_stringVar[5].set(config.get('Coordinate', 'EmojiLeftXY', fallback='0 0'))
-      self.setting_stringVar[6].set(config.get('Coordinate', 'EmojiOffsetX', fallback='0'))
-      self.setting_stringVar[7].set(config.get('Coordinate', 'SummonDiceXY', fallback='0 0'))
-      self.setting_stringVar[8].set(config.get('Coordinate', 'LevelSpXY', fallback='0 0'))
-      self.setting_stringVar[9].set(config.get('Coordinate', 'MergeFloatLocationXY', fallback='0 0'))
-      self.setting_stringVar[10].set(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
-      self.setting_stringVar[11].set(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
-      self.setting_stringVar[12].set(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
-      self.setting_stringVar[13].set(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
-      self.setting_stringVar[14].set(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
-      self.setting_stringVar[15].set(config.get('Window', 'ZoomRatio', fallback='1'))
+    self.bg_task.variable.loadFromConfigFile()
+    self.setSettingInputField()
 
   def changeImage(self, label: tk.Label, img):
     label.configure(image=img)
@@ -249,11 +209,14 @@ class UI:
       time.sleep(1)
 
   def onClosing(self):
-    if self.isRunning:
-      self.isRunning = False
+    self.close()
+    self.window.destroy()
+
+  def close(self):
+    self.isRunning = False
     if self.bg_task.ctrl_mode == ControlMode.ADB:
       ADB.disconnect()
-    self.window.destroy()
 
   def RUN(self):
     self.window.mainloop()
+    self.close()

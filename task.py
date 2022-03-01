@@ -3,27 +3,23 @@ import win32gui
 import win32con
 import random as rd
 from tkinter import Variable
-from enum import Enum
 
 from screen import *
 from control import *
 from detect import *
 from variable import *
-
-class Emulator(Enum):
-  BLUESTACKS = 0
-  NOX = 1
+from mode import *
+from action import *
 
 class Task:
-  def __init__(self, _emu_mode: Emulator = Emulator.BLUESTACKS, _ctrl_mode: ControlMode = ControlMode.ADB):
+  def __init__(self, _action: Action, _emu_mode: Emulator = Emulator.BLUESTACKS, _ctrl_mode: ControlMode = ControlMode.ADB):
     self.emu_mode = _emu_mode
     self.ctrl_mode = _ctrl_mode
+    self.action = _action
 
     self.board_dice = []
     self.detect_board_dice_img = []
     self.board_dice_lu = []
-    self.merge_dice = []
-    self.merge_dice_location = []
 
     self.targetDice = ["Healing", "Solar_O", "Rock", "Flash", "Mimic", "Blank", "Solar_X"]
 
@@ -47,18 +43,18 @@ class Task:
 
     # init
     id = None
-    port = None
     if self.ctrl_mode == ControlMode.WIN32API:
       self.getWindowID()
       id = self.windowID
     elif self.ctrl_mode == ControlMode.ADB:
-      port = 4498
       # connect to device
-      ADB.connect(port)
+      ADB.connect(self.variable.getADBIP(), self.variable.getADBPort())
 
     self.detect = Detect("./image", self.variable)
-    self.screen = Screen(self.ctrl_mode, _hwnd=id, _port=port)
-    self.diceControl = DiceControl(self.ctrl_mode, _hwnd=id, _port=port)
+    self.screen = Screen(self.ctrl_mode, _hwnd=id, 
+      _ip=self.variable.getADBIP(), _port=self.variable.getADBPort())
+    self.diceControl = DiceControl(self.ctrl_mode, _hwnd=id, 
+      _ip=self.variable.getADBIP(), _port=self.variable.getADBPort())
     self.diceControl.setVariable(self.variable)
 
   def getWindowID(self):
@@ -79,47 +75,39 @@ class Task:
       col = i % self.variable.getCol()
       function(i, row, col)
 
-  def findMergeDice(self, count, location, orig_lu, mergeDice, exceptDice):
-    rdidx = rd.randrange(count[mergeDice])
-    srcidx = location[mergeDice][rdidx] + 1
+  def findMergeDice(self, srcidx, exceptDice):
     self.diceControl.dragPressDice(srcidx)
     time.sleep(0.2)
     _, canMergeImage = self.screen.getScreenShot(self.variable.getZoomRatio())
     time.sleep(0.2)
     canMergeImage = self.detect.Image2OpenCV(canMergeImage)
-    self.diceControl.dragUpDice(srcidx)
+    self.diceControl.dragUpDice()
 
     x = self.variable.getBoardDiceLeftTopXY()[0]
     y = self.variable.getBoardDiceLeftTopXY()[1]
     offset_x = self.variable.getBoardDiceOffsetXY()[0]
     offset_y = self.variable.getBoardDiceOffsetXY()[1]
 
-    self.merge_dice = []
-    self.merge_dice_location = []
+    merge_dice_location = []
     def detectMerge(i, row, col):
       img = self.detect.extractImage(canMergeImage, 
         (x+col*offset_x, y+row*offset_y, 
         self.variable.getExtractDiceLuSizeWH()[0], self.variable.getExtractDiceLuSizeWH()[1]), ExtractMode.CENTER)
       img_lu = self.detect.getAverageLuminance(img)
-      lu_offset = orig_lu[i] - img_lu
+      lu_offset = self.board_dice_lu[i] - img_lu
       canMerge = self.detect.canMergeDice(lu_offset)
-      self.merge_dice.append(canMerge)
       if canMerge and self.board_dice[i] != 'Blank':
         if exceptDice is None or self.board_dice[i] not in exceptDice:
-          self.merge_dice_location.append(i)
+          merge_dice_location.append(i)
       if i != 0 and i % self.variable.getCol() == 0 :
         print("")
-      print(f"{'O' if canMerge else 'X'} {orig_lu[i]:4.1f} / {img_lu:4.1f}  ", end="")
+      print(f"{'O' if canMerge else 'X'} {self.board_dice_lu[i]:4.1f} / {img_lu:4.1f}  ", end="")
       if i+1 == self.variable.getBoardSize():
         print("")
 
     self.forAllDiceOnBoard(detectMerge)
     
-    if len(self.merge_dice_location) > 0:
-      dstidx = self.merge_dice_location[rd.randrange(0, len(self.merge_dice_location))] + 1
-      if srcidx != dstidx:
-        self.diceControl.mergeDice(srcidx, dstidx)
-        time.sleep(1)
+    return merge_dice_location
       
   def task(self):
 
@@ -182,39 +170,15 @@ class Task:
     for idx, dice in enumerate(self.board_dice):
       location[dice].append(idx)
     count_sorted = sorted(count.items(), key=lambda x : x[1], reverse=True)
-
-    # flag
-    hasSolar = count['Solar_O'] >= 4
-    hasMimic = count['Mimic'] > 0
-    hasStone = count['Rock'] > 0
-    noBlank = count['Blank'] == 0
-
-    countRock = count['Rock']
-    countSolar = count['Solar_O'] + count['Solar_X']
-    countBlank = count['Blank']
     countTotal = sum([x[1] for x in count.items() if x[0] != 'Blank'])
 
-    earlyGame = countTotal <= 10
-
-    if not hasSolar and hasMimic and not earlyGame:
-      self.findMergeDice(count, location, self.board_dice_lu, 'Mimic', (None if countSolar > 4 else ['Solar_X', 'Solar_O']))
-    if not hasSolar and hasStone and countRock >= 2 and not earlyGame:
-      self.findMergeDice(count, location, self.board_dice_lu, 'Rock', ['Mimic'])
-    if not hasSolar and countSolar == 6 and not earlyGame:
-      self.findMergeDice(count, location, self.board_dice_lu, 'Solar_X', ['Mimic'])
-    if not hasSolar and noBlank:
-      self.findMergeDice(count, location, self.board_dice_lu, count_sorted[0][0], ['Mimic'])
-
-    if self.detect.canLevelSP(sp_lu):
-      self.diceControl.levelUpSP()
-    elif self.detect.canSummon(summon_lu) and (not hasSolar or countBlank >= 3):
-      self.diceControl.summonDice()
-    elif self.detect.canLevelDice(level_lu[2]):
-      self.diceControl.levelUpDice(3)
-    elif self.detect.canLevelDice(level_lu[0]):
-      self.diceControl.levelUpDice(1)
-    elif self.detect.canLevelDice(level_lu[3]):
-      self.diceControl.levelUpDice(4)
+    self.action.action(
+      self.diceControl, self.findMergeDice,
+      count, count_sorted, location, 
+      self.detect.canSummon(summon_lu), self.detect.canLevelSP(sp_lu),
+      [self.detect.canLevelDice(level_lu[i]) for i in range(self.variable.getPartyDiceSize())],
+      countTotal
+    )
 
     print(f'Summon: {summon_lu} --- {self.detect.canSummon(summon_lu)}')
     print(f'SP: {sp_lu} --- {self.detect.canLevelSP(sp_lu)}')
