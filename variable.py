@@ -45,6 +45,8 @@ class Variable:
     self.adb_port = 10311
     self.adb_ip = '127.0.0.1' # constant
 
+    self.dice_party = None
+
   ### read from config file ###
   def loadFromConfigFile(self):
     if os.path.exists(self.getConfigFileName()):
@@ -74,9 +76,10 @@ class Variable:
       self.extract_summon_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
       self.extract_level_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
       self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
-      self.emulator_mode = str2Type(config.get('Mode', 'Emulator', fallback='0'))
-      self.control_mode = str2Type(config.get('Mode', 'ControlMode', fallback='0'))
+      self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
+      self.control_mode = ControlMode(str2Type(config.get('Mode', 'ControlMode', fallback='0')))
       self.adb_port = str2Type(config.get('ADB', 'Port', fallback='-1'))
+      self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
 
       return True
     else:
@@ -111,10 +114,12 @@ class Variable:
     config.add_section('Window')
     config.set('Window', 'ZoomRatio', type2Str(self.zoom_ratio))
     config.add_section('Mode')
-    config.set('Mode', 'Emulator', type2Str(self.emulator_mode))
-    config.set('Mode', 'ControlMode', type2Str(self.control_mode))
+    config.set('Mode', 'Emulator', type2Str(int(self.emulator_mode)))
+    config.set('Mode', 'ControlMode', type2Str(int(self.control_mode)))
     config.add_section('ADB')
     config.set('ADB', 'Port', type2Str(self.adb_port))
+    config.add_section('Dice')
+    config.set('Dice', 'DiceParty', type2Str(tuple(self.dice_party)))
 
     with open(self.config_file_name, 'w') as f:
       config.write(f)
@@ -177,6 +182,9 @@ class Variable:
 
   def setADBPort(self, _value: int):
     self.adb_port = _value
+
+  def setDiceParty(self, _value: list):
+    self.dice_party = _value
 
   ### get ###
 
@@ -257,3 +265,6 @@ class Variable:
 
   def getADBPort(self):
     return self.adb_port
+
+  def getDiceParty(self):
+    return self.dice_party

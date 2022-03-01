@@ -12,57 +12,50 @@ from mode import *
 from action import *
 
 class Task:
-  def __init__(self, _action: Action, _emu_mode: Emulator = Emulator.BLUESTACKS, _ctrl_mode: ControlMode = ControlMode.ADB):
-    self.emu_mode = _emu_mode
-    self.ctrl_mode = _ctrl_mode
+  def __init__(self, _action: Action):
     self.action = _action
 
     self.board_dice = []
     self.detect_board_dice_img = []
     self.board_dice_lu = []
+    self.windowID = None
 
-    self.targetDice = ["Healing", "Solar_O", "Rock", "Flash", "Mimic", "Blank", "Solar_X"]
+    # self.targetDice = ["Healing", "Solar_O", "Rock", "Flash", "Mimic", "Blank", "Solar_X"]
 
     self.variable = Variable()
-    self.variable.setBoardDiceLeftTopXY((90, 477))
-    self.variable.setBoardDiceOffsetXY((49, 49))
-    self.variable.setLevelDiceLeftXY((70, 640))
-    self.variable.setLevelDiceOffsetX(60)
-    self.variable.setEmojiDialogXY((40, 390))
-    self.variable.setEmojiLeftXY((40, 390))
-    self.variable.setEmojiOffsetX(60)
-    self.variable.setSummonDiceXY((340, 580))
-    self.variable.setLevelSpXY((40, 580))
-    self.variable.setMergeFloatLocationXY((190, 400))
-    self.variable.setExtractDiceSizeWH((50, 50))
-    self.variable.setExtractDiceLuSizeWH((40, 40))
-    self.variable.setExtractSpLuSizeWH((5, 5))
-    self.variable.setExtractSummonLuSizeWH((3, 3))
-    self.variable.setExtractLevelDiceLuSizeWH((3, 3))
-    self.variable.setZoomRatio(1)
-
-    # init
-    id = None
-    if self.ctrl_mode == ControlMode.WIN32API:
-      self.getWindowID()
-      id = self.windowID
-    elif self.ctrl_mode == ControlMode.ADB:
-      # connect to device
-      ADB.connect(self.variable.getADBIP(), self.variable.getADBPort())
+    self.variable.loadFromConfigFile()
+    # self.variable.setBoardDiceLeftTopXY((90, 477))
+    # self.variable.setBoardDiceOffsetXY((49, 49))
+    # self.variable.setLevelDiceLeftXY((70, 640))
+    # self.variable.setLevelDiceOffsetX(60)
+    # self.variable.setEmojiDialogXY((40, 390))
+    # self.variable.setEmojiLeftXY((40, 390))
+    # self.variable.setEmojiOffsetX(60)
+    # self.variable.setSummonDiceXY((340, 580))
+    # self.variable.setLevelSpXY((40, 580))
+    # self.variable.setMergeFloatLocationXY((190, 400))
+    # self.variable.setExtractDiceSizeWH((50, 50))
+    # self.variable.setExtractDiceLuSizeWH((40, 40))
+    # self.variable.setExtractSpLuSizeWH((5, 5))
+    # self.variable.setExtractSummonLuSizeWH((3, 3))
+    # self.variable.setExtractLevelDiceLuSizeWH((3, 3))
+    # self.variable.setZoomRatio(1)
 
     self.detect = Detect("./image", self.variable)
-    self.screen = Screen(self.ctrl_mode, _hwnd=id, 
+
+  def init(self):
+    self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID, 
       _ip=self.variable.getADBIP(), _port=self.variable.getADBPort())
-    self.diceControl = DiceControl(self.ctrl_mode, _hwnd=id, 
+    self.diceControl = DiceControl(self.variable.getControlMode(), _hwnd=self.windowID, 
       _ip=self.variable.getADBIP(), _port=self.variable.getADBPort())
     self.diceControl.setVariable(self.variable)
 
   def getWindowID(self):
-    if self.emu_mode == Emulator.BLUESTACKS:
+    if self.variable.getEmulatorMode() == Emulator.BLUESTACKS:
       hwnd = win32gui.FindWindow(None, "BlueStacks")
       hwndChild = win32gui.GetWindow(hwnd, win32con.GW_CHILD)
       self.windowID = hwndChild
-    elif self.emu_mode == Emulator.NOX:
+    elif self.variable.getEmulatorMode() == Emulator.NOX:
       hwnd = win32gui.FindWindow(None, "夜神模擬器")
       self.windowID = hwnd
     # check if is valid
@@ -127,7 +120,7 @@ class Task:
       img = self.detect.extractImage(im, 
         (dice_xy[0], dice_xy[1], 
         self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
-      res = self.detect.detectDice(img, self.targetDice)
+      res = self.detect.detectDice(img, self.variable.getDiceParty() + ['Blank'])
 
       dice_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
         (dice_xy[0], dice_xy[1], 
@@ -160,7 +153,7 @@ class Task:
         self.variable.getExtractLevelDiceLuSizeWH()[0], self.variable.getExtractLevelDiceLuSizeWH()[1]), ExtractMode.CENTER)))
 
     count = {}
-    for dice in self.targetDice:
+    for dice in self.variable.getDiceParty() + ['Blank']:
       count[dice] = 0
     for dice in self.board_dice:
       count[dice] += 1
