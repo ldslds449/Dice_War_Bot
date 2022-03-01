@@ -167,16 +167,16 @@ class Task:
 
     self.action.action(
       self.diceControl, self.findMergeDice,
-      count, count_sorted, location, 
+      count, count_sorted, location, self.board_dice, 
       self.detect.canSummon(summon_lu), self.detect.canLevelSP(sp_lu),
       [self.detect.canLevelDice(level_lu[i]) for i in range(self.variable.getPartyDiceSize())],
       countTotal
     )
 
-    print(f'Summon: {summon_lu} --- {self.detect.canSummon(summon_lu)}')
-    print(f'SP: {sp_lu} --- {self.detect.canLevelSP(sp_lu)}')
+    print(f'Summon: {summon_lu:3.1f} --- {self.detect.canSummon(summon_lu)}')
+    print(f'SP: {sp_lu:3.1f} --- {self.detect.canLevelSP(sp_lu)}')
     for i in range(self.variable.getPartyDiceSize()):
-      print(f'Level_{i+1}: {level_lu[i]} --- {self.detect.canLevelDice(level_lu[i])}')
+      print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.detect.canLevelDice(level_lu[i])}')
 
     sys.stdout.flush()
     print("\n================")

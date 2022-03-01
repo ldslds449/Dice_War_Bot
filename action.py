@@ -1,6 +1,7 @@
 from typing import Callable, Dict, List
 import abc
 import time
+from functools import cmp_to_key
 
 from control import *
 
@@ -8,7 +9,7 @@ class Action:
   @staticmethod
   @abc.abstractmethod
   def action(self,
-    count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], 
+    count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], boardDice: list, 
     canSummon: bool, canLevelSp: bool, canLevelDice: List,
     countTotal: int):
     return NotImplemented
@@ -17,7 +18,7 @@ import random as rd
 
 class MyAction(Action):
   @staticmethod
-  def randomMerge( diceControl: DiceControl, findMergeDice: Callable,
+  def randomMerge(diceControl: DiceControl, findMergeDice: Callable,
     count, location, mergeDice, exceptDice):
     rdidx = rd.randrange(count[mergeDice])
     srcidx = location[mergeDice][rdidx] + 1
@@ -31,9 +32,34 @@ class MyAction(Action):
         time.sleep(1)
 
   @staticmethod
+  def orderMerge(diceControl: DiceControl, findMergeDice: Callable,
+    count, location, boardDice, mergeDice, exceptDice, order):
+    rdidx = rd.randrange(count[mergeDice])
+    srcidx = location[mergeDice][rdidx] + 1
+
+    merge_dice_location = findMergeDice(srcidx, exceptDice)
+    
+    if len(merge_dice_location) > 0:
+      def myCompare(a, b):
+        a_order = order.index(boardDice[a]) if a in order else 99999
+        b_order = order.index(boardDice[b]) if b in order else 99999
+        if a_order < b_order:
+          return -1
+        elif a_order > b_order:
+          return 1
+        else:
+          return 0
+
+      merge_dice_location = sorted(merge_dice_location, key=cmp_to_key(myCompare))
+      dstidx = merge_dice_location[0] + 1
+      if srcidx != dstidx:
+        diceControl.mergeDice(srcidx, dstidx)
+        time.sleep(1)
+
+  @staticmethod
   def action(
     diceControl: DiceControl, findMergeDice: Callable,
-    count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], 
+    count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], boardDice: list,
     canSummon: bool, canLevelSp: bool, canLevelDice: List,
     countTotal: int):
 
@@ -50,8 +76,9 @@ class MyAction(Action):
     earlyGame = countTotal <= 10
 
     if not hasSolar and hasMimic and not earlyGame:
-      MyAction.randomMerge(diceControl, findMergeDice,
-        count, location, 'Mimic', (None if countSolar > 4 else ['Solar_X', 'Solar_O'])) 
+      MyAction.orderMerge(diceControl, findMergeDice,
+        count, location, boardDice, 'Mimic', (None if countSolar > 4 else ['Solar_X', 'Solar_O']),
+        ['Rock', 'Mimic']) 
     if not hasSolar and hasStone and countRock >= 2 and not earlyGame:
       MyAction.randomMerge(diceControl, findMergeDice,
         count, location, 'Rock', ['Mimic'])
