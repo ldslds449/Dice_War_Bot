@@ -56,27 +56,27 @@ class MyAction(Action):
     countTotal: int, boarDiceStar: list):
 
     # flag
-    hasSolar = count['Solar_O'] >= 4
+    hasSolar = (count['Solar_O'] == 4 or count['Solar_O'] == 7)
     hasMimic = count['Mimic'] > 0
     hasStone = count['Rock'] > 0
     noBlank = count['Blank'] == 0
 
     countRock = count['Rock']
-    countSolar = count['Solar_O'] + count['Solar_X']
+    countSolar = count['Solar_O']
     countBlank = count['Blank']
 
     earlyGame = countTotal <= 10
 
     if not hasSolar and hasMimic and not earlyGame:
       MyAction.orderMerge(diceControl, findMergeDice,
-        count, location, boardDice, 'Mimic', (None if countSolar > 4 else ['Solar_X', 'Solar_O']),
+        count, location, boardDice, 'Mimic', (None if countSolar > 4 else ['Solar_O', 'Solar_O']),
         ['Rock', 'Mimic']) 
     if not hasSolar and hasStone and countRock >= 2 and not earlyGame:
       MyAction.randomMerge(diceControl, findMergeDice,
         count, location, 'Rock', ['Mimic'])
     if not hasSolar and countSolar == 6 and not earlyGame:
       MyAction.randomMerge(diceControl, findMergeDice,
-        count, location, 'Solar_X', ['Mimic'])
+        count, location, 'Solar_O', ['Mimic'])
     if not hasSolar and noBlank:
       MyAction.randomMerge(diceControl, findMergeDice,
         count, location, count_sorted[0][0], ['Mimic'])

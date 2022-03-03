@@ -3,6 +3,7 @@ import cv2
 import glob
 import os
 import numpy as np
+import dhash
 # from skimage.metrics import structural_similarity
 from typing import Tuple
 from enum import Enum
@@ -16,6 +17,8 @@ class ExtractMode(Enum):
 class DetectDiceMode(Enum):
   HIST = 0
   TEMPLATE = 1
+  DHASH = 2
+  COMBINE = 3
 
 class Detect:
   def __init__(self, dice_folder, variable: Variable):
@@ -27,10 +30,14 @@ class Detect:
     self.dice_image_hsv = []
     self.dice_image_hsv_resize = []
     self.dice_image_PIL = []
+    self.dice_image_PIL_resize = []
     self.dice_image_tk = []
     self.dice_image_tk_resize = []
+    self.dice_image_dhash_resize = []
     self.dice_name = []
     self.dice_name_idx_dict = {}
+
+    self.dhash_size = 16
 
     for i, f in enumerate(glob.glob(os.path.join(dice_folder, '*.png'))):
       name = os.path.basename(f).split(".")[0]
@@ -43,13 +50,27 @@ class Detect:
       self.dice_image_hsv.append(cv2.cvtColor(image_rgb.copy(), cv2.COLOR_BGR2HSV))
       self.dice_image_hsv_resize.append(cv2.resize(self.dice_image_hsv[-1], variable.getExtractDiceSizeWH()))
       self.dice_image_PIL.append(image_pil)
+      self.dice_image_PIL_resize.append(self.dice_image_PIL[-1].resize((50, 50)))
       self.dice_image_tk.append(self.Image2TK(image_pil))
       self.dice_image_tk_resize.append(self.Image2TK(image_pil.resize(variable.getExtractDiceSizeWH())))
+      self.dice_image_dhash_resize.append(dhash.dhash_int(self.dice_image_PIL_resize[-1], size=self.dhash_size))
       self.dice_name.append(name)
       self.dice_name_idx_dict[name] = i
 
-  def detectDice(self, img, candidate = None, mode: DetectDiceMode = DetectDiceMode.HIST):
-    if mode == DetectDiceMode.HIST:
+  def detectDice(self, img, candidate = None, mode: DetectDiceMode = DetectDiceMode.COMBINE):
+
+    def getCandidateImage(original_list):
+      dice_template = zip(self.dice_name, original_list) if candidate is None else []
+      if candidate is not None:
+        for name, image in zip(self.dice_name, original_list):
+          if name in candidate:
+            dice_template.append((name, image))
+      return dice_template
+
+    if mode == DetectDiceMode.COMBINE:
+      score = {}
+
+    if mode == DetectDiceMode.HIST or mode == DetectDiceMode.COMBINE:
       h_bins = 100
       s_bins = 120
       histSize = [h_bins, s_bins]
@@ -64,11 +85,7 @@ class Detect:
       # img_hsv_norm = img_hsv.copy()
       # cv2.normalize(img_hsv, img_hsv_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 
-      dice_template = zip(self.dice_name, self.dice_image_hsv_resize) if candidate is None else []
-      if candidate is not None:
-        for name, image in zip(self.dice_name, self.dice_image_hsv_resize):
-          if name in candidate:
-            dice_template.append((name, image))
+      dice_template = getCandidateImage(self.dice_image_hsv_resize)
 
       # matching
       result = []
@@ -80,15 +97,14 @@ class Detect:
         result.append((name, res))
 
       result = sorted(result, key=lambda x : x[1], reverse=True)
+      if mode == DetectDiceMode.COMBINE:
+        for i, (n, r) in enumerate(result):
+          score[n] = i + (0 if n not in score else score[n])
     
-    elif mode == DetectDiceMode.TEMPLATE:
+    if mode == DetectDiceMode.TEMPLATE:
       img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-      dice_template = zip(self.dice_name, self.dice_image_gray_resize) if candidate is None else []
-      if candidate is not None:
-        for name, image in zip(self.dice_name, self.dice_image_gray_resize):
-          if name in candidate:
-            dice_template.append((name, image))
+      dice_template = getCandidateImage(self.dice_image_gray_resize)
 
       result = []
       for name, dice in dice_template:
@@ -98,11 +114,32 @@ class Detect:
 
       result = sorted(result, key=lambda x : x[1], reverse=True)
 
+    if mode == DetectDiceMode.DHASH or mode == DetectDiceMode.COMBINE:
+      img = self.OpenCV2Image(img)
+      img_hash = dhash.dhash_int(img, size=self.dhash_size)
+
+      dice_template = getCandidateImage(self.dice_image_dhash_resize)
+
+      result = []
+      for name, dice in dice_template:
+        r = dhash.get_num_bits_different(img_hash, dice)
+        result.append((name, r))
+
+      result = sorted(result, key=lambda x : x[1])
+      if mode == DetectDiceMode.COMBINE:
+        for i, (n, r) in enumerate(result):
+          score[n] = i + (0 if n not in score else score[n])
+
+    if mode == DetectDiceMode.COMBINE:
+      result = sorted(score.items(), key=lambda x : x[1])
+
     return result[0]
 
   def detectStar(self, img):
     img_resize = cv2.resize(img, (50, 50))
     img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
+
+    # binary
     _, img_binary = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)
     kernel = np.array([
         [0, 0, 1, 0, 0],
@@ -111,19 +148,41 @@ class Detect:
         [0, 1, 1, 1, 0],
         [0, 0, 1, 0, 0]
     ], np.uint8)
-    img_erosion = cv2.erode(img_binary, kernel, iterations = 1)
+    img_erosion = cv2.erode(img_gray, kernel, iterations = 1)
     img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
     contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    star_count = 0
+    star_count_binary = 0
     for cnt in contours:
-        area = cv2.contourArea(cnt)
-        perimeter = cv2.arcLength(cnt,True)
-        (x,y),radius = cv2.minEnclosingCircle(cnt)
-        center = (int(x),int(y))
-        radius = int(radius)
-        if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 15:
-            star_count += 1
-    return star_count
+      area = cv2.contourArea(cnt)
+      perimeter = cv2.arcLength(cnt,True)
+      _, radius = cv2.minEnclosingCircle(cnt)
+      radius = int(radius)
+      if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 15:
+          star_count_binary += 1
+
+    # edge detection
+    img_edge = cv2.Canny(image=img_gray, threshold1=300, threshold2=400)
+    contours, _ = cv2.findContours(img_edge, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    star_count_edge = 0
+    centers = []
+    for cnt in contours:
+      area = cv2.contourArea(cnt)
+      perimeter = cv2.arcLength(cnt,True)
+      (x,y),radius = cv2.minEnclosingCircle(cnt)
+      center = (int(x),int(y))
+      radius = int(radius)
+      if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 15:
+        # find if is overlap
+        overlap = False
+        for c in centers:
+          dist = abs(c[0]-center[0])**2 + abs(c[1]-center[1])**2
+          if dist <= 30:
+            overlap = True
+            break
+        if not overlap:
+          star_count_edge += 1
+          centers.append(center)
+    return max(star_count_binary, star_count_edge)
 
   def canSummon(self, luminance: float):
     if luminance >= 180:
