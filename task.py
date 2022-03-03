@@ -1,3 +1,4 @@
+from itertools import count
 import sys
 import win32gui
 import win32con
@@ -17,6 +18,7 @@ class Task:
 
     self.board_dice = []
     self.detect_board_dice_img = []
+    self.detect_board_dice_star = []
     self.board_dice_lu = []
     self.windowID = None
 
@@ -69,36 +71,52 @@ class Task:
       function(i, row, col)
 
   def findMergeDice(self, srcidx, exceptDice):
-    self.diceControl.dragPressDice(srcidx)
-    time.sleep(0.2)
-    _, canMergeImage = self.screen.getScreenShot(self.variable.getZoomRatio())
-    time.sleep(0.2)
-    canMergeImage = self.detect.Image2OpenCV(canMergeImage)
-    self.diceControl.dragUpDice()
+    if self.variable.getControlMode() == ControlMode.WIN32API:
+      self.diceControl.dragPressDice(srcidx)
+      time.sleep(0.2)
+      _, canMergeImage = self.screen.getScreenShot(self.variable.getZoomRatio())
+      time.sleep(0.2)
+      canMergeImage = self.detect.Image2OpenCV(canMergeImage)
+      self.diceControl.dragUpDice()
 
-    x = self.variable.getBoardDiceLeftTopXY()[0]
-    y = self.variable.getBoardDiceLeftTopXY()[1]
-    offset_x = self.variable.getBoardDiceOffsetXY()[0]
-    offset_y = self.variable.getBoardDiceOffsetXY()[1]
+      x = self.variable.getBoardDiceLeftTopXY()[0]
+      y = self.variable.getBoardDiceLeftTopXY()[1]
+      offset_x = self.variable.getBoardDiceOffsetXY()[0]
+      offset_y = self.variable.getBoardDiceOffsetXY()[1]
 
-    merge_dice_location = []
-    def detectMerge(i, row, col):
-      img = self.detect.extractImage(canMergeImage, 
-        (x+col*offset_x, y+row*offset_y, 
-        self.variable.getExtractDiceLuSizeWH()[0], self.variable.getExtractDiceLuSizeWH()[1]), ExtractMode.CENTER)
-      img_lu = self.detect.getAverageLuminance(img)
-      lu_offset = self.board_dice_lu[i] - img_lu
-      canMerge = self.detect.canMergeDice(lu_offset)
-      if canMerge and self.board_dice[i] != 'Blank':
-        if exceptDice is None or self.board_dice[i] not in exceptDice:
-          merge_dice_location.append(i)
-      if i != 0 and i % self.variable.getCol() == 0 :
-        print("")
-      print(f"{'O' if canMerge else 'X'} {self.board_dice_lu[i]:4.1f} / {img_lu:4.1f}  ", end="")
-      if i+1 == self.variable.getBoardSize():
-        print("")
+      merge_dice_location = []
+      def detectMerge(i, row, col):
+        img = self.detect.extractImage(canMergeImage, 
+          (x+col*offset_x, y+row*offset_y, 
+          self.variable.getExtractDiceLuSizeWH()[0], self.variable.getExtractDiceLuSizeWH()[1]), ExtractMode.CENTER)
+        img_lu = self.detect.getAverageLuminance(img)
+        lu_offset = self.board_dice_lu[i] - img_lu
+        canMerge = self.detect.canMergeDice(lu_offset)
+        if canMerge and self.board_dice[i] != 'Blank':
+          if exceptDice is None or self.board_dice[i] not in exceptDice:
+            merge_dice_location.append(i)
+        if i != 0 and i % self.variable.getCol() == 0 :
+          print("")
+        print(f"{'O' if canMerge else 'X'} {self.board_dice_lu[i]:4.1f} / {img_lu:4.1f}  ", end="")
+        if i+1 == self.variable.getBoardSize():
+          print("")
 
-    self.forAllDiceOnBoard(detectMerge)
+      self.forAllDiceOnBoard(detectMerge)
+
+    elif self.variable.getControlMode() == ControlMode.ADB:
+      srcidx -= 1
+      dice_src_name = self.board_dice[srcidx]
+      dice_src_star = self.board_dice_star[srcidx]
+      if dice_src_name == 'Mimic' or dice_src_name == 'Joker' or dice_src_name == 'Supplement':
+        acceptDice = self.variable.getDiceParty() 
+      else:
+        acceptDice = [dice_src_name, 'Mimic'] 
+      merge_dice_location = []
+      for i, dice in enumerate(self.board_dice):
+        if i != srcidx and dice in acceptDice:
+          if exceptDice is None or self.board_dice[i] not in exceptDice:
+            if dice_src_star == self.board_dice_star[i]:
+              merge_dice_location.append(i)
     
     return merge_dice_location
       
@@ -114,6 +132,7 @@ class Task:
 
     self.board_dice = []
     self.detect_board_dice_img = []
+    self.board_dice_star = []
     self.board_dice_lu = []
     def detectDice(i, row, col):
       dice_xy = (x+col*offset_x, y+row*offset_y)
@@ -121,18 +140,20 @@ class Task:
         (dice_xy[0], dice_xy[1], 
         self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
       res = self.detect.detectDice(img, self.variable.getDiceParty() + ['Blank'])
+      res_star = self.detect.detectStar(img)
 
       dice_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
         (dice_xy[0], dice_xy[1], 
         self.variable.getExtractDiceLuSizeWH()[0], self.variable.getExtractDiceLuSizeWH()[1]), ExtractMode.CENTER))
 
       self.detect_board_dice_img.append(img)
+      self.board_dice_star.append(res_star)
       self.board_dice.append(res[0])
       self.board_dice_lu.append(dice_lu)
 
       if i != 0 and i % self.variable.getCol() == 0 :
         print("")
-      print(f"{res[0]:10}", end="")
+      print(f"{res[0]:10}({res_star})", end="")
       if i+1 == self.variable.getBoardSize():
         print("")
 
@@ -165,14 +186,6 @@ class Task:
     count_sorted = sorted(count.items(), key=lambda x : x[1], reverse=True)
     countTotal = sum([x[1] for x in count.items() if x[0] != 'Blank'])
 
-    self.action.action(
-      self.diceControl, self.findMergeDice,
-      count, count_sorted, location, self.board_dice, 
-      self.detect.canSummon(summon_lu), self.detect.canLevelSP(sp_lu),
-      [self.detect.canLevelDice(level_lu[i]) for i in range(self.variable.getPartyDiceSize())],
-      countTotal
-    )
-
     print(f'Summon: {summon_lu:3.1f} --- {self.detect.canSummon(summon_lu)}')
     print(f'SP: {sp_lu:3.1f} --- {self.detect.canLevelSP(sp_lu)}')
     for i in range(self.variable.getPartyDiceSize()):
@@ -180,3 +193,12 @@ class Task:
 
     sys.stdout.flush()
     print("\n================")
+
+    self.action.action(
+      self.diceControl, self.findMergeDice,
+      count, count_sorted, location, self.board_dice, 
+      self.detect.canSummon(summon_lu), self.detect.canLevelSP(sp_lu),
+      [self.detect.canLevelDice(level_lu[i]) for i in range(self.variable.getPartyDiceSize())],
+      countTotal, self.board_dice_star
+    )
+    

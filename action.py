@@ -11,7 +11,7 @@ class Action:
   def action(self,
     count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], boardDice: list, 
     canSummon: bool, canLevelSp: bool, canLevelDice: List,
-    countTotal: int):
+    countTotal: int, boarDiceStar: list):
     return NotImplemented
 
 import random as rd
@@ -24,6 +24,7 @@ class MyAction(Action):
     srcidx = location[mergeDice][rdidx] + 1
 
     merge_dice_location = findMergeDice(srcidx, exceptDice)
+    print(merge_dice_location)
 
     if len(merge_dice_location) > 0:
       dstidx = merge_dice_location[rd.randrange(0, len(merge_dice_location))] + 1
@@ -40,17 +41,8 @@ class MyAction(Action):
     merge_dice_location = findMergeDice(srcidx, exceptDice)
     
     if len(merge_dice_location) > 0:
-      def myCompare(a, b):
-        a_order = order.index(boardDice[a]) if a in order else 99999
-        b_order = order.index(boardDice[b]) if b in order else 99999
-        if a_order < b_order:
-          return -1
-        elif a_order > b_order:
-          return 1
-        else:
-          return 0
-
-      merge_dice_location = sorted(merge_dice_location, key=cmp_to_key(myCompare))
+      merge_dice_location = sorted(merge_dice_location, key= lambda x: 99999 if boardDice[x] not in order else order.index(boardDice[x]))
+      print(merge_dice_location)
       dstidx = merge_dice_location[0] + 1
       if srcidx != dstidx:
         diceControl.mergeDice(srcidx, dstidx)
@@ -61,7 +53,7 @@ class MyAction(Action):
     diceControl: DiceControl, findMergeDice: Callable,
     count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], boardDice: list,
     canSummon: bool, canLevelSp: bool, canLevelDice: List,
-    countTotal: int):
+    countTotal: int, boarDiceStar: list):
 
     # flag
     hasSolar = count['Solar_O'] >= 4
@@ -99,3 +91,5 @@ class MyAction(Action):
       diceControl.levelUpDice(1)
     elif canLevelDice[3]:
       diceControl.levelUpDice(4)
+
+    time.sleep(1)

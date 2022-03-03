@@ -94,10 +94,14 @@ class UI:
 
     # board
     self.label_board_dice = []
+    self.label_board_star = []
     for i in range(15):
       label = tk.Label(self.frame_board, padx=5, pady=5)
-      label.grid(row=i//5, column=i%5)
+      label.grid(row=i//5, column=(i%5)*2)
       self.label_board_dice.append(label)
+      label = tk.Label(self.frame_board, padx=5, pady=5)
+      label.grid(row=i//5, column=(i%5)*2+1)
+      self.label_board_star.append(label)
 
     # screenshot
     self.label_detect_board_dice = []
@@ -256,11 +260,11 @@ class UI:
         idx = self.bg_task.detect.dice_name_idx_dict[name]
         img = self.bg_task.detect.dice_image_tk_resize[idx]
         self.changeImage(self.label_board_dice[i], img)
+      for i, star in enumerate(self.bg_task.board_dice_star):
+        self.label_board_star[i].config(text=str(star))
       for i, img in enumerate(self.bg_task.detect_board_dice_img):
         img = ImageTk.PhotoImage(self.bg_task.detect.OpenCV2Image(img))
         self.changeImage(self.label_detect_board_dice[i], img)
-      # wait for delay
-      time.sleep(1)
 
   def onClosing(self):
     self.close()

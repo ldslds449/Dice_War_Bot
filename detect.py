@@ -100,6 +100,31 @@ class Detect:
 
     return result[0]
 
+  def detectStar(self, img):
+    img_resize = cv2.resize(img, (50, 50))
+    img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
+    _, img_binary = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)
+    kernel = np.array([
+        [0, 0, 1, 0, 0],
+        [0, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 0],
+        [0, 0, 1, 0, 0]
+    ], np.uint8)
+    img_erosion = cv2.erode(img_binary, kernel, iterations = 1)
+    img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
+    contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    star_count = 0
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        perimeter = cv2.arcLength(cnt,True)
+        (x,y),radius = cv2.minEnclosingCircle(cnt)
+        center = (int(x),int(y))
+        radius = int(radius)
+        if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 15:
+            star_count += 1
+    return star_count
+
   def canSummon(self, luminance: float):
     if luminance >= 180:
       return True
