@@ -265,6 +265,7 @@ class UI:
       for i, img in enumerate(self.bg_task.detect_board_dice_img):
         img = ImageTk.PhotoImage(self.bg_task.detect.OpenCV2Image(img))
         self.changeImage(self.label_detect_board_dice[i], img)
+      self.window.update()
 
   def onClosing(self):
     self.close()

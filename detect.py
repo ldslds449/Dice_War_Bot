@@ -148,7 +148,7 @@ class Detect:
         [0, 1, 1, 1, 0],
         [0, 0, 1, 0, 0]
     ], np.uint8)
-    img_erosion = cv2.erode(img_gray, kernel, iterations = 1)
+    img_erosion = cv2.erode(img_binary, kernel, iterations = 1)
     img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
     contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     star_count_binary = 0
