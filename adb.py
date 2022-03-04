@@ -5,7 +5,7 @@ class ADB:
   def sh(command):
     print(command)
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    result = p.stdout.read()
+    result, _ = p.communicate()
     return result
 
   @staticmethod

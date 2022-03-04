@@ -122,8 +122,11 @@ class UI:
     # button
     self.btn_run = tk.Button(self.frame_btn, text='Start', width=15, height=3, font=('Arial', 12))
     self.btn_run.bind('<Button>', self.btn_run_event)
-    self.btn_run.pack(fill=BOTH)
+    self.btn_run.pack(fill=BOTH, side=LEFT, expand=True)
     self.isRunning = False
+    self.btn_init = tk.Button(self.frame_btn, text='Init', width=15, height=3, font=('Arial', 12))
+    self.btn_init.bind('<Button>', self.btn_init_event)
+    self.btn_init.pack(fill=BOTH, side=RIGHT, expand=True)
 
     self.window.protocol("WM_DELETE_WINDOW", self.onClosing)
 
@@ -203,6 +206,9 @@ class UI:
     else: # disable
       self.isRunning = False
       self.btn_run.config(text='Start')
+
+  def btn_init_event(self, _):
+    MyAction.init()
 
   def btn_screenshot_event(self, _):
     success, im = self.bg_task.screen.getScreenShot(self.bg_task.variable.getZoomRatio())

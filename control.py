@@ -69,7 +69,7 @@ class Control:
       offset_x = src[0] - dst[0]
       offset_y = src[1] - dst[1]
       dist = int(math.sqrt(abs(offset_x)**2 + abs(offset_y)**2))
-      duration = int((dist // 3) * 4)
+      duration = int((dist // 3) * 5)
       command = f'adb -s {self.ip}:{self.port} shell input swipe {src[0]} {src[1]} {dst[0]} {dst[1]} {duration}'
       self.sh(command)
 
