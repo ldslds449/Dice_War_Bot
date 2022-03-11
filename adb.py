@@ -3,17 +3,16 @@ import subprocess
 class ADB:
   @staticmethod
   def sh(command):
-    print(command)
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result, _ = p.communicate()
     return result
 
   @staticmethod
   def connect(ip:str, port:int):
-    print(ADB.sh(f'adb tcpip {port}'))
-    print(ADB.sh(f'adb connect {ip}:{port}'))
+    ADB.sh(f'adb tcpip {port}')
+    return ADB.sh(f'adb connect {ip}:{port}').decode('utf-8')
 
   @staticmethod
   def disconnect():
-    print(ADB.sh('adb disconnect'))
-    print(ADB.sh('adb kill-server'))
+    ADB.sh('adb disconnect')
+    ADB.sh('adb kill-server')

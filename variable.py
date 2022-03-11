@@ -25,12 +25,15 @@ class Variable:
     self.summon_dice_xy = None
     self.level_sp_xy = None
     self.merge_float_location_xy = None
+    self.battle_xy = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
     self.extract_sp_lu_size_wh = None
     self.extract_summon_lu_size_wh = None
     self.extract_level_dice_lu_size_wh = None
+
+    self.emoji_dialog_wh = None
 
     self.zoom_ratio = 1.0
     self.col = 5 # constant
@@ -42,48 +45,45 @@ class Variable:
 
     self.emulator_mode = None
     self.control_mode = None
-    self.adb_port = 10311
+    self.adb_port = None
     self.adb_ip = '127.0.0.1' # constant
 
     self.dice_party = None
 
   ### read from config file ###
   def loadFromConfigFile(self):
-    if os.path.exists(self.getConfigFileName()):
-      config = ConfigParser()
-      config.read(self.getConfigFileName())
+    config = ConfigParser()
+    config.read(self.getConfigFileName())
 
-      def str2Type(s, t = int):
-        s_split = s.split(' ')
-        if len(s_split) > 1:
-          return tuple([t(x) for x in s_split])
-        else:
-          return t(s)
+    def str2Type(s, t = int):
+      s_split = s.split(' ')
+      if len(s_split) > 1:
+        return tuple([t(x) for x in s_split])
+      else:
+        return t(s)
 
-      self.board_dice_left_top_xy = str2Type(config.get('Coordinate', 'BoardDiceLeftTopXY', fallback='0 0'))
-      self.board_dice_offset_xy = str2Type(config.get('Coordinate', 'BoardDiceOffsetXY', fallback='0 0'))
-      self.level_dice_left_xy = str2Type(config.get('Coordinate', 'LevelDiceLeftXY', fallback='0 0'))
-      self.level_dice_offset_x = str2Type(config.get('Coordinate', 'LevelDiceOffsetX', fallback='0'))
-      self.emoji_dialog_xy = str2Type(config.get('Coordinate', 'EmojiDialogXY', fallback='0 0'))
-      self.emoji_left_xy = str2Type(config.get('Coordinate', 'EmojiLeftXY', fallback='0 0'))
-      self.emoji_offset_x = str2Type(config.get('Coordinate', 'EmojiOffsetX', fallback='0'))
-      self.summon_dice_xy = str2Type(config.get('Coordinate', 'SummonDiceXY', fallback='0 0'))
-      self.level_sp_xy = str2Type(config.get('Coordinate', 'LevelSpXY', fallback='0 0'))
-      self.merge_float_location_xy = str2Type(config.get('Coordinate', 'MergeFloatLocationXY', fallback='0 0'))
-      self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
-      self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
-      self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
-      self.extract_summon_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
-      self.extract_level_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
-      self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
-      self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
-      self.control_mode = ControlMode(str2Type(config.get('Mode', 'ControlMode', fallback='0')))
-      self.adb_port = str2Type(config.get('ADB', 'Port', fallback='-1'))
-      self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
-
-      return True
-    else:
-      return False
+    self.board_dice_left_top_xy = str2Type(config.get('Coordinate', 'BoardDiceLeftTopXY', fallback='0 0'))
+    self.board_dice_offset_xy = str2Type(config.get('Coordinate', 'BoardDiceOffsetXY', fallback='0 0'))
+    self.level_dice_left_xy = str2Type(config.get('Coordinate', 'LevelDiceLeftXY', fallback='0 0'))
+    self.level_dice_offset_x = str2Type(config.get('Coordinate', 'LevelDiceOffsetX', fallback='0'))
+    self.emoji_dialog_xy = str2Type(config.get('Coordinate', 'EmojiDialogXY', fallback='0 0'))
+    self.emoji_left_xy = str2Type(config.get('Coordinate', 'EmojiLeftXY', fallback='0 0'))
+    self.emoji_offset_x = str2Type(config.get('Coordinate', 'EmojiOffsetX', fallback='0'))
+    self.summon_dice_xy = str2Type(config.get('Coordinate', 'SummonDiceXY', fallback='0 0'))
+    self.level_sp_xy = str2Type(config.get('Coordinate', 'LevelSpXY', fallback='0 0'))
+    self.merge_float_location_xy = str2Type(config.get('Coordinate', 'MergeFloatLocationXY', fallback='0 0'))
+    self.battle_xy = str2Type(config.get('Coordinate', 'BattleXY', fallback='0 0'))
+    self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
+    self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
+    self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
+    self.extract_summon_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
+    self.extract_level_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
+    self.emoji_dialog_wh = str2Type(config.get('Coordinate', 'EmojiDialogWH', fallback='30 25'))
+    self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
+    self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
+    self.control_mode = ControlMode(str2Type(config.get('Mode', 'ControlMode', fallback='0')))
+    self.adb_port = str2Type(config.get('ADB', 'Port', fallback='5555'), int)
+    self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
 
   ### write to config file ###
   def saveToConfigFile(self):
@@ -106,11 +106,13 @@ class Variable:
     config.set('Coordinate', 'SummonDiceXY', type2Str(self.summon_dice_xy))
     config.set('Coordinate', 'LevelSpXY', type2Str(self.level_sp_xy))
     config.set('Coordinate', 'MergeFloatLocationXY', type2Str(self.merge_float_location_xy))
+    config.set('Coordinate', 'BattleXY', type2Str(self.battle_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
     config.set('Coordinate', 'ExtractSummonLuSizeWH', type2Str(self.extract_summon_lu_size_wh))
     config.set('Coordinate', 'ExtractLevelDiceLuSizeWH', type2Str(self.extract_level_dice_lu_size_wh))
+    config.set('Coordinate', 'EmojiDialogWH', type2Str(self.emoji_dialog_wh))
     config.add_section('Window')
     config.set('Window', 'ZoomRatio', type2Str(self.zoom_ratio))
     config.add_section('Mode')
@@ -156,6 +158,9 @@ class Variable:
   def setMergeFloatLocationXY(self, _value: Tuple[int,int]):
     self.merge_float_location_xy = _value
 
+  def setBattleXY(self, _value: Tuple[int,int]):
+    self.battle_xy = _value
+
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
 
@@ -170,6 +175,9 @@ class Variable:
 
   def setExtractLevelDiceLuSizeWH(self, _value: Tuple[int,int]):
     self.extract_level_dice_lu_size_wh = _value
+
+  def setEmojiDialogWH(self, _value: Tuple[int,int]):
+    self.emoji_dialog_wh = _value
 
   def setZoomRatio(self, _value: float):
     self.zoom_ratio = _value
@@ -218,6 +226,9 @@ class Variable:
   def getMergeFloatLocationXY(self):
     return self.merge_float_location_xy
 
+  def getBattleXY(self):
+    return self.battle_xy
+
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh
 
@@ -232,6 +243,9 @@ class Variable:
 
   def getExtractLevelDiceLuSizeWH(self):
     return self.extract_level_dice_lu_size_wh
+
+  def getEmojiDialogWH(self):
+    return self.emoji_dialog_wh
 
   def getZoomRatio(self):
     return self.zoom_ratio

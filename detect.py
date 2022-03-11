@@ -4,7 +4,7 @@ import glob
 import os
 import numpy as np
 import dhash
-# from skimage.metrics import structural_similarity
+from sewar import *
 from typing import Tuple
 from enum import Enum
 from PIL import Image, ImageTk
@@ -18,13 +18,15 @@ class DetectDiceMode(Enum):
   HIST = 0
   TEMPLATE = 1
   DHASH = 2
-  COMBINE = 3
+  MSSSIM = 3
+  COMBINE = 4
 
 class Detect:
   def __init__(self, dice_folder, variable: Variable):
     self.variable = variable
 
     self.dice_image_rgb = []
+    self.dice_image_rgb_resize = []
     self.dice_image_gray = []
     self.dice_image_gray_resize = []
     self.dice_image_hsv = []
@@ -38,24 +40,35 @@ class Detect:
     self.dice_name_idx_dict = {}
 
     self.dhash_size = 16
+    self.resize_size = (50, 50)
 
+    # dice
     for i, f in enumerate(glob.glob(os.path.join(dice_folder, '*.png'))):
       name = os.path.basename(f).split(".")[0]
       image_rgb = cv2.imread(f)
       image_gray = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
       image_pil = Image.open(f)
       self.dice_image_rgb.append(image_rgb)
+      self.dice_image_rgb_resize.append(cv2.resize(image_rgb, self.resize_size))
       self.dice_image_gray.append(image_gray)
       self.dice_image_gray_resize.append(cv2.resize(self.dice_image_gray[-1], variable.getExtractDiceSizeWH()))
       self.dice_image_hsv.append(cv2.cvtColor(image_rgb.copy(), cv2.COLOR_BGR2HSV))
       self.dice_image_hsv_resize.append(cv2.resize(self.dice_image_hsv[-1], variable.getExtractDiceSizeWH()))
       self.dice_image_PIL.append(image_pil)
-      self.dice_image_PIL_resize.append(self.dice_image_PIL[-1].resize((50, 50)))
+      self.dice_image_PIL_resize.append(self.dice_image_PIL[-1].resize(self.resize_size))
       self.dice_image_tk.append(self.Image2TK(image_pil))
       self.dice_image_tk_resize.append(self.Image2TK(image_pil.resize(variable.getExtractDiceSizeWH())))
       self.dice_image_dhash_resize.append(dhash.dhash_int(self.dice_image_PIL_resize[-1], size=self.dhash_size))
       self.dice_name.append(name)
       self.dice_name_idx_dict[name] = i
+
+    # other
+    self.lobby_image_PIL_resize = Image.open(os.path.join(dice_folder, 'lobby.png')).resize(self.resize_size)
+    self.lobby_image_dhash_resize = dhash.dhash_int(self.lobby_image_PIL_resize, size=self.dhash_size)
+    self.wait_image_PIL_resize = Image.open(os.path.join(dice_folder, 'wait.png')).resize(self.resize_size)
+    self.wait_image_dhash_resize = dhash.dhash_int(self.wait_image_PIL_resize, size=self.dhash_size)
+    self.finish_image_PIL_resize = Image.open(os.path.join(dice_folder, 'finish.png')).resize(self.resize_size)
+    self.finish_image_dhash_resize = dhash.dhash_int(self.finish_image_PIL_resize, size=self.dhash_size)
 
   def detectDice(self, img, candidate = None, mode: DetectDiceMode = DetectDiceMode.COMBINE):
 
@@ -80,10 +93,11 @@ class Detect:
       s_ranges = [0, 512]
       ranges = h_ranges + s_ranges # concat lists
 
+      img = cv2.resize(img, self.resize_size)
       img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
       img_hist = cv2.calcHist([img_hsv], channels, None, histSize, ranges, accumulate=False)
-      # img_hsv_norm = img_hsv.copy()
-      # cv2.normalize(img_hsv, img_hsv_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+      img_hsv_norm = img_hsv.copy()
+      cv2.normalize(img_hsv, img_hsv_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 
       dice_template = getCandidateImage(self.dice_image_hsv_resize)
 
@@ -91,8 +105,8 @@ class Detect:
       result = []
       for name, dice in dice_template:
         dice_hist = cv2.calcHist([dice], channels, None, histSize, ranges, accumulate=False)
-        # dice_norm = dice.copy()
-        # cv2.normalize(img_hsv, dice_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+        dice_norm = dice.copy()
+        cv2.normalize(img_hsv, dice_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
         res = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_INTERSECT)
         result.append((name, res))
 
@@ -115,6 +129,7 @@ class Detect:
       result = sorted(result, key=lambda x : x[1], reverse=True)
 
     if mode == DetectDiceMode.DHASH or mode == DetectDiceMode.COMBINE:
+      img = cv2.resize(img, self.resize_size)
       img = self.OpenCV2Image(img)
       img_hash = dhash.dhash_int(img, size=self.dhash_size)
 
@@ -129,6 +144,17 @@ class Detect:
       if mode == DetectDiceMode.COMBINE:
         for i, (n, r) in enumerate(result):
           score[n] = i + (0 if n not in score else score[n])
+
+    if mode == DetectDiceMode.MSSSIM:
+      img = cv2.resize(img, self.resize_size)
+      dice_template = getCandidateImage(self.dice_image_rgb_resize)
+      
+      result = []
+      for name, dice in dice_template:
+        r = msssim(img, dice)
+        result.append((name, r))
+
+      result = sorted(result, key=lambda x : x[1])
 
     if mode == DetectDiceMode.COMBINE:
       result = sorted(score.items(), key=lambda x : x[1])
@@ -184,6 +210,44 @@ class Detect:
           centers.append(center)
     return max(star_count_binary, star_count_edge)
 
+  def detectLobby(self, img):
+    img = cv2.resize(img, self.resize_size)
+    img = self.OpenCV2Image(img)
+    img_hash = dhash.dhash_int(img, size=self.dhash_size)
+
+    r = dhash.get_num_bits_different(self.lobby_image_dhash_resize, img_hash)
+    print(f'Lobby {r}')
+    return r <= self.dhash_size*2
+
+  def detectWaiting(self, img):
+    img = cv2.resize(img, self.resize_size)
+    img = self.OpenCV2Image(img)
+    img_hash = dhash.dhash_int(img, size=self.dhash_size)
+
+    r = dhash.get_num_bits_different(self.wait_image_dhash_resize, img_hash)
+    print(f'Wait {r}')
+    return r <= self.dhash_size*2
+
+  def detectFinish(self, img):
+    img = cv2.resize(img, self.resize_size)
+    img = self.OpenCV2Image(img)
+    img_hash = dhash.dhash_int(img, size=self.dhash_size)
+
+    r = dhash.get_num_bits_different(self.finish_image_dhash_resize, img_hash)
+    print(f'Finish {r}')
+    return r <= self.dhash_size*2
+
+  def detectGame(self, img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    h,w = img.shape
+    count = 0
+    for i in range(h):
+      for j in range(w):
+        if img[i,j] > 240:
+          count += 1
+    print(f'Game {count/w/h}')
+    return count >= w*h*0.65
+
   def canSummon(self, luminance: float):
     if luminance >= 180:
       return True
@@ -238,6 +302,12 @@ class Detect:
   def OpenCV2TK(self, img):
     return ImageTk.PhotoImage(self.OpenCV2Image(img))
 
+  def resize(self, img, size):
+    return cv2.resize(img, size)
+
+  def save(self, img, fname):
+    cv2.imwrite(fname, img)
+
   def drawTestImage(self, img):
     def tupleAdd(a, b):
       return (a[0]+b[0], a[1]+b[1])
@@ -268,9 +338,15 @@ class Detect:
     cv2.circle(img, self.variable.getLevelSpXY(), 5, color, -1)
 
     # draw emoji
-    cv2.circle(img, self.variable.getEmojiDialogXY(), 5, color, -1)
+    leftCorner = tupleAdd(self.variable.getEmojiDialogXY(), 
+      (-self.variable.getEmojiDialogWH()[0]//2, -self.variable.getEmojiDialogWH()[1]//2))
+    cv2.rectangle(img, leftCorner, 
+      tupleAdd(leftCorner, self.variable.getEmojiDialogWH()), color, 2)
     for i in range(self.variable.getEmojiSize()):
       cv2.circle(img, tupleAdd(self.variable.getEmojiLeftXY(), 
         (self.variable.getEmojiOffsetX()*i, 0)), 5, color, -1)
+
+    # draw battle
+    cv2.circle(img, self.variable.getBattleXY(), 5, color, -1)
 
     return img

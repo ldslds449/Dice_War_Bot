@@ -1,7 +1,5 @@
 import tkinter as tk
 import threading
-import time
-from PIL import Image, ImageTk
 from tkinter import ttk
 from tkinter import *
 
@@ -29,12 +27,16 @@ class UI:
     self.tabControl.add(self.tab_setting, text='Setting')
     self.tabControl.pack(expand=1, fill="both")
 
-    self.frame_board = tk.Frame(self.tab_detect, width=200, height=400)
-    self.frame_board.grid(column=0, row=0)
+    self.frame_board = tk.Frame(self.tab_detect, width=200, height=400, pady=10, padx=10)
+    self.frame_board.grid(column=0, row=0, columnspan=2)
     self.frame_screenshot = tk.Frame(self.tab_detect, width=200, height=400)
-    self.frame_screenshot.grid(column=1, row=0)
-    self.frame_select_dice = tk.Frame(self.tab_detect)
-    self.frame_select_dice.grid(column=0, row=1, columnspan=2)
+    self.frame_screenshot.grid(column=2, row=0, columnspan=2)
+    self.frame_select_dice = tk.Frame(self.tab_detect, padx=20)
+    self.frame_select_dice.grid(column=0, row=1, columnspan=4)
+    self.frame_log = tk.Frame(self.tab_detect, pady=10, padx=10)
+    self.frame_log.grid(column=0, row=2, columnspan=6)
+    self.frame_detect_btn = tk.Frame(self.tab_detect, pady=10, padx=10)
+    self.frame_detect_btn.grid(column=5, row=0, rowspan=2)
     self.frame_btn = tk.Frame(self.window, height=240)
     self.frame_btn.pack(expand=1, fill="x")
     self.frame_setting = tk.Frame(self.tab_setting)
@@ -65,11 +67,13 @@ class UI:
       'Summon Dice XY',
       'Level SP XY',
       'Merge Float Location XY',
+      'Battle XY',
       'Extract Dice Size WH',
       'Extract Dice Luminance Size WH',
       'Extract SP Luminance Size WH',
       'Extract Summon Luminance Size WH',
       'Extract Level Dice Luminance Size WH',
+      'Emoji Dialog WH',
       'Zoom Ratio'
     ]
     for i, label in enumerate(SettingLabelList):
@@ -82,13 +86,10 @@ class UI:
     btn_load_config.grid(row=0, column=1)
     btn_screenshot = tk.Button(self.frame_setting_btn, text='ScreenShot', width=15, height=2, font=('Arial', 12))
     btn_screenshot.bind('<Button>', self.btn_screenshot_event)
-    btn_screenshot.grid(row=0, column=2)
+    btn_screenshot.grid(row=1, column=0)
     btn_draw = tk.Button(self.frame_setting_btn, text='Draw', width=15, height=2, font=('Arial', 12))
     btn_draw.bind('<Button>', self.btn_draw)
-    btn_draw.grid(row=1, column=0)
-    btn_connect = tk.Button(self.frame_setting_btn, text='Connect', width=15, height=2, font=('Arial', 12))
-    btn_connect.bind('<Button>', self.btn_ADB_connect_event)
-    btn_connect.grid(row=1, column=1)
+    btn_draw.grid(row=1, column=1)
     self.label_screenshot = tk.Label(self.frame_setting_view)
     self.label_screenshot.pack(fill=BOTH)
 
@@ -119,14 +120,46 @@ class UI:
       checkBtn.grid(row=i//8, column=i%8, sticky="W")
       self.select_dice_booleanVar.append(chkValue)
 
+    # log
+    scrollbar_log = tk.Scrollbar(self.frame_log)
+    self.text_log = tk.Text(self.frame_log, font=('Arial', 12), height=18)
+    scrollbar_log.pack(side=tk.RIGHT, fill=tk.Y)
+    self.text_log.pack(side=tk.LEFT, fill=tk.Y)
+    scrollbar_log.config(command=self.text_log.yview)
+    self.text_log.config(yscrollcommand=scrollbar_log.set)
+
+    # detect button
+    self.btn_save_extract_images = tk.Button(self.frame_detect_btn, text='Save Extract Images', width=15, height=3, font=('Arial', 10))
+    self.btn_save_extract_images.bind('<Button>', self.btn_save_extract_images_event)
+    self.btn_save_extract_images.pack(fill=BOTH, expand=True)
+    self.btn_BM = tk.Button(self.frame_detect_btn, text='BM', width=15, height=3, font=('Arial', 10))
+    self.btn_BM.bind('<Button>', self.btn_bm_event)
+    self.btn_BM.pack(fill=BOTH, expand=True)
+
+    # auto play
+    self.autoPlay_booleanVar = tk.BooleanVar() 
+    self.autoPlay_booleanVar.set(False)
+    checkBtn = tk.Checkbutton(self.frame_detect_btn, text='Auto Play', var=self.autoPlay_booleanVar, command=self.ckeckBtn_autoPlay) 
+    checkBtn.pack(fill=BOTH, expand=True)
+    self.autoPlay = False
+
+    # Status Label
+    self.status_StringVar = StringVar()
+    self.status_StringVar.set('Lobby')
+    label_status = tk.Label(self.frame_detect_btn, padx=5, pady=5, textvariable=self.status_StringVar)
+    label_status.pack(fill=BOTH, expand=True)
+
     # button
     self.btn_run = tk.Button(self.frame_btn, text='Start', width=15, height=3, font=('Arial', 12))
     self.btn_run.bind('<Button>', self.btn_run_event)
     self.btn_run.pack(fill=BOTH, side=LEFT, expand=True)
     self.isRunning = False
-    self.btn_init = tk.Button(self.frame_btn, text='Init', width=15, height=3, font=('Arial', 12))
-    self.btn_init.bind('<Button>', self.btn_init_event)
-    self.btn_init.pack(fill=BOTH, side=RIGHT, expand=True)
+    btn_connect = tk.Button(self.frame_btn, text='Connect', width=15, height=2, font=('Arial', 12))
+    btn_connect.bind('<Button>', self.btn_ADB_connect_event)
+    btn_connect.pack(fill=BOTH, side=RIGHT, expand=True)
+    btn_init = tk.Button(self.frame_btn, text='Init', width=15, height=3, font=('Arial', 12))
+    btn_init.bind('<Button>', self.btn_init_event)
+    btn_init.pack(fill=BOTH, side=RIGHT, expand=True)
 
     self.window.protocol("WM_DELETE_WINDOW", self.onClosing)
 
@@ -160,12 +193,14 @@ class UI:
       self.setting_stringVar[10].set(dealString(self.bg_task.variable.getSummonDiceXY()))
       self.setting_stringVar[11].set(dealString(self.bg_task.variable.getLevelSpXY()))
       self.setting_stringVar[12].set(dealString(self.bg_task.variable.getMergeFloatLocationXY()))
-      self.setting_stringVar[13].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
-      self.setting_stringVar[14].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
-      self.setting_stringVar[15].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
-      self.setting_stringVar[16].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
-      self.setting_stringVar[17].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
-      self.setting_stringVar[18].set(dealString(self.bg_task.variable.getZoomRatio()))
+      self.setting_stringVar[13].set(dealString(self.bg_task.variable.getBattleXY()))
+      self.setting_stringVar[14].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
+      self.setting_stringVar[15].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
+      self.setting_stringVar[16].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
+      self.setting_stringVar[17].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
+      self.setting_stringVar[18].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
+      self.setting_stringVar[19].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
+      self.setting_stringVar[20].set(dealString(self.bg_task.variable.getZoomRatio()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -188,12 +223,14 @@ class UI:
       self.bg_task.variable.setSummonDiceXY(dealString(self.setting_stringVar[10].get()))
       self.bg_task.variable.setLevelSpXY(dealString(self.setting_stringVar[11].get()))
       self.bg_task.variable.setMergeFloatLocationXY(dealString(self.setting_stringVar[12].get()))
-      self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar[13].get()))
-      self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar[14].get()))
-      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar[15].get()))
-      self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar[16].get()))
-      self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar[17].get()))
-      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[18].get(), float))
+      self.bg_task.variable.setBattleXY(dealString(self.setting_stringVar[13].get()))
+      self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar[14].get()))
+      self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar[15].get()))
+      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar[16].get()))
+      self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar[17].get()))
+      self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar[18].get()))
+      self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar[19].get()))
+      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[20].get(), float))
     
   def btn_run_event(self, _):
     if self.isRunning == False: # enable
@@ -203,17 +240,28 @@ class UI:
         self.thread_bg_task = threading.Thread(target = self.run_bg_task)
         self.thread_bg_task.start()
         self.btn_run.config(text='Stop')
+        self.log('=== Start Detecting ===\n')
     else: # disable
       self.isRunning = False
       self.btn_run.config(text='Start')
+      self.log('=== Stop Detecting ===\n')
 
   def btn_init_event(self, _):
-    MyAction.init()
+    self.log('=== Init ===\n')
+    threading.Thread(target = MyAction.init()).start()
+
+  def btn_bm_event(self, _):
+    threading.Thread(target = self.bg_task.diceControl.BMOpponent()).start()
 
   def btn_screenshot_event(self, _):
+    self.log('=== ScreenShot ===\n')
     success, im = self.bg_task.screen.getScreenShot(self.bg_task.variable.getZoomRatio())
     if success:
       self.screenshot_image = self.bg_task.detect.Image2OpenCV(im)
+      # limit
+      h,w,_ = self.screenshot_image.shape
+      if h > 800:
+        self.screenshot_image = cv2.resize(self.screenshot_image, (800, int((800/h)*w)))
       self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image))
   
   def btn_draw(self, _):
@@ -222,18 +270,29 @@ class UI:
     self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(labeled_screenshot))
 
   def btn_save_config_event(self, _):
+    self.log('=== Save Config ===\n')
     self.getSettingInputField()
     self.bg_task.variable.saveToConfigFile()
 
   def btn_load_config_event(self, _):
+    self.log('=== Load Config ===\n')
     self.bg_task.variable.loadFromConfigFile()
     self.setSettingInputField()
+
+  def btn_save_extract_images_event(self, _):
+    self.log('=== Save Extract Images ===\n')
+    def event():
+      if not os.path.exists('extract'):
+        os.mkdir('extract')
+      for i, img in enumerate(self.bg_task.detect_board_dice_img):
+        self.bg_task.detect.save(img, os.path.join('extract', f'{i}.png'))
+    threading.Thread(target = event).start()
 
   def changeImage(self, label: tk.Label, img):
     label.configure(image=img)
     label.image = img
 
-  def ckeckBtn_select_dice_event(self, ):
+  def ckeckBtn_select_dice_event(self):
     self.getSelectDiceField()
 
   def getSelectDiceField(self):
@@ -248,19 +307,46 @@ class UI:
       if name in self.bg_task.variable.getDiceParty():
         var.set(True)
 
+  def ckeckBtn_autoPlay(self):
+    self.autoPlay = self.autoPlay_booleanVar.get()
+
   def btn_ADB_connect_event(self, _):
     if self.bg_task.variable.getControlMode() == ControlMode.WIN32API:
       self.bg_task.getWindowID()
-      print(f'WindowID: {self.bg_task.windowID}')
+      self.log(f'WindowID: {self.bg_task.windowID}\n')
+      self.bg_task.init()
     elif self.bg_task.variable.getControlMode() == ControlMode.ADB:
+      self.log('=== Start Connecting ===\n')
       # connect to device
-      ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
-    self.bg_task.init()
+      def adb_connect():
+        r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
+        self.log(r)
+        self.bg_task.init()
+      thread = threading.Thread(target = adb_connect)
+      thread.start()
+
+  def log(self, text):
+    print(text)
+    self.text_log.insert(tk.END, text)
+    self.text_log.see(tk.END)  
 
   def run_bg_task(self):
     while self.isRunning:
+      status_str = ['Lobby', 'Wait', 'Game', 'Finish']
       # run
-      self.bg_task.task()
+      previous_status = self.bg_task.status
+      
+      self.bg_task.task(self.log, self.autoPlay)
+      
+      if previous_status != self.bg_task.status:
+        self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
+        self.status_StringVar.set(status_str[int(self.bg_task.status)])
+      if not self.autoPlay:
+        if self.bg_task.status == Status.LOBBY:
+          self.isRunning = False
+          self.btn_run.config(text='Start')
+          self.log('=== Stop Detecting ===\n')
+          break
       # update ui
       for i, name in enumerate(self.bg_task.board_dice):
         idx = self.bg_task.detect.dice_name_idx_dict[name]
@@ -269,11 +355,12 @@ class UI:
       for i, star in enumerate(self.bg_task.board_dice_star):
         self.label_board_star[i].config(text=str(star))
       for i, img in enumerate(self.bg_task.detect_board_dice_img):
-        img = ImageTk.PhotoImage(self.bg_task.detect.OpenCV2Image(img))
+        img = self.bg_task.detect.OpenCV2TK(img)
         self.changeImage(self.label_detect_board_dice[i], img)
       self.window.update()
 
   def onClosing(self):
+    self.log('Closing...\n')
     self.close()
     self.window.destroy()
 
@@ -283,5 +370,5 @@ class UI:
       ADB.disconnect()
 
   def RUN(self):
+    self.log('=== Finish Initial ===\n')
     self.window.mainloop()
-    self.close()

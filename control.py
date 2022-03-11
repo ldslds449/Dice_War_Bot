@@ -140,10 +140,14 @@ class DiceControl(Control):
   def sendEmoji(self, idx: int):
     self.openEmojiDialog()
     emoji_xy = self.getEmojiXY(idx-1) # rescale [1~5] to [0~4]
-    time.sleep(0.4) # wait for dialog open
+    time.sleep(0.1) # wait for dialog open
     self.tap(emoji_xy)
 
   def BMOpponent(self, times = 5):
     for i in range(times):
       self.sendEmoji(1)
-      time.sleep(0.2)
+
+  def battle(self):
+    self.tap(self.getBoardDiceXY(9))
+    time.sleep(1)
+    self.tap(self.modifyZoom(self.variable.getBattleXY()))

@@ -1,8 +1,6 @@
-from itertools import count
 import sys
 import win32gui
 import win32con
-import random as rd
 from tkinter import Variable
 
 from screen import *
@@ -11,6 +9,12 @@ from detect import *
 from variable import *
 from mode import *
 from action import *
+
+class Status(IntEnum):
+  LOBBY = 0
+  WAIT = 1
+  GAME = 2
+  FINISH = 3
 
 class Task:
   def __init__(self, _action: Action):
@@ -22,26 +26,10 @@ class Task:
     self.board_dice_lu = []
     self.windowID = None
 
-    # self.targetDice = ["Healing", "Solar_O", "Rock", "Flash", "Mimic", "Blank", "Solar_X"]
-
     self.variable = Variable()
     self.variable.loadFromConfigFile()
-    # self.variable.setBoardDiceLeftTopXY((90, 477))
-    # self.variable.setBoardDiceOffsetXY((49, 49))
-    # self.variable.setLevelDiceLeftXY((70, 640))
-    # self.variable.setLevelDiceOffsetX(60)
-    # self.variable.setEmojiDialogXY((40, 390))
-    # self.variable.setEmojiLeftXY((40, 390))
-    # self.variable.setEmojiOffsetX(60)
-    # self.variable.setSummonDiceXY((340, 580))
-    # self.variable.setLevelSpXY((40, 580))
-    # self.variable.setMergeFloatLocationXY((190, 400))
-    # self.variable.setExtractDiceSizeWH((50, 50))
-    # self.variable.setExtractDiceLuSizeWH((40, 40))
-    # self.variable.setExtractSpLuSizeWH((5, 5))
-    # self.variable.setExtractSummonLuSizeWH((3, 3))
-    # self.variable.setExtractLevelDiceLuSizeWH((3, 3))
-    # self.variable.setZoomRatio(1)
+
+    self.status = Status.LOBBY
 
     self.detect = Detect("./image", self.variable)
 
@@ -120,7 +108,7 @@ class Task:
     
     return merge_dice_location
       
-  def task(self):
+  def task(self, log: Callable, autoPlay: bool):
 
     x = self.variable.getBoardDiceLeftTopXY()[0]
     y = self.variable.getBoardDiceLeftTopXY()[1]
@@ -139,8 +127,8 @@ class Task:
       img = self.detect.extractImage(im, 
         (dice_xy[0], dice_xy[1], 
         self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
-      res = self.detect.detectDice(img, self.variable.getDiceParty() + ['Blank'])
-      res_star = self.detect.detectStar(img)
+      res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'])
+      res_star = self.detect.detectStar(img.copy())
 
       dice_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
         (dice_xy[0], dice_xy[1], 
@@ -158,6 +146,47 @@ class Task:
         print("")
 
     self.forAllDiceOnBoard(detectDice)
+
+    # detect status
+    inLobby = False
+    inWaiting = False
+    inFinish = False
+    inGame = False
+    if self.detect.detectLobby(self.detect_board_dice_img[7]):
+      inLobby = True
+    if self.detect.detectWaiting(self.detect_board_dice_img[2]):
+      inWaiting = True
+    if self.detect.detectFinish(self.detect_board_dice_img[4]):
+      inFinish = True
+    if self.detect.detectGame(self.detect.extractImage(im, 
+      (self.variable.getEmojiDialogXY()[0], self.variable.getEmojiDialogXY()[1],
+      self.variable.getEmojiDialogWH()[0], self.variable.getEmojiDialogWH()[1]), ExtractMode.CENTER)):
+      inGame = True
+
+    if inGame:
+      self.status = Status.GAME
+    else:
+      if self.status == Status.GAME:
+        if inFinish:
+          self.status = Status.FINISH
+      elif self.status == Status.FINISH:
+        if inLobby:
+          self.status = Status.LOBBY
+        else:
+          self.diceControl.summonDice() # leave this stage
+      elif self.status == Status.LOBBY:
+        if inWaiting:
+          self.status = Status.WAIT
+        else:
+          MyAction.init()
+          if autoPlay:
+            print('GOGO')
+            self.diceControl.battle() # start battle
+
+    if self.status == Status.GAME:
+      pass
+    else:
+      return
 
     summon_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
       (self.variable.getSummonDiceXY()[0], self.variable.getSummonDiceXY()[1], 
