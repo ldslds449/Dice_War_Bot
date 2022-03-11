@@ -31,7 +31,7 @@ class Task:
 
     self.status = Status.LOBBY
 
-    self.detect = Detect("./image", self.variable)
+    self.detect = Detect("./image/dice", "./image", self.variable)
 
   def init(self):
     self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID, 
@@ -127,7 +127,7 @@ class Task:
       img = self.detect.extractImage(im, 
         (dice_xy[0], dice_xy[1], 
         self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
-      res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'])
+      res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], )
       res_star = self.detect.detectStar(img.copy())
 
       dice_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
@@ -152,7 +152,7 @@ class Task:
     inWaiting = False
     inFinish = False
     inGame = False
-    if self.detect.detectLobby(self.detect_board_dice_img[7]):
+    if self.detect.detectLobby(self.detect_board_dice_img[8]):
       inLobby = True
     if self.detect.detectWaiting(self.detect_board_dice_img[2]):
       inWaiting = True
@@ -166,9 +166,14 @@ class Task:
     if inGame:
       self.status = Status.GAME
     else:
-      if self.status == Status.GAME:
+      if self.status == Status.WAIT:
+        if inLobby:
+          self.status = Status.LOBBY
+      elif self.status == Status.GAME:
         if inFinish:
           self.status = Status.FINISH
+        elif inLobby:
+          self.status = Status.LOBBY
       elif self.status == Status.FINISH:
         if inLobby:
           self.status = Status.LOBBY
@@ -180,7 +185,6 @@ class Task:
         else:
           MyAction.init()
           if autoPlay:
-            print('GOGO')
             self.diceControl.battle() # start battle
 
     if self.status == Status.GAME:

@@ -2,7 +2,6 @@ import cv2
 import win32gui
 import win32ui
 import win32con
-import io
 import cv2
 import numpy as np
 from PIL import Image

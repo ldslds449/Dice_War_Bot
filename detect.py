@@ -1,4 +1,3 @@
-import enum
 import cv2
 import glob
 import os
@@ -6,23 +5,13 @@ import numpy as np
 import dhash
 from sewar import *
 from typing import Tuple
-from enum import Enum
 from PIL import Image, ImageTk
+
 from variable import *
-
-class ExtractMode(Enum):
-  LEFTTOP = 0
-  CENTER = 1
-
-class DetectDiceMode(Enum):
-  HIST = 0
-  TEMPLATE = 1
-  DHASH = 2
-  MSSSIM = 3
-  COMBINE = 4
+from mode import *
 
 class Detect:
-  def __init__(self, dice_folder, variable: Variable):
+  def __init__(self, dice_folder, detect_folder, variable: Variable):
     self.variable = variable
 
     self.dice_image_rgb = []
@@ -63,11 +52,9 @@ class Detect:
       self.dice_name_idx_dict[name] = i
 
     # other
-    self.lobby_image_PIL_resize = Image.open(os.path.join(dice_folder, 'lobby.png')).resize(self.resize_size)
-    self.lobby_image_dhash_resize = dhash.dhash_int(self.lobby_image_PIL_resize, size=self.dhash_size)
-    self.wait_image_PIL_resize = Image.open(os.path.join(dice_folder, 'wait.png')).resize(self.resize_size)
+    self.wait_image_PIL_resize = Image.open(os.path.join(detect_folder, 'wait.png')).resize(self.resize_size)
     self.wait_image_dhash_resize = dhash.dhash_int(self.wait_image_PIL_resize, size=self.dhash_size)
-    self.finish_image_PIL_resize = Image.open(os.path.join(dice_folder, 'finish.png')).resize(self.resize_size)
+    self.finish_image_PIL_resize = Image.open(os.path.join(detect_folder, 'finish.png')).resize(self.resize_size)
     self.finish_image_dhash_resize = dhash.dhash_int(self.finish_image_PIL_resize, size=self.dhash_size)
 
   def detectDice(self, img, candidate = None, mode: DetectDiceMode = DetectDiceMode.COMBINE):
@@ -212,12 +199,18 @@ class Detect:
 
   def detectLobby(self, img):
     img = cv2.resize(img, self.resize_size)
-    img = self.OpenCV2Image(img)
-    img_hash = dhash.dhash_int(img, size=self.dhash_size)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    r = dhash.get_num_bits_different(self.lobby_image_dhash_resize, img_hash)
-    print(f'Lobby {r}')
-    return r <= self.dhash_size*2
+    hsv_color1 = np.asarray([100, 216, 252])
+    hsv_color2 = np.asarray([105, 226, 255])
+
+    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
+    extract_pixel_count = np.sum(mask)//255
+    ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+
+    print(f'Lobby {ratio}')
+
+    return ratio > 0.55
 
   def detectWaiting(self, img):
     img = cv2.resize(img, self.resize_size)

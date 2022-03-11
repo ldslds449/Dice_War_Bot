@@ -32,8 +32,9 @@ class Variable:
     self.extract_sp_lu_size_wh = None
     self.extract_summon_lu_size_wh = None
     self.extract_level_dice_lu_size_wh = None
-
     self.emoji_dialog_wh = None
+
+    self.detect_dice_mode = None
 
     self.zoom_ratio = 1.0
     self.col = 5 # constant
@@ -82,6 +83,7 @@ class Variable:
     self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
     self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
     self.control_mode = ControlMode(str2Type(config.get('Mode', 'ControlMode', fallback='0')))
+    self.detect_dice_mode = DetectDiceMode(str2Type(config.get('Mode', 'DetectDiceMode', fallback='0')))
     self.adb_port = str2Type(config.get('ADB', 'Port', fallback='5555'), int)
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
 
@@ -118,6 +120,7 @@ class Variable:
     config.add_section('Mode')
     config.set('Mode', 'Emulator', type2Str(int(self.emulator_mode)))
     config.set('Mode', 'ControlMode', type2Str(int(self.control_mode)))
+    config.set('Mode', 'DetectDiceMode', type2Str(int(self.detect_dice_mode)))
     config.add_section('ADB')
     config.set('ADB', 'Port', type2Str(self.adb_port))
     config.add_section('Dice')
@@ -187,6 +190,9 @@ class Variable:
 
   def setControlMode(self, _value: ControlMode):
     self.control_mode = _value
+
+  def setDetectDiceMode(self, _value: DetectDiceMode):
+    self.detect_dice_mode = _value
 
   def setADBPort(self, _value: int):
     self.adb_port = _value
@@ -273,6 +279,9 @@ class Variable:
 
   def getControlMode(self):
     return self.control_mode
+
+  def getDetectDiceMode(self):
+    return self.detect_dice_mode
 
   def getADBIP(self):
     return self.adb_ip

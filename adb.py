@@ -10,9 +10,15 @@ class ADB:
   @staticmethod
   def connect(ip:str, port:int):
     ADB.sh(f'adb tcpip {port}')
-    return ADB.sh(f'adb connect {ip}:{port}').decode('utf-8')
+    s = ADB.sh(f'adb connect {ip}:{port}').decode('utf-8')
+    return (s, 'connected' in s)
 
   @staticmethod
   def disconnect():
     ADB.sh('adb disconnect')
     ADB.sh('adb kill-server')
+
+  @staticmethod
+  def detectDiceWar():
+    r = ADB.sh('adb shell "dumpsys window windows | grep -E \'mCurrentFocus|mFocusedApp\'"').decode('utf-8')
+    return 'com.percent.aos.randomdicewars' in r
