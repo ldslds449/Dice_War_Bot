@@ -61,7 +61,7 @@ class MyAction(Action):
     countTotal: int, boardDiceStar: list):
 
     # flag
-    hasSolar = (count['Solar_O'] == 4 or count['Solar_O'] == 7)
+    hasSolar = (count['Solar_O'] == 7)
     hasJoker = count['Joker'] > 0
     hasCharm = count['Charm'] > 0
     noBlank = count['Blank'] == 0
@@ -79,12 +79,9 @@ class MyAction(Action):
     if not hasSolar and hasCharm and countCharm >= 2 and not earlyGame:
       MyAction.randomMerge(diceControl, findMergeDice,
         count, location, 'Charm', ['Joker'])
-    if not hasSolar and countSolar == 6 and not earlyGame:
-      MyAction.randomMerge(diceControl, findMergeDice,
-        count, location, 'Solar_X', ['Joker'])
     if not hasSolar and noBlank:
       MyAction.randomMerge(diceControl, findMergeDice,
-        count, location, count_sorted[0][0], ['Joker'])
+        count, location, count_sorted[0][0], ['Joker', 'Solar_X', 'Solar_O'])
 
     if not MyAction.hasleveledSp:
       if canLevelSp:
