@@ -73,6 +73,13 @@ class Control:
       command = f'adb -s {self.ip}:{self.port} shell input swipe {src[0]} {src[1]} {dst[0]} {dst[1]} {duration}'
       self.sh(command)
 
+  def back(self):
+    if self.mode == ControlMode.WIN32API:
+      pass # not supported
+    elif self.mode == ControlMode.ADB:
+      command = f'adb -s {self.ip}:{self.port} shell input keyevent KEYCODE_BACK'
+      self.sh(command)
+
 class DiceControl(Control):
   def __init__(self, _mode: ControlMode, _hwnd = None, _ip = None, _port = None):
     super(DiceControl, self).__init__(_mode, _hwnd, _ip, _port)
@@ -147,7 +154,13 @@ class DiceControl(Control):
     for i in range(times):
       self.sendEmoji(1)
 
+  def skip(self):
+    self.summonDice()
+
   def battle(self):
     self.tap(self.getBoardDiceXY(9))
     time.sleep(1)
     self.tap(self.modifyZoom(self.variable.getBattleXY()))
+
+  def watchAD(self):
+    self.tap(self.getBoardDiceXY(12))

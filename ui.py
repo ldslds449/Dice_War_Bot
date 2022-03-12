@@ -10,7 +10,7 @@ from mode import *
 from action import *
 
 class UI:
-  def __init__(self, emu_mode = Emulator.BLUESTACKS):
+  def __init__(self):
     self.window = tk.Tk()
 
     self.bg_task = Task(MyAction())
@@ -47,7 +47,7 @@ class UI:
 
     self.setting_stringVar = []
     def getSettingLabel(text, row):
-      tk.Label(self.frame_setting, text=text, anchor='e', width=32, font=('Arial', 12)).grid(row=row, column=0)
+      tk.Label(self.frame_setting, text=text, anchor='e', width=32, font=('Arial', 10)).grid(row=row, column=0)
       input_str = StringVar(None)
       input_field = Entry(self.frame_setting, textvariable=input_str, width=20)
       input_field.grid(row=row, column=1)
@@ -68,6 +68,7 @@ class UI:
       'Level SP XY',
       'Merge Float Location XY',
       'Battle XY',
+      'AD Close XY',
       'Extract Dice Size WH',
       'Extract Dice Luminance Size WH',
       'Extract SP Luminance Size WH',
@@ -129,27 +130,32 @@ class UI:
     self.text_log.config(yscrollcommand=scrollbar_log.set)
 
     # detect button
-    self.btn_save_extract_images = tk.Button(self.frame_detect_btn, text='Save Extract Images', width=15, height=3, font=('Arial', 10))
+    self.btn_save_extract_images = tk.Button(self.frame_detect_btn, text='Save Extract Images', width=15, height=2, font=('Arial', 10))
     self.btn_save_extract_images.config(command=self.btn_save_extract_images_event, state=DISABLED)
     self.btn_save_extract_images.pack(fill=BOTH, expand=True)
-    self.btn_BM = tk.Button(self.frame_detect_btn, text='BM', width=15, height=3, font=('Arial', 10))
+    self.btn_BM = tk.Button(self.frame_detect_btn, text='BM', width=15, height=2, font=('Arial', 10))
     self.btn_BM.config(command=self.btn_bm_event, state=DISABLED)
     self.btn_BM.pack(fill=BOTH, expand=True)
 
     # auto play
     self.autoPlay_booleanVar = tk.BooleanVar() 
     self.autoPlay_booleanVar.set(False)
-    checkBtn = tk.Checkbutton(self.frame_detect_btn, text='Auto Play', var=self.autoPlay_booleanVar, command=self.ckeckBtn_autoPlay, pady=5) 
-    checkBtn.pack(fill=BOTH, expand=True)
-    self.autoPlay = False
+    checkBtn_autoPlay = tk.Checkbutton(self.frame_detect_btn, text='Auto Play', var=self.autoPlay_booleanVar, pady=5) 
+    checkBtn_autoPlay.pack(fill=BOTH, expand=True)
 
     # top Window
     self.topWindow_booleanVar = tk.BooleanVar() 
     self.topWindow_booleanVar.set(False)
-    checkBtn = tk.Checkbutton(self.frame_detect_btn, text='Top Window', var=self.topWindow_booleanVar, command=self.checkBtn_topWindow, pady=5) 
-    checkBtn.pack(fill=BOTH, expand=True)
+    checkBtn_topWindow = tk.Checkbutton(self.frame_detect_btn, text='Top Window', var=self.topWindow_booleanVar, command=self.checkBtn_topWindow, pady=5) 
+    checkBtn_topWindow.pack(fill=BOTH, expand=True)
     
-
+    # watch AD
+    self.watchAD_booleanVar = tk.BooleanVar() 
+    self.watchAD_booleanVar.set(False)
+    self.checkBtn_watchAD = tk.Checkbutton(self.frame_detect_btn, text='Watch AD', var=self.watchAD_booleanVar, pady=5) 
+    self.checkBtn_watchAD.pack(fill=BOTH, expand=True)
+    self.checkBtn_watchAD.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
+    
     # Status Label
     self.status_StringVar = StringVar()
     self.status_StringVar.set('Lobby')
@@ -202,13 +208,14 @@ class UI:
       self.setting_stringVar[12].set(dealString(self.bg_task.variable.getLevelSpXY()))
       self.setting_stringVar[13].set(dealString(self.bg_task.variable.getMergeFloatLocationXY()))
       self.setting_stringVar[14].set(dealString(self.bg_task.variable.getBattleXY()))
-      self.setting_stringVar[15].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
-      self.setting_stringVar[16].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
-      self.setting_stringVar[17].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
-      self.setting_stringVar[18].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
-      self.setting_stringVar[19].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
-      self.setting_stringVar[20].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
-      self.setting_stringVar[21].set(dealString(self.bg_task.variable.getZoomRatio()))
+      self.setting_stringVar[15].set(dealString(self.bg_task.variable.getADCloseXY()))
+      self.setting_stringVar[16].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
+      self.setting_stringVar[17].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
+      self.setting_stringVar[18].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
+      self.setting_stringVar[19].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
+      self.setting_stringVar[20].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
+      self.setting_stringVar[21].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
+      self.setting_stringVar[22].set(dealString(self.bg_task.variable.getZoomRatio()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -233,13 +240,14 @@ class UI:
       self.bg_task.variable.setLevelSpXY(dealString(self.setting_stringVar[12].get()))
       self.bg_task.variable.setMergeFloatLocationXY(dealString(self.setting_stringVar[13].get()))
       self.bg_task.variable.setBattleXY(dealString(self.setting_stringVar[14].get()))
-      self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar[15].get()))
-      self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar[16].get()))
-      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar[17].get()))
-      self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar[18].get()))
-      self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar[19].get()))
-      self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar[20].get()))
-      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[21].get(), float))
+      self.bg_task.variable.setADCloseXY(dealString(self.setting_stringVar[15].get()))
+      self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar[16].get()))
+      self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar[17].get()))
+      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar[18].get()))
+      self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar[19].get()))
+      self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar[20].get()))
+      self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar[21].get()))
+      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[22].get(), float))
     
   def btn_run_event(self):
     if self.isRunning == False: # enable
@@ -264,26 +272,35 @@ class UI:
     t = threading.Thread(target = self.bg_task.diceControl.BMOpponent())
     t.start()
 
+  def limitImageSize(self, img):
+    h,w,_ = img.shape
+    height_limit = 600
+    if h > height_limit:
+      return cv2.resize(img, (int((height_limit/h)*w), height_limit))
+    else:
+      return img.copy()
+
   def btn_screenshot_event(self):
     self.log('=== ScreenShot ===\n')
     success, im = self.bg_task.screen.getScreenShot(self.bg_task.variable.getZoomRatio())
     if success:
       self.screenshot_image = self.bg_task.detect.Image2OpenCV(im)
       # limit
-      h,w,_ = self.screenshot_image.shape
-      if h > 800:
-        self.screenshot_image = cv2.resize(self.screenshot_image, (800, int((800/h)*w)))
-      self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image))
+      self.screenshot_image_limit = self.limitImageSize(self.screenshot_image)
+      self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image_limit))
   
   def btn_draw_event(self):
     self.getSettingInputField()
     labeled_screenshot = self.bg_task.detect.drawTestImage(self.screenshot_image.copy())
-    self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(labeled_screenshot))
+    # limit
+    labeled_screenshot_limit = self.limitImageSize(labeled_screenshot)
+    self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(labeled_screenshot_limit))
 
   def btn_save_config_event(self):
     self.log('=== Save Config ===\n')
     self.getSettingInputField()
     self.bg_task.variable.saveToConfigFile()
+    self.checkBtn_watchAD.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
 
   def btn_load_config_event(self):
     self.log('=== Load Config ===\n')
@@ -317,9 +334,6 @@ class UI:
     for var, name in zip(self.select_dice_booleanVar, self.bg_task.detect.dice_name):
       if name in self.bg_task.variable.getDiceParty():
         var.set(True)
-
-  def ckeckBtn_autoPlay(self):
-    self.autoPlay = self.autoPlay_booleanVar.get()
 
   def checkBtn_topWindow(self):
     self.window.call('wm', 'attributes', '.', '-topmost', self.topWindow_booleanVar.get())
@@ -375,16 +389,22 @@ class UI:
       # run
       previous_status = self.bg_task.status
       
-      self.bg_task.task(self.log, self.autoPlay)
+      self.bg_task.task(self.log, 
+        self.autoPlay_booleanVar.get(), 
+        self.watchAD_booleanVar.get())
       
       if previous_status != self.bg_task.status:
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)])
-      if not self.autoPlay:
-        if self.bg_task.status == Status.LOBBY:
-          self.log('Detect lobby, stop detecting\n')
-          stopDetect()
-          break
+      
+      if self.bg_task.status == Status.LOBBY:
+        if previous_status == Status.LOBBY:
+          self.bg_task.diceControl.battle()
+        else:
+          if not self.autoPlay_booleanVar.get():
+            self.log('Detect lobby, stop detecting\n')
+            stopDetect()
+            break
       # update ui
       for i, name in enumerate(self.bg_task.board_dice):
         idx = self.bg_task.detect.dice_name_idx_dict[name]

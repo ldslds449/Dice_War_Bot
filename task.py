@@ -108,14 +108,14 @@ class Task:
     
     return merge_dice_location
       
-  def task(self, log: Callable, autoPlay: bool):
+  def task(self, log: Callable, autoPlay: bool, watchAD: bool):
 
     x = self.variable.getBoardDiceLeftTopXY()[0]
     y = self.variable.getBoardDiceLeftTopXY()[1]
     offset_x = self.variable.getBoardDiceOffsetXY()[0]
     offset_y = self.variable.getBoardDiceOffsetXY()[1]
     
-    r, im = self.screen.getScreenShot(self.variable.getZoomRatio())
+    _, im = self.screen.getScreenShot(self.variable.getZoomRatio())
     im = self.detect.Image2OpenCV(im)
 
     self.board_dice = []
@@ -127,7 +127,7 @@ class Task:
       img = self.detect.extractImage(im, 
         (dice_xy[0], dice_xy[1], 
         self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
-      res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], )
+      res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], self.variable.getDetectDiceMode())
       res_star = self.detect.detectStar(img.copy())
 
       dice_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
@@ -152,6 +152,7 @@ class Task:
     inWaiting = False
     inFinish = False
     inGame = False
+    hasAD = False
     if self.detect.detectLobby(self.detect_board_dice_img[8]):
       inLobby = True
     if self.detect.detectWaiting(self.detect_board_dice_img[2]):
@@ -162,6 +163,8 @@ class Task:
       (self.variable.getEmojiDialogXY()[0], self.variable.getEmojiDialogXY()[1],
       self.variable.getEmojiDialogWH()[0], self.variable.getEmojiDialogWH()[1]), ExtractMode.CENTER)):
       inGame = True
+    if self.detect.detectAD(self.detect_board_dice_img[12]):
+      hasAD = True
 
     if inGame:
       self.status = Status.GAME
@@ -178,7 +181,13 @@ class Task:
         if inLobby:
           self.status = Status.LOBBY
         else:
-          self.diceControl.summonDice() # leave this stage
+          if watchAD and hasAD:
+            log('=== Detect AD ===\n')
+            self.diceControl.watchAD()
+            time.sleep(60)
+            self.diceControl.back()
+          else:
+            self.diceControl.skip() # leave this stage
       elif self.status == Status.LOBBY:
         if inWaiting:
           self.status = Status.WAIT
@@ -187,9 +196,7 @@ class Task:
           if autoPlay:
             self.diceControl.battle() # start battle
 
-    if self.status == Status.GAME:
-      pass
-    else:
+    if self.status != Status.GAME:
       return
 
     summon_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 

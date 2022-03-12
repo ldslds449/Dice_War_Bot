@@ -26,6 +26,7 @@ class Variable:
     self.level_sp_xy = None
     self.merge_float_location_xy = None
     self.battle_xy = None
+    self.ad_close_xy = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
@@ -74,6 +75,7 @@ class Variable:
     self.level_sp_xy = str2Type(config.get('Coordinate', 'LevelSpXY', fallback='0 0'))
     self.merge_float_location_xy = str2Type(config.get('Coordinate', 'MergeFloatLocationXY', fallback='0 0'))
     self.battle_xy = str2Type(config.get('Coordinate', 'BattleXY', fallback='0 0'))
+    self.ad_close_xy = str2Type(config.get('Coordinate', 'ADCloseXY', fallback='0 0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
     self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
@@ -109,6 +111,7 @@ class Variable:
     config.set('Coordinate', 'LevelSpXY', type2Str(self.level_sp_xy))
     config.set('Coordinate', 'MergeFloatLocationXY', type2Str(self.merge_float_location_xy))
     config.set('Coordinate', 'BattleXY', type2Str(self.battle_xy))
+    config.set('Coordinate', 'ADCloseXY', type2Str(self.ad_close_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
@@ -163,6 +166,9 @@ class Variable:
 
   def setBattleXY(self, _value: Tuple[int,int]):
     self.battle_xy = _value
+
+  def setADCloseXY(self, _value: Tuple[int,int]):
+    self.ad_close_xy = _value
 
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
@@ -234,6 +240,9 @@ class Variable:
 
   def getBattleXY(self):
     return self.battle_xy
+
+  def getADCloseXY(self):
+    return self.ad_close_xy
 
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh
