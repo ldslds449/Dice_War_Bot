@@ -19,6 +19,6 @@ class ADB:
     ADB.sh('adb kill-server')
 
   @staticmethod
-  def detectDiceWar():
-    r = ADB.sh('adb shell "dumpsys window windows | grep -E \'mCurrentFocus|mFocusedApp\'"').decode('utf-8')
+  def detectDiceWar(ip:str, port:int):
+    r = ADB.sh(f'adb -s {ip}:{port} shell "dumpsys window windows | grep -E \'mCurrentFocus|mFocusedApp\'"').decode('utf-8')
     return 'com.percent.aos.randomdicewars' in r

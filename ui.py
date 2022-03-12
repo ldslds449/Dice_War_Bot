@@ -366,7 +366,7 @@ class UI:
 
     while self.isRunning:
       # detect dice war app
-      if not ADB.detectDiceWar():
+      if not ADB.detectDiceWar(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort()):
         self.log("Error: Focus app is not Dice War App\n")
         stopDetect()
         break
