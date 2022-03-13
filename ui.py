@@ -7,13 +7,12 @@ from tkinter import messagebox
 from task import *
 from screen import *
 from mode import *
-from action import *
 
 class UI:
   def __init__(self):
     self.window = tk.Tk()
 
-    self.bg_task = Task(MyAction())
+    self.bg_task = Task()
 
     # let the window on top
     self.window.title('Dice Bot')
@@ -79,16 +78,16 @@ class UI:
     ]
     for i, label in enumerate(SettingLabelList):
       getSettingLabel(f'{label}: ', i)
-    btn_save_config = tk.Button(self.frame_setting_btn, text='Save', width=15, height=2, font=('Arial', 12))
+    btn_save_config = tk.Button(self.frame_setting_btn, text='Save', width=10, height=2, font=('Arial', 12))
     btn_save_config.config(command=self.btn_save_config_event)
     btn_save_config.grid(row=0, column=0)
-    btn_load_config = tk.Button(self.frame_setting_btn, text='Load', width=15, height=2, font=('Arial', 12))
+    btn_load_config = tk.Button(self.frame_setting_btn, text='Load', width=10, height=2, font=('Arial', 12))
     btn_load_config.config(command=self.btn_load_config_event)
     btn_load_config.grid(row=0, column=1)
-    self.btn_screenshot = tk.Button(self.frame_setting_btn, text='ScreenShot', width=15, height=2, font=('Arial', 12))
+    self.btn_screenshot = tk.Button(self.frame_setting_btn, text='ScreenShot', width=10, height=2, font=('Arial', 12))
     self.btn_screenshot.config(command=self.btn_screenshot_event, state=DISABLED)
     self.btn_screenshot.grid(row=1, column=0)
-    self.btn_draw = tk.Button(self.frame_setting_btn, text='Draw', width=15, height=2, font=('Arial', 12))
+    self.btn_draw = tk.Button(self.frame_setting_btn, text='Draw', width=10, height=2, font=('Arial', 12))
     self.btn_draw.config(command=self.btn_draw_event, state=DISABLED)
     self.btn_draw.grid(row=1, column=1)
     self.label_screenshot = tk.Label(self.frame_setting_view)
@@ -380,10 +379,11 @@ class UI:
 
     while self.isRunning:
       # detect dice war app
-      if not ADB.detectDiceWar(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort()):
-        self.log("Error: Focus app is not Dice War App\n")
-        stopDetect()
-        break
+      if self.bg_task.variable.getControlMode() == ControlMode.ADB:
+        if not ADB.detectDiceWar(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort()):
+          self.log("Error: Focus app is not Dice War App\n")
+          stopDetect()
+          break
 
       status_str = ['Lobby', 'Wait', 'Game', 'Finish']
       # run

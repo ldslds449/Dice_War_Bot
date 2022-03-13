@@ -1,6 +1,7 @@
 import sys
 import win32gui
 import win32con
+from typing import Callable
 from tkinter import Variable
 
 from screen import *
@@ -17,9 +18,7 @@ class Status(IntEnum):
   FINISH = 3
 
 class Task:
-  def __init__(self, _action: Action):
-    self.action = _action
-
+  def __init__(self):
     self.board_dice = []
     self.detect_board_dice_img = []
     self.detect_board_dice_star = []
@@ -183,9 +182,14 @@ class Task:
         else:
           if watchAD and hasAD:
             log('=== Detect AD ===\n')
+            # deal with AD
             self.diceControl.watchAD()
             time.sleep(60)
             self.diceControl.back()
+            time.sleep(2)
+            self.diceControl.closeAD()
+            time.sleep(10)
+            self.diceControl.closeAD()
           else:
             self.diceControl.skip() # leave this stage
       elif self.status == Status.LOBBY:
@@ -234,7 +238,7 @@ class Task:
     sys.stdout.flush()
     print("\n================")
 
-    self.action.action(
+    MyAction.action(
       self.diceControl, self.findMergeDice,
       count, count_sorted, location, self.board_dice, 
       self.detect.canSummon(summon_lu), self.detect.canLevelSP(sp_lu),
