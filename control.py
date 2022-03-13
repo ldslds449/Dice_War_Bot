@@ -151,7 +151,7 @@ class DiceControl(Control):
     self.tap(emoji_xy)
 
   def BMOpponent(self, times = 5):
-    for i in range(times):
+    for _ in range(times):
       self.sendEmoji(1)
 
   def skip(self):
@@ -164,3 +164,6 @@ class DiceControl(Control):
 
   def watchAD(self):
     self.tap(self.getBoardDiceXY(12))
+
+  def closeAD(self):
+    self.tap(self.modifyZoom(self.variable.getADCloseXY()))
