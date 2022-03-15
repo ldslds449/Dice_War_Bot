@@ -157,8 +157,11 @@ class DiceControl(Control):
   def skip(self):
     self.summonDice()
 
-  def battle(self):
-    self.tap(self.getBoardDiceXY(9))
+  def battle(self, battleMode: BattleMode):
+    if battleMode == BattleMode.BATTLE_1V1:
+      self.tap(self.getBoardDiceXY(5))
+    elif battleMode == BattleMode.BATTLE_2V2:
+      self.tap(self.getBoardDiceXY(9))
     time.sleep(1)
     self.tap(self.modifyZoom(self.variable.getBattleXY()))
 
