@@ -18,3 +18,7 @@ class DetectDiceMode(IntEnum):
   DHASH = 2
   MSSSIM = 3
   COMBINE = 4
+
+class BattleMode(IntEnum):
+  BATTLE_1V1 = 0
+  BATTLE_2V2 = 1

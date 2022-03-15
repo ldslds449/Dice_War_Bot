@@ -107,7 +107,7 @@ class Task:
     
     return merge_dice_location
       
-  def task(self, log: Callable, autoPlay: bool, watchAD: bool):
+  def task(self, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode):
 
     x = self.variable.getBoardDiceLeftTopXY()[0]
     y = self.variable.getBoardDiceLeftTopXY()[1]
@@ -172,10 +172,10 @@ class Task:
         if inLobby:
           self.status = Status.LOBBY
       elif self.status == Status.GAME:
-        if inFinish:
-          self.status = Status.FINISH
-        elif inLobby:
+        if inLobby:
           self.status = Status.LOBBY
+        else:
+          self.status = Status.FINISH
       elif self.status == Status.FINISH:
         if inLobby:
           self.status = Status.LOBBY
@@ -190,6 +190,7 @@ class Task:
             self.diceControl.closeAD()
             time.sleep(10)
             self.diceControl.closeAD()
+            time.sleep(5)
           else:
             self.diceControl.skip() # leave this stage
       elif self.status == Status.LOBBY:
@@ -198,7 +199,7 @@ class Task:
         else:
           MyAction.init()
           if autoPlay:
-            self.diceControl.battle() # start battle
+            self.diceControl.battle(battleMode) # start battle
 
     if self.status != Status.GAME:
       return

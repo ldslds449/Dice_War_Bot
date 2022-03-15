@@ -128,6 +128,16 @@ class UI:
     scrollbar_log.config(command=self.text_log.yview)
     self.text_log.config(yscrollcommand=scrollbar_log.set)
 
+    # 1v1 2v2
+    battle_mode = [
+      "1v1",
+      "2v2"
+    ]
+    self.battle_stringVar = StringVar()
+    self.battle_stringVar.set(battle_mode[1]) # default value
+    optionMenu_battle = OptionMenu(self.frame_detect_btn, self.battle_stringVar, *battle_mode)
+    optionMenu_battle.pack(fill=BOTH, expand=True)
+
     # detect button
     self.btn_save_extract_images = tk.Button(self.frame_detect_btn, text='Save Extract Images', width=15, height=2, font=('Arial', 10))
     self.btn_save_extract_images.config(command=self.btn_save_extract_images_event, state=DISABLED)
@@ -389,9 +399,11 @@ class UI:
       # run
       previous_status = self.bg_task.status
       
+      battleMode = BattleMode.BATTLE_1V1 if self.battle_stringVar.get() == '1v1' else BattleMode.BATTLE_2V2
       self.bg_task.task(self.log, 
         self.autoPlay_booleanVar.get(), 
-        self.watchAD_booleanVar.get())
+        self.watchAD_booleanVar.get(),
+        battleMode)
       
       if previous_status != self.bg_task.status:
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
@@ -399,7 +411,7 @@ class UI:
       
       if self.bg_task.status == Status.LOBBY:
         if previous_status == Status.LOBBY:
-          self.bg_task.diceControl.battle()
+          self.bg_task.diceControl.battle(battleMode)
         else:
           if not self.autoPlay_booleanVar.get():
             self.log('Detect lobby, stop detecting\n')
