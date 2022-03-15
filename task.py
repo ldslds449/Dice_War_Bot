@@ -188,8 +188,9 @@ class Task:
             self.diceControl.back()
             time.sleep(2)
             self.diceControl.closeAD()
-            time.sleep(10)
+            time.sleep(5)
             self.diceControl.closeAD()
+            time.sleep(5)
           else:
             self.diceControl.skip() # leave this stage
       elif self.status == Status.LOBBY:
