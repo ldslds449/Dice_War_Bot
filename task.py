@@ -194,10 +194,10 @@ class Task:
           else:
             self.diceControl.skip() # leave this stage
       elif self.status == Status.LOBBY:
+        MyAction.init()
         if inWaiting:
           self.status = Status.WAIT
         else:
-          MyAction.init()
           if autoPlay:
             self.diceControl.battle(battleMode) # start battle
 
