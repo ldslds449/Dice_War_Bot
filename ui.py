@@ -262,7 +262,7 @@ class UI:
   def btn_run_event(self):
     if self.isRunning == False: # enable
       if self.bg_task is not None:
-        if self.thread_bg_task is None or not self.thread_bg_task.isAlive():
+        if self.thread_bg_task is None or not self.thread_bg_task.is_alive():
           self.getSettingInputField()
           self.isRunning = True
           self.thread_bg_task = threading.Thread(target = self.run_bg_task)
