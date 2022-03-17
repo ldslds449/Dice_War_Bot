@@ -165,6 +165,12 @@ class Task:
     if self.detect.detectAD(self.detect_board_dice_img[12]):
       hasAD = True
 
+    def detectLobby():
+      img = self.detect.extractImage(im, 
+        (x+(8%5)*offset_x, y+(8//5)*offset_y, 
+        self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
+      return self.detect.detectLobby(img)
+
     if inGame:
       self.status = Status.GAME
     else:
@@ -184,11 +190,16 @@ class Task:
             log('=== Detect AD ===\n')
             # deal with AD
             self.diceControl.watchAD()
-            time.sleep(60)
+            time.sleep(30)
+            if detectLobby(): return # check if in lobby
+            time.sleep(30)
+            if detectLobby(): return # check if in lobby
             self.diceControl.back()
             time.sleep(2)
+            if detectLobby(): return # check if in lobby
             self.diceControl.closeAD()
-            time.sleep(5)
+            time.sleep(10)
+            if detectLobby(): return # check if in lobby
             self.diceControl.closeAD()
             time.sleep(5)
           else:
