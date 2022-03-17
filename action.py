@@ -50,12 +50,16 @@ class MyAction(Action):
   hasSummonFirstDice = False
   hasLevelUpFirstSp = False
   hasLevelUpSecondThirdSp = 0
+  hasSummonDiceTimes = 0
+  SummonDiceFortyTimes = False
   
   @staticmethod
   def init():
     MyAction.hasSummonFirstDice = False
     MyAction.hasLevelUpFirstSp = False
     MyAction.hasLevelUpSecondThirdSp = 0
+    MyAction.hasSummonDiceTimes = 0
+    MyAction.SummonDiceFortyTimes = False
 
   @staticmethod
   def action(
@@ -110,6 +114,7 @@ class MyAction(Action):
     if not MyAction.hasSummonFirstDice:
       if canSummon:
         diceControl.summonDice()
+        MyAction.hasSummonDiceTimes += 1
         MyAction.hasSummonFirstDice = True
     elif not MyAction.hasLevelUpFirstSp :
       if canLevelSp:
@@ -122,13 +127,20 @@ class MyAction(Action):
         diceControl.levelUpDice(1)
       if canSummon:
         diceControl.summonDice()
+        MyAction.hasSummonDiceTimes += 1
       if noBlank and MyAction.hasLevelUpSecondThirdSp < 2:
         if canLevelSp:
           diceControl.levelUpSP()
           MyAction.hasLevelUpSecondThirdSp += 1
+      elif MyAction.hasSummonDiceTimes >= 30 and not MyAction.SummonDiceFortyTimes:
+        if canLevelSp:
+          diceControl.levelUpSP()
+          MyAction.SummonDiceFortyTimes = True  
+
       else:
         # if hasMimic and not earlyGame:
         #   MyAction.randomMerge(diceControl, findMergeDice, count, location, 'Mimic', ['Pop_Gun'])
+
         if hasSupplement:
           MyAction.orderMerge(diceControl, findMergeDice,count, location, boardDice, 'Supplement', team[0:3], team[3:5])
         if hasFire and countFire >= 2 and noBlank:
