@@ -176,9 +176,10 @@ class UI:
     self.btn_run.pack(fill=BOTH, side=LEFT, expand=True)
     self.btn_run.config(command=self.btn_run_event, state=DISABLED)
     self.isRunning = False
-    btn_connect = tk.Button(self.frame_btn, text='Connect', width=15, height=2, font=('Arial', 12))
-    btn_connect.config(command=self.btn_ADB_connect_event)
-    btn_connect.pack(fill=BOTH, side=RIGHT, expand=True)
+    self.thread_bg_task = None
+    self.btn_connect = tk.Button(self.frame_btn, text='Connect', width=15, height=2, font=('Arial', 12))
+    self.btn_connect.config(command=self.btn_ADB_connect_event)
+    self.btn_connect.pack(fill=BOTH, side=RIGHT, expand=True)
     self.btn_init = tk.Button(self.frame_btn, text='Init', width=15, height=3, font=('Arial', 12))
     self.btn_init.config(command=self.btn_init_event, state=DISABLED)
     self.btn_init.pack(fill=BOTH, side=RIGHT, expand=True)
@@ -261,24 +262,28 @@ class UI:
   def btn_run_event(self):
     if self.isRunning == False: # enable
       if self.bg_task is not None:
-        self.getSettingInputField()
-        self.isRunning = True
-        self.thread_bg_task = threading.Thread(target = self.run_bg_task)
-        self.thread_bg_task.start()
-        self.btn_run.config(text='Stop')
-        self.log('=== Start Detecting ===\n')
+        if self.thread_bg_task is None or not self.thread_bg_task.isAlive():
+          self.getSettingInputField()
+          self.isRunning = True
+          self.thread_bg_task = threading.Thread(target = self.run_bg_task)
+          self.thread_bg_task.start()
+          self.btn_run.config(text='Stop')
+          self.log('=== Start Detecting ===\n')
     else: # disable
+      self.btn_run.config(state=DISABLED, text='Stop...')
       self.isRunning = False
-      self.btn_run.config(text='Start')
       self.log('=== Stop Detecting ===\n')
 
   def btn_init_event(self):
     self.log('=== Init ===\n')
-    t = threading.Thread(target = MyAction.init())
-    t.start()
+    MyAction.init()
 
   def btn_bm_event(self):
-    t = threading.Thread(target = self.bg_task.diceControl.BMOpponent())
+    def bm_function():
+      self.btn_BM.config(state=DISABLED, text='BM ing...')
+      self.bg_task.diceControl.BMOpponent()
+      self.btn_BM.config(state=NORMAL, text='BM')
+    t = threading.Thread(target = bm_function)
     t.start()
 
   def limitImageSize(self, img):
@@ -319,10 +324,12 @@ class UI:
   def btn_save_extract_images_event(self):
     self.log('=== Save Extract Images ===\n')
     def event():
+      self.btn_save_extract_images.config(state=DISABLED, text='saving...')
       if not os.path.exists('extract'):
         os.mkdir('extract')
       for i, img in enumerate(self.bg_task.detect_board_dice_img):
         self.bg_task.detect.save(img, os.path.join('extract', f'{i}.png'))
+      self.btn_save_extract_images.config(state=NORMAL, text='Save Extract Images')
     threading.Thread(target = event).start()
 
   def changeImage(self, label: tk.Label, img):
@@ -357,6 +364,7 @@ class UI:
       self.log('=== Start Connecting ===\n')
       # connect to device
       def adb_connect():
+        self.btn_connect.config(state=DISABLED, text='Connecting...')
         s, r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
         self.log(s)
         self.bg_task.init()
@@ -364,6 +372,7 @@ class UI:
           self.enableButton()
         else:
           messagebox.showerror('Connect Error', s, parent=self.window)
+        self.btn_connect.config(state=NORMAL, text='Connect')
 
       t = threading.Thread(target = adb_connect)
       t.start()
@@ -428,6 +437,9 @@ class UI:
         img = self.bg_task.detect.OpenCV2TK(img)
         self.changeImage(self.label_detect_board_dice[i], img)
       self.window.update()
+
+    # recover the text and state
+    self.btn_run.config(state=NORMAL, text='Start')
 
   def onClosing(self):
     self.log('Closing...\n')
