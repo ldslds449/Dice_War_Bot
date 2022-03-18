@@ -1,3 +1,4 @@
+import enum
 import cv2
 import glob
 import os
@@ -72,32 +73,43 @@ class Detect:
 
     if mode == DetectDiceMode.HIST or mode == DetectDiceMode.COMBINE:
       h_bins = 100
-      s_bins = 120
+      s_bins = 200
       histSize = [h_bins, s_bins]
       channels = [0, 1]
       # hue varies from 0 to 179, saturation from 0 to 255
-      h_ranges = [0, 360]
-      s_ranges = [0, 512]
+      h_ranges = [0, 180]
+      s_ranges = [0, 256]
       ranges = h_ranges + s_ranges # concat lists
 
       img = cv2.resize(img, self.resize_size)
       img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
       img_hist = cv2.calcHist([img_hsv], channels, None, histSize, ranges, accumulate=False)
-      img_hsv_norm = img_hsv.copy()
-      cv2.normalize(img_hsv, img_hsv_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+      cv2.normalize(img_hist, img_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 
       dice_template = getCandidateImage(self.dice_image_hsv_resize)
 
       # matching
-      result = []
+      result1 = []
+      result2 = []
+      rank_dict = {}
       for name, dice in dice_template:
         dice_hist = cv2.calcHist([dice], channels, None, histSize, ranges, accumulate=False)
-        dice_norm = dice.copy()
-        cv2.normalize(img_hsv, dice_norm, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-        res = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_INTERSECT)
-        result.append((name, res))
+        cv2.normalize(dice_hist, dice_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+        # combine Intersection & Bhattacharyya
+        res1 = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_INTERSECT)
+        res2 = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_BHATTACHARYYA)
+        result1.append((name, res1))
+        result2.append((name, res2))
+        rank_dict[name] = 0
 
-      result = sorted(result, key=lambda x : x[1], reverse=True)
+      result1 = sorted(result1, key=lambda x : x[1], reverse=True)
+      result2 = sorted(result2, key=lambda x : x[1])
+      for i,(r1,r2) in enumerate(zip(result1, result2)):
+        rank_dict[r1[0]] += i
+        rank_dict[r2[0]] += i
+
+      result = sorted(rank_dict.items(), key=lambda x : x[1])
+
       if mode == DetectDiceMode.COMBINE:
         for i, (n, r) in enumerate(result):
           score[n] = i + (0 if n not in score else score[n])
@@ -184,7 +196,7 @@ class Detect:
       (x,y),radius = cv2.minEnclosingCircle(cnt)
       center = (int(x),int(y))
       radius = int(radius)
-      if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 15:
+      if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 15:
         # find if is overlap
         overlap = False
         for c in centers:
@@ -195,7 +207,9 @@ class Detect:
         if not overlap:
           star_count_edge += 1
           centers.append(center)
-    return max(star_count_binary, star_count_edge)
+
+    max_star_value = max(star_count_binary, star_count_edge)
+    return 7 if max_star_value == 0 else max_star_value
 
   def detectLobby(self, img):
     img = cv2.resize(img, self.resize_size)

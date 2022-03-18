@@ -370,9 +370,10 @@ class UI:
         self.bg_task.init()
         if r:
           self.enableButton()
+          self.btn_connect.config(state=DISABLED, text='Connected')
         else:
           messagebox.showerror('Connect Error', s, parent=self.window)
-        self.btn_connect.config(state=NORMAL, text='Connect')
+          self.btn_connect.config(state=NORMAL, text='Connect')
 
       t = threading.Thread(target = adb_connect)
       t.start()
