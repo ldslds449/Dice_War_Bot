@@ -84,7 +84,7 @@ class Detect:
       img = cv2.resize(img, self.resize_size)
       img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
       img_hist = cv2.calcHist([img_hsv], channels, None, histSize, ranges, accumulate=False)
-      cv2.normalize(img_hist, img_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+      # cv2.normalize(img_hist, img_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 
       dice_template = getCandidateImage(self.dice_image_hsv_resize)
 
@@ -94,7 +94,7 @@ class Detect:
       rank_dict = {}
       for name, dice in dice_template:
         dice_hist = cv2.calcHist([dice], channels, None, histSize, ranges, accumulate=False)
-        cv2.normalize(dice_hist, dice_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+        # cv2.normalize(dice_hist, dice_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
         # combine Intersection & Bhattacharyya
         res1 = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_INTERSECT)
         result1.append((name, res1))
