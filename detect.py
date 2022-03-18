@@ -71,7 +71,7 @@ class Detect:
     if mode == DetectDiceMode.COMBINE:
       score = {}
 
-    if mode == DetectDiceMode.HIST or mode == DetectDiceMode.COMBINE:
+    if mode == DetectDiceMode.HIST or mode == DetectDiceMode.HIST_COMBINE or mode == DetectDiceMode.COMBINE:
       h_bins = 100
       s_bins = 200
       histSize = [h_bins, s_bins]
@@ -97,18 +97,21 @@ class Detect:
         cv2.normalize(dice_hist, dice_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
         # combine Intersection & Bhattacharyya
         res1 = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_INTERSECT)
-        res2 = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_BHATTACHARYYA)
         result1.append((name, res1))
-        result2.append((name, res2))
-        rank_dict[name] = 0
+        if mode == DetectDiceMode.HIST_COMBINE:
+          res2 = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_BHATTACHARYYA)
+          result2.append((name, res2))
+          rank_dict[name] = 0
 
-      result1 = sorted(result1, key=lambda x : x[1], reverse=True)
-      result2 = sorted(result2, key=lambda x : x[1])
-      for i,(r1,r2) in enumerate(zip(result1, result2)):
-        rank_dict[r1[0]] += i
-        rank_dict[r2[0]] += i
-
-      result = sorted(rank_dict.items(), key=lambda x : x[1])
+      if mode == DetectDiceMode.HIST_COMBINE:
+        result1 = sorted(result1, key=lambda x : x[1], reverse=True)
+        result2 = sorted(result2, key=lambda x : x[1])
+        for i,(r1,r2) in enumerate(zip(result1, result2)):
+          rank_dict[r1[0]] += i
+          rank_dict[r2[0]] += i
+        result = sorted(rank_dict.items(), key=lambda x : x[1])
+      else:
+        result = sorted(result1, key=lambda x : x[1], reverse=True)
 
       if mode == DetectDiceMode.COMBINE:
         for i, (n, r) in enumerate(result):
