@@ -73,7 +73,7 @@ class Detect:
 
     if mode == DetectDiceMode.HIST or mode == DetectDiceMode.HIST_COMBINE or mode == DetectDiceMode.COMBINE:
       h_bins = 100
-      s_bins = 200
+      s_bins = 120
       histSize = [h_bins, s_bins]
       channels = [0, 1]
       # hue varies from 0 to 179, saturation from 0 to 255
