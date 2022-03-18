@@ -77,8 +77,8 @@ class Detect:
       histSize = [h_bins, s_bins]
       channels = [0, 1]
       # hue varies from 0 to 179, saturation from 0 to 255
-      h_ranges = [0, 180]
-      s_ranges = [0, 256]
+      h_ranges = [0, 360]
+      s_ranges = [0, 512]
       ranges = h_ranges + s_ranges # concat lists
 
       img = cv2.resize(img, self.resize_size)
@@ -95,7 +95,7 @@ class Detect:
       for name, dice in dice_template:
         dice_hist = cv2.calcHist([dice], channels, None, histSize, ranges, accumulate=False)
         # cv2.normalize(dice_hist, dice_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-        # combine Intersection & Bhattacharyya
+        
         res1 = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_INTERSECT)
         result1.append((name, res1))
         if mode == DetectDiceMode.HIST_COMBINE:
@@ -103,19 +103,19 @@ class Detect:
           result2.append((name, res2))
           rank_dict[name] = 0
 
-      if mode == DetectDiceMode.HIST_COMBINE:
+      if mode == DetectDiceMode.COMBINE:
+        for i, (n, r) in enumerate(result):
+          score[n] = i + (0 if n not in score else score[n])
+      elif mode == DetectDiceMode.HIST_COMBINE:
+        # combine Intersection & Bhattacharyya
         result1 = sorted(result1, key=lambda x : x[1], reverse=True)
         result2 = sorted(result2, key=lambda x : x[1])
         for i,(r1,r2) in enumerate(zip(result1, result2)):
           rank_dict[r1[0]] += i
           rank_dict[r2[0]] += i
         result = sorted(rank_dict.items(), key=lambda x : x[1])
-      else:
+      elif mode == DetectDiceMode.HIST:
         result = sorted(result1, key=lambda x : x[1], reverse=True)
-
-      if mode == DetectDiceMode.COMBINE:
-        for i, (n, r) in enumerate(result):
-          score[n] = i + (0 if n not in score else score[n])
     
     if mode == DetectDiceMode.TEMPLATE:
       img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
