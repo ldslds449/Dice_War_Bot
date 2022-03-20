@@ -159,7 +159,7 @@ class MyAction(Action):
         if countHealing >= 2 and noBlank:
           MyAction.randomMerge(diceControl, findMergeDice, count, location, 'Healing', ['Mimic'])
         if countBlank == 0:         
-          star_1_PopGun_Loc = findStarCount("Pop_Gun", 1)
+          star_1_PopGun_Loc = findStarCount("PopGun", 1)
           if len(star_1_PopGun_Loc) >= 2:
             diceControl.mergeDice(star_1_PopGun_Loc[0] + 1, star_1_PopGun_Loc[1] + 1)
     
