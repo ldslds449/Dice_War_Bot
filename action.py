@@ -69,7 +69,7 @@ class MyAction(Action):
     countTotal: int, boardDiceStar: list):
 
     # flag
-    muchPop_Gun = count['Pop_Gun'] >= 5
+    muchPopGun = count['PopGun'] >= 5
     # hasMimic = count['Mimic'] > 0
     hasFire = count['Fire'] > 0
     noBlank = count['Blank'] == 0
@@ -86,7 +86,7 @@ class MyAction(Action):
     countTotal = sum([v for k, v in count.items() if k != 'Blank'])
     earlyGame = countTotal <= 12
     
-    team = ['Fire','Healing','Ice','Pop_Gun','Supplement']
+    team = ['Fire','Healing','Ice','PopGun','Supplement']
     # star_1_Pop_Gun_Loc = []
     # Pop_Gun_Loc = location["Pop_Gun"]
     
@@ -123,7 +123,7 @@ class MyAction(Action):
     else:
       if canLevelSp:
         diceControl.levelUpSP()
-      if canLevelDice[0] and muchPop_Gun:
+      if canLevelDice[0] and muchPopGun:
         diceControl.levelUpDice(1)
       if canSummon:
         diceControl.summonDice()
@@ -159,8 +159,8 @@ class MyAction(Action):
         if countHealing >= 2 and noBlank:
           MyAction.randomMerge(diceControl, findMergeDice, count, location, 'Healing', ['Mimic'])
         if countBlank == 0:         
-          star_1_Pop_Gun_Loc = findStarCount("Pop_Gun", 1)
-          if len(star_1_Pop_Gun_Loc) >= 2:
-            diceControl.mergeDice(star_1_Pop_Gun_Loc[0] + 1, star_1_Pop_Gun_Loc[1] + 1)
+          star_1_PopGun_Loc = findStarCount("Pop_Gun", 1)
+          if len(star_1_PopGun_Loc) >= 2:
+            diceControl.mergeDice(star_1_PopGun_Loc[0] + 1, star_1_PopGun_Loc[1] + 1)
     
     time.sleep(1)
