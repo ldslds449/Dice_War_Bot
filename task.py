@@ -30,7 +30,7 @@ class Task:
 
     self.status = Status.LOBBY
 
-    self.detect = Detect("./image/dice", "./image", self.variable)
+    self.detect = Detect("./image/dice", self.variable)
 
   def init(self):
     self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID, 
@@ -166,7 +166,9 @@ class Task:
       hasAD = True
 
     def detectLobby():
-      img = self.detect.extractImage(im, 
+      _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
+      img = self.detect.Image2OpenCV(img)
+      img = self.detect.extractImage(img, 
         (x+(8%5)*offset_x, y+(8//5)*offset_y, 
         self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
       return self.detect.detectLobby(img)
@@ -185,11 +187,11 @@ class Task:
       elif self.status == Status.FINISH:
         if inLobby:
           self.status = Status.LOBBY
-        else:
+        elif inFinish:
+          time.sleep(3)
           if watchAD and hasAD:
             log('=== Detect AD ===\n')
             # deal with AD
-            time.sleep(2)
             self.diceControl.watchAD()
             time.sleep(30)
             if detectLobby(): return # check if in lobby
@@ -209,7 +211,7 @@ class Task:
         MyAction.init()
         if inWaiting:
           self.status = Status.WAIT
-        else:
+        elif inLobby:
           if autoPlay:
             self.diceControl.battle(battleMode) # start battle
 

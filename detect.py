@@ -12,7 +12,7 @@ from variable import *
 from mode import *
 
 class Detect:
-  def __init__(self, dice_folder, detect_folder, variable: Variable):
+  def __init__(self, dice_folder, variable: Variable):
     self.variable = variable
 
     self.dice_image_rgb = []
@@ -51,12 +51,6 @@ class Detect:
       self.dice_image_dhash_resize.append(dhash.dhash_int(self.dice_image_PIL_resize[-1], size=self.dhash_size))
       self.dice_name.append(name)
       self.dice_name_idx_dict[name] = i
-
-    # other
-    self.wait_image_PIL_resize = Image.open(os.path.join(detect_folder, 'wait.png')).resize(self.resize_size)
-    self.wait_image_dhash_resize = dhash.dhash_int(self.wait_image_PIL_resize, size=self.dhash_size)
-    self.finish_image_PIL_resize = Image.open(os.path.join(detect_folder, 'finish.png')).resize(self.resize_size)
-    self.finish_image_dhash_resize = dhash.dhash_int(self.finish_image_PIL_resize, size=self.dhash_size)
 
   def detectDice(self, img, candidate = None, mode: DetectDiceMode = DetectDiceMode.COMBINE):
 
@@ -189,7 +183,7 @@ class Detect:
           star_count_binary += 1
 
     # edge detection
-    img_edge = cv2.Canny(image=img_gray, threshold1=300, threshold2=400)
+    img_edge = cv2.Canny(image=img_gray, threshold1=350, threshold2=400)
     contours, _ = cv2.findContours(img_edge, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     star_count_edge = 0
     centers = []
@@ -231,21 +225,33 @@ class Detect:
 
   def detectWaiting(self, img):
     img = cv2.resize(img, self.resize_size)
-    img = self.OpenCV2Image(img)
-    img_hash = dhash.dhash_int(img, size=self.dhash_size)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    r = dhash.get_num_bits_different(self.wait_image_dhash_resize, img_hash)
-    print(f'Wait {r}')
-    return r <= self.dhash_size*2
+    hsv_color1 = np.asarray([125, 165, 84])
+    hsv_color2 = np.asarray([126, 169, 88])
+
+    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
+    extract_pixel_count = np.sum(mask)//255
+    ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+
+    print(f'Wait {ratio}')
+
+    return ratio > 0.90
 
   def detectFinish(self, img):
     img = cv2.resize(img, self.resize_size)
-    img = self.OpenCV2Image(img)
-    img_hash = dhash.dhash_int(img, size=self.dhash_size)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    r = dhash.get_num_bits_different(self.finish_image_dhash_resize, img_hash)
-    print(f'Finish {r}')
-    return r <= self.dhash_size*2
+    hsv_color1 = np.asarray([126, 176, 79])
+    hsv_color2 = np.asarray([128, 181, 82])
+
+    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
+    extract_pixel_count = np.sum(mask)//255
+    ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+
+    print(f'Finish {ratio}')
+
+    return ratio > 0.90
 
   def detectGame(self, img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
