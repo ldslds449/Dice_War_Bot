@@ -87,10 +87,13 @@ class UI:
     btn_load_config.grid(row=0, column=1)
     self.btn_screenshot = tk.Button(self.frame_setting_btn, text='ScreenShot', width=10, height=2, font=('Arial', 12))
     self.btn_screenshot.config(command=self.btn_screenshot_event, state=DISABLED)
-    self.btn_screenshot.grid(row=1, column=0)
+    self.btn_screenshot.grid(row=0, column=2)
     self.btn_draw = tk.Button(self.frame_setting_btn, text='Draw', width=10, height=2, font=('Arial', 12))
     self.btn_draw.config(command=self.btn_draw_event, state=DISABLED)
-    self.btn_draw.grid(row=1, column=1)
+    self.btn_draw.grid(row=1, column=0)
+    self.btn_save_screenshot = tk.Button(self.frame_setting_btn, text='Save\nScreenShot', width=10, height=2, font=('Arial', 12))
+    self.btn_save_screenshot.config(command=self.btn_save_screenshot_event, state=DISABLED)
+    self.btn_save_screenshot.grid(row=1, column=1)
     self.label_screenshot = tk.Label(self.frame_setting_view)
     self.label_screenshot.pack(fill=BOTH)
 
@@ -171,9 +174,6 @@ class UI:
     self.status_StringVar.set('Lobby')
     label_status = tk.Label(self.frame_detect_btn, padx=5, pady=5, textvariable=self.status_StringVar)
     label_status.pack(fill=BOTH, expand=True, side=TOP)
-
-    # key image
-
 
     # button
     self.btn_run = tk.Button(self.frame_btn, text='Start', width=15, height=3, font=('Arial', 12))
@@ -338,6 +338,19 @@ class UI:
       self.btn_save_extract_images.config(state=NORMAL, text='Save Extract Images')
     threading.Thread(target = event).start()
 
+  def btn_save_screenshot_event(self):
+    self.log('=== Save Screenshot Image ===\n')
+    def event():
+      self.btn_save_screenshot.config(state=DISABLED, text='saving...')
+      if not os.path.exists('extract'):
+        os.mkdir('extract')
+      try:
+        self.bg_task.detect.save(self.screenshot_image, os.path.join('extract', 'screenshot.png'))
+      except AttributeError:
+        messagebox.showerror('Save Error', 'Need screenshot first', parent=self.window)
+      self.btn_save_screenshot.config(state=NORMAL, text='Save\nScreenShot')
+    threading.Thread(target = event).start()
+
   def changeImage(self, label: tk.Label, img):
     label.configure(image=img)
     label.image = img
@@ -390,6 +403,7 @@ class UI:
     self.btn_screenshot.config(state=NORMAL)
     self.btn_BM.config(state=NORMAL)
     self.btn_draw.config(state=NORMAL)
+    self.btn_save_screenshot.config(state=NORMAL)
     self.btn_save_extract_images.config(state=NORMAL)
 
   def log(self, text):

@@ -151,7 +151,7 @@ class Task:
       inLobby = True
     if self.detect.detectWaiting(self.detect_board_dice_img[2]):
       inWaiting = True
-    if self.detect.detectFinish(self.detect_board_dice_img[4]):
+    if self.detect.detectFinish(self.detect_board_dice_img[14]):
       inFinish = True
     if self.detect.detectGame(self.detect.extractImage(im, 
       (self.variable.getEmojiDialogXY()[0], self.variable.getEmojiDialogXY()[1],
