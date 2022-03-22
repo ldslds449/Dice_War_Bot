@@ -20,5 +20,5 @@ class ADB:
 
   @staticmethod
   def detectDiceWar(ip:str, port:int):
-    r = ADB.sh(f'adb -s {ip}:{port} shell "dumpsys window windows | grep -E \'mCurrentFocus|mFocusedApp\'"').decode('utf-8')
+    r = ADB.sh(f'adb -s {ip}:{port} shell "dumpsys activity activities | grep mResumedActivity"').decode('utf-8')
     return 'com.percent.aos.randomdicewars' in r
