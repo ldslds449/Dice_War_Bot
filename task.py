@@ -11,12 +11,6 @@ from variable import *
 from mode import *
 from action import *
 
-class Status(IntEnum):
-  LOBBY = 0
-  WAIT = 1
-  GAME = 2
-  FINISH = 3
-
 class Task:
   def __init__(self):
     self.board_dice = []
@@ -151,6 +145,7 @@ class Task:
     inWaiting = False
     inFinish = False
     inGame = False
+    inTrophy = False
     hasAD = False
     if self.detect.detectLobby(self.detect_board_dice_img[8]):
       inLobby = True
@@ -164,6 +159,8 @@ class Task:
       inGame = True
     if self.detect.detectAD(self.detect_board_dice_img[12]):
       hasAD = True
+    if self.detect.detectTrophy(self.detect_board_dice_img[4]):
+      inTrophy = True
 
     def detectLobby():
       _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
@@ -187,11 +184,13 @@ class Task:
       elif self.status == Status.FINISH:
         if inLobby:
           self.status = Status.LOBBY
+        elif inTrophy:
+          self.status = Status.TROPHY
         elif inFinish:
-          time.sleep(3)
           if watchAD and hasAD:
             log('=== Detect AD ===\n')
             # deal with AD
+            time.sleep(3)
             self.diceControl.watchAD()
             time.sleep(30)
             if detectLobby(): return # check if in lobby
@@ -214,6 +213,11 @@ class Task:
         elif inLobby:
           if autoPlay:
             self.diceControl.battle(battleMode) # start battle
+      elif self.status == Status.TROPHY:
+        if inLobby:
+          self.status = Status.LOBBY
+        elif inTrophy:
+          self.diceControl.skip()
 
     if self.status != Status.GAME:
       return
