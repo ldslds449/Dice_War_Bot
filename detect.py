@@ -242,8 +242,8 @@ class Detect:
     img = cv2.resize(img, self.resize_size)
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    hsv_color1 = np.asarray([126, 176, 79])
-    hsv_color2 = np.asarray([128, 181, 82])
+    hsv_color1 = np.asarray([125, 161, 69])
+    hsv_color2 = np.asarray([129, 193, 101])
 
     mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
     extract_pixel_count = np.sum(mask)//255
@@ -278,6 +278,21 @@ class Detect:
     print(f'AD {ratio}')
 
     return ratio > 0.35
+
+  def detectTrophy(self, img):
+    img = cv2.resize(img, self.resize_size)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    hsv_color1 = np.asarray([124, 180, 70])
+    hsv_color2 = np.asarray([126, 183, 73])
+
+    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
+    extract_pixel_count = np.sum(mask)//255
+    ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+
+    print(f'Trophy {ratio}')
+
+    return ratio > 0.90
 
   def canSummon(self, luminance: float):
     if luminance >= 180:

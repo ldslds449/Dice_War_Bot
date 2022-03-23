@@ -23,3 +23,10 @@ class DetectDiceMode(IntEnum):
 class BattleMode(IntEnum):
   BATTLE_1V1 = 0
   BATTLE_2V2 = 1
+
+class Status(IntEnum):
+  LOBBY = 0
+  WAIT = 1
+  GAME = 2
+  FINISH = 3
+  TROPHY = 4

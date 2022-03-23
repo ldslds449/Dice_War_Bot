@@ -48,7 +48,7 @@ class Variable:
     self.emulator_mode = None
     self.control_mode = None
     self.adb_port = None
-    self.adb_ip = '127.0.0.1' # constant
+    self.adb_ip = None
 
     self.dice_party = None
 
@@ -86,6 +86,7 @@ class Variable:
     self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
     self.control_mode = ControlMode(str2Type(config.get('Mode', 'ControlMode', fallback='0')))
     self.detect_dice_mode = DetectDiceMode(str2Type(config.get('Mode', 'DetectDiceMode', fallback='0')))
+    self.adb_ip = config.get('ADB', 'IP', fallback='127.0.0.1')
     self.adb_port = str2Type(config.get('ADB', 'Port', fallback='5555'), int)
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
 
@@ -125,6 +126,7 @@ class Variable:
     config.set('Mode', 'ControlMode', type2Str(int(self.control_mode)))
     config.set('Mode', 'DetectDiceMode', type2Str(int(self.detect_dice_mode)))
     config.add_section('ADB')
+    config.set('ADB', 'IP', self.adb_ip)
     config.set('ADB', 'Port', type2Str(self.adb_port))
     config.add_section('Dice')
     config.set('Dice', 'DiceParty', type2Str(tuple(self.dice_party)))
@@ -199,6 +201,9 @@ class Variable:
 
   def setDetectDiceMode(self, _value: DetectDiceMode):
     self.detect_dice_mode = _value
+
+  def setADBIP(self, _value: int):
+    self.adb_ip = _value
 
   def setADBPort(self, _value: int):
     self.adb_port = _value
