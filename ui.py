@@ -425,7 +425,7 @@ class UI:
           stopDetect()
           break
 
-      status_str = ['Lobby', 'Wait', 'Game', 'Finish']
+      status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy']
       # run
       previous_status = self.bg_task.status
       
