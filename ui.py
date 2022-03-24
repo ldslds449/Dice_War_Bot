@@ -9,13 +9,15 @@ from screen import *
 from mode import *
 
 class UI:
+  Version = '1.0.0'
+
   def __init__(self):
     self.window = tk.Tk()
 
     self.bg_task = Task()
 
     # let the window on top
-    self.window.title('Dice Bot')
+    self.window.title(f'Dice Bot {UI.Version}')
 
     # tab
     self.tabControl = ttk.Notebook(self.window)
@@ -198,6 +200,15 @@ class UI:
     self.initAll()
 
   def initAll(self):
+    if os.path.exists(self.bg_task.variable.getUpdateFileName()):
+      with open(self.bg_task.variable.getUpdateFileName(), 'r') as f:
+        lines = f.readlines()
+        self.text_log.insert(tk.END, '========================================\n')
+        for line in lines:
+          if len(line.strip()) != 0:
+            self.text_log.insert(tk.END, line)
+        self.text_log.insert(tk.END, '========================================\n')
+        self.text_log.see(tk.END)  
     self.setSettingInputField()
     self.btn_load_config_event()
     self.setSelectDiceField()
