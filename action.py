@@ -9,7 +9,7 @@ class Action:
   @abc.abstractmethod
   def action(self,
     count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], boardDice: list, 
-    canSummon: bool, canLevelSp: bool, canLevelDice: List,
+    canSummon: bool, canLevelSp: bool, canLevelDice: List, canSpell: bool,
     countTotal: int, boardDiceStar: list):
     return NotImplemented
 
@@ -65,7 +65,7 @@ class MyAction(Action):
   def action(
     diceControl: DiceControl, findMergeDice: Callable,
     count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], boardDice: list,
-    canSummon: bool, canLevelSp: bool, canLevelDice: List,
+    canSummon: bool, canLevelSp: bool, canLevelDice: List, canSpell: bool,
     countTotal: int, boardDiceStar: list):
 
     # flag
@@ -125,6 +125,8 @@ class MyAction(Action):
         diceControl.levelUpSP()
       if canLevelDice[0] and muchPopGun:
         diceControl.levelUpDice(1)
+      if canSpell:
+        diceControl.CastSpell()
       if canSummon:
         diceControl.summonDice()
         MyAction.hasSummonDiceTimes += 1
