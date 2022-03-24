@@ -175,6 +175,13 @@ class UI:
     self.checkBtn_watchAD = tk.Checkbutton(self.frame_detect_btn, text='Watch AD', var=self.watchAD_booleanVar, pady=5) 
     self.checkBtn_watchAD.pack(fill=BOTH, expand=True, side=TOP)
     self.checkBtn_watchAD.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
+
+    # restart App
+    self.restartApp_booleanVar = tk.BooleanVar() 
+    self.restartApp_booleanVar.set(False)
+    self.checkBtn_restartApp = tk.Checkbutton(self.frame_detect_btn, text='Restart App', var=self.restartApp_booleanVar, pady=5) 
+    self.checkBtn_restartApp.pack(fill=BOTH, expand=True, side=TOP)
+    self.checkBtn_restartApp.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
     
     # Status Label
     self.status_StringVar = StringVar()
@@ -341,6 +348,7 @@ class UI:
     self.getSettingInputField()
     self.bg_task.variable.saveToConfigFile()
     self.checkBtn_watchAD.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
+    self.checkBtn_restartApp.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
 
   def btn_load_config_event(self):
     self.log('=== Load Config ===\n')
@@ -458,8 +466,13 @@ class UI:
       if self.bg_task.variable.getControlMode() == ControlMode.ADB:
         if not ADB.detectDiceWar(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort()):
           self.log("Error: Focus app is not Dice War App\n")
-          stopDetect()
-          break
+          if self.restartApp_booleanVar.get() == True:
+            self.log("Info: Restart app and continue after 60 seconds\n")
+            ADB.restart()
+            time.sleep(60) # sleep for 60 seconds
+          else:
+            stopDetect()
+            break
 
       status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy']
       # run
