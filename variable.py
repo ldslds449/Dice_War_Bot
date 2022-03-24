@@ -46,6 +46,7 @@ class Variable:
     self.party_dice_size = 5 # constant
     self.emoji_size = 5 # constant
     self.config_file_name = 'config.ini' # constant
+    self.update_file_name = 'update.md' # constant
 
     self.emulator_mode = None
     self.control_mode = None
@@ -323,3 +324,6 @@ class Variable:
 
   def getDiceParty(self):
     return self.dice_party
+
+  def getUpdateFileName(self):
+    return self.update_file_name

@@ -47,9 +47,7 @@ class Task:
 
   def forAllDiceOnBoard(self, function):
     for i in range(self.variable.getBoardSize()):
-      row = i // self.variable.getCol()
-      col = i % self.variable.getCol()
-      function(i, row, col)
+      function(i)
 
   def findMergeDice(self, srcidx, exceptDice):
     if self.variable.getControlMode() == ControlMode.WIN32API:
@@ -60,16 +58,9 @@ class Task:
       canMergeImage = self.detect.Image2OpenCV(canMergeImage)
       self.diceControl.dragUpDice()
 
-      x = self.variable.getBoardDiceLeftTopXY()[0]
-      y = self.variable.getBoardDiceLeftTopXY()[1]
-      offset_x = self.variable.getBoardDiceOffsetXY()[0]
-      offset_y = self.variable.getBoardDiceOffsetXY()[1]
-
       merge_dice_location = []
-      def detectMerge(i, row, col):
-        img = self.detect.extractImage(canMergeImage, 
-          (x+col*offset_x, y+row*offset_y, 
-          self.variable.getExtractDiceLuSizeWH()[0], self.variable.getExtractDiceLuSizeWH()[1]), ExtractMode.CENTER)
+      def detectMerge(i):
+        img = self.detect.getDiceImage(canMergeImage, i, self.variable.getExtractDiceLuSizeWH())
         img_lu = self.detect.getAverageLuminance(img)
         lu_offset = self.board_dice_lu[i] - img_lu
         canMerge = self.detect.canMergeDice(lu_offset)
@@ -115,17 +106,13 @@ class Task:
     self.detect_board_dice_img = []
     self.board_dice_star = []
     self.board_dice_lu = []
-    def detectDice(i, row, col):
-      dice_xy = (x+col*offset_x, y+row*offset_y)
-      img = self.detect.extractImage(im, 
-        (dice_xy[0], dice_xy[1], 
-        self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
+    def detectDice(i):
+      img = self.detect.getDiceImage(im, i)
       res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], self.variable.getDetectDiceMode())
       res_star = self.detect.detectStar(img.copy())
 
-      dice_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
-        (dice_xy[0], dice_xy[1], 
-        self.variable.getExtractDiceLuSizeWH()[0], self.variable.getExtractDiceLuSizeWH()[1]), ExtractMode.CENTER))
+      dice_lu = self.detect.getAverageLuminance(
+        self.detect.getDiceImage(im, i, self.variable.getExtractDiceLuSizeWH()))
 
       self.detect_board_dice_img.append(img)
       self.board_dice_star.append(res_star)
@@ -141,35 +128,18 @@ class Task:
     self.forAllDiceOnBoard(detectDice)
 
     # detect status
-    inLobby = False
-    inWaiting = False
-    inFinish = False
-    inGame = False
-    inTrophy = False
-    hasAD = False
-    if self.detect.detectLobby(self.detect_board_dice_img[8]):
-      inLobby = True
-    if self.detect.detectWaiting(self.detect_board_dice_img[2]):
-      inWaiting = True
-    if self.detect.detectFinish(self.detect_board_dice_img[4]) or \
-      self.detect.detectFinish(self.detect_board_dice_img[14]):
-      inFinish = True
-    if self.detect.detectGame(self.detect.extractImage(im, 
-      (self.variable.getEmojiDialogXY()[0], self.variable.getEmojiDialogXY()[1],
-      self.variable.getEmojiDialogWH()[0], self.variable.getEmojiDialogWH()[1]), ExtractMode.CENTER)):
-      inGame = True
-    if self.detect.detectAD(self.detect_board_dice_img[12]):
-      hasAD = True
-    if self.detect.detectTrophy(self.detect_board_dice_img[4]):
-      inTrophy = True
+    status_result = self.detect.detectStatus(im)
+    inLobby = status_result['Lobby']
+    inWaiting = status_result['Wait']
+    inFinish = status_result['Finish']
+    inGame = status_result['Game']
+    inTrophy = status_result['Trophy']
+    hasAD = status_result['AD']
 
-    def detectLobby():
+    def detectLobbyAgain():
       _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
       img = self.detect.Image2OpenCV(img)
-      img = self.detect.extractImage(img, 
-        (x+(8%5)*offset_x, y+(8//5)*offset_y, 
-        self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
-      return self.detect.detectLobby(img)
+      return self.detect.detectStatus(im)['Lobby']
 
     if inGame:
       self.status = Status.GAME
@@ -191,18 +161,18 @@ class Task:
           if watchAD and hasAD:
             log('=== Detect AD ===\n')
             # deal with AD
-            time.sleep(3)
+            time.sleep(5)
             self.diceControl.watchAD()
             time.sleep(30)
-            if detectLobby(): return # check if in lobby
+            if detectLobbyAgain(): return # check if in lobby
             time.sleep(30)
-            if detectLobby(): return # check if in lobby
+            if detectLobbyAgain(): return # check if in lobby
             self.diceControl.back()
             time.sleep(2)
-            if detectLobby(): return # check if in lobby
+            if detectLobbyAgain(): return # check if in lobby
             self.diceControl.closeAD()
             time.sleep(10)
-            if detectLobby(): return # check if in lobby
+            if detectLobbyAgain(): return # check if in lobby
             self.diceControl.closeAD()
             time.sleep(5)
           else:
@@ -223,22 +193,11 @@ class Task:
     if self.status != Status.GAME:
       return
 
-    summon_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
-      (self.variable.getSummonDiceXY()[0], self.variable.getSummonDiceXY()[1], 
-      self.variable.getExtractSummonLuSizeWH()[0], self.variable.getExtractSummonLuSizeWH()[1]), ExtractMode.CENTER))
-    sp_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
-      (self.variable.getLevelSpXY()[0], self.variable.getLevelSpXY()[1],
-      self.variable.getExtractSpLuSizeWH()[0], self.variable.getExtractSpLuSizeWH()[1]), ExtractMode.CENTER))
-    spell_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
-      (self.variable.getSpellXY()[0], self.variable.getSpellXY()[1],
-      self.variable.getExtractSpellLuSizeWH()[0], self.variable.getExtractSpellLuSizeWH()[1]), ExtractMode.CENTER))
-    level_lu = []
-    for i in range(self.variable.getPartyDiceSize()):
-      level_dice_x = self.variable.getLevelDiceLeftXY()[0] + i*self.variable.getLevelDiceOffsetX()
-      level_dice_y = self.variable.getLevelDiceLeftXY()[1]
-      level_lu.append(self.detect.getAverageLuminance(self.detect.extractImage(im, 
-        (level_dice_x, level_dice_y,
-        self.variable.getExtractLevelDiceLuSizeWH()[0], self.variable.getExtractLevelDiceLuSizeWH()[1]), ExtractMode.CENTER)))
+    enable_result = self.detect.detectEnable(im)
+    canSummon = enable_result['Summon']
+    canSP = enable_result['Sp']
+    canSpell = enable_result['Spell']
+    canLevel = enable_result['Level']
 
     count = {}
     for dice in self.variable.getDiceParty() + ['Blank']:
@@ -253,21 +212,16 @@ class Task:
     count_sorted = sorted(count.items(), key=lambda x : x[1], reverse=True)
     countTotal = sum([x[1] for x in count.items() if x[0] != 'Blank'])
 
-    print(f'Summon: {summon_lu:3.1f} --- {self.detect.canSummon(summon_lu)}')
-    print(f'SP: {sp_lu:3.1f} --- {self.detect.canLevelSP(sp_lu)}')
-    print(f'Spell: {spell_lu:3.1f} --- {self.detect.canSpell(spell_lu)}')
-    for i in range(self.variable.getPartyDiceSize()):
-      print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.detect.canLevelDice(level_lu[i])}')
-
     sys.stdout.flush()
     print("\n================")
 
     MyAction.action(
       self.diceControl, self.findMergeDice,
       count, count_sorted, location, self.board_dice, 
-      self.detect.canSummon(summon_lu), self.detect.canLevelSP(sp_lu),
-      [self.detect.canLevelDice(level_lu[i]) for i in range(self.variable.getPartyDiceSize())],
-      self.detect.canSpell(spell_lu),
+      canSummon, 
+      canSP,
+      canLevel,
+      canSpell,
       countTotal, self.board_dice_star
     )
     

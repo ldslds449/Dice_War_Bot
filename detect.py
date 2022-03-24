@@ -319,7 +319,7 @@ class Detect:
       return False
 
   def canSpell(self, luminance: float):
-    if luminance >= 140:
+    if luminance >= 110:
       return True
     else:
       return False
@@ -359,6 +359,24 @@ class Detect:
 
   def save(self, img, fname):
     cv2.imwrite(fname, img)
+
+  def getDiceImage(self, img, idx, WH = None):
+    x = self.variable.getBoardDiceLeftTopXY()[0]
+    y = self.variable.getBoardDiceLeftTopXY()[1]
+    offset_x = self.variable.getBoardDiceOffsetXY()[0]
+    offset_y = self.variable.getBoardDiceOffsetXY()[1]
+    if WH is None:
+      w = self.variable.getExtractDiceSizeWH()[0]
+      h = self.variable.getExtractDiceSizeWH()[1]
+    else:
+      w, h = WH
+
+    row = idx // self.variable.getCol()
+    col = idx % self.variable.getCol()
+
+    dice_xy = (x+col*offset_x, y+row*offset_y)
+    dice_img = self.extractImage(img, (dice_xy[0], dice_xy[1], w, h), ExtractMode.CENTER)
+    return dice_img
 
   def drawTestImage(self, img):
     def tupleAdd(a, b):
@@ -409,3 +427,67 @@ class Detect:
     cv2.circle(img, self.variable.getSpellXY(), 5, green, -1)
 
     return img
+
+  def detectEnable(self, img):
+    summon_lu = self.getAverageLuminance(self.extractImage(img, 
+      (self.variable.getSummonDiceXY()[0], self.variable.getSummonDiceXY()[1], 
+      self.variable.getExtractSummonLuSizeWH()[0], self.variable.getExtractSummonLuSizeWH()[1]), ExtractMode.CENTER))
+    sp_lu = self.getAverageLuminance(self.extractImage(img, 
+      (self.variable.getLevelSpXY()[0], self.variable.getLevelSpXY()[1],
+      self.variable.getExtractSpLuSizeWH()[0], self.variable.getExtractSpLuSizeWH()[1]), ExtractMode.CENTER))
+    spell_lu = self.getAverageLuminance(self.extractImage(img, 
+      (self.variable.getSpellXY()[0], self.variable.getSpellXY()[1],
+      self.variable.getExtractSpellLuSizeWH()[0], self.variable.getExtractSpellLuSizeWH()[1]), ExtractMode.CENTER))
+    level_lu = []
+    for i in range(self.variable.getPartyDiceSize()):
+      level_dice_x = self.variable.getLevelDiceLeftXY()[0] + i*self.variable.getLevelDiceOffsetX()
+      level_dice_y = self.variable.getLevelDiceLeftXY()[1]
+      level_lu.append(self.getAverageLuminance(self.extractImage(img, 
+        (level_dice_x, level_dice_y,
+        self.variable.getExtractLevelDiceLuSizeWH()[0], self.variable.getExtractLevelDiceLuSizeWH()[1]), ExtractMode.CENTER)))
+
+    print(f'Summon: {summon_lu:3.1f} --- {self.canSummon(summon_lu)}')
+    print(f'SP: {sp_lu:3.1f} --- {self.canLevelSP(sp_lu)}')
+    print(f'Spell: {spell_lu:3.1f} --- {self.canSpell(spell_lu)}')
+    for i in range(len(level_lu)):
+      print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.canLevelDice(level_lu[i])}')
+
+    return {
+      'Summon': self.canSummon(summon_lu), 
+      'Sp': self.canLevelSP(sp_lu), 
+      'Spell': self.canSpell(spell_lu),
+      'Level': [self.canLevelDice(level_lu[i]) for i in range(len(level_lu))]
+    }
+
+  def detectStatus(self, img):
+    inLobby = False
+    inWaiting = False
+    inFinish = False
+    inGame = False
+    inTrophy = False
+    hasAD = False
+
+    if self.detectLobby(self.getDiceImage(img, 8)):
+      inLobby = True
+    if self.detectWaiting(self.getDiceImage(img, 2)):
+      inWaiting = True
+    if self.detectFinish(self.getDiceImage(img, 4)) or \
+      self.detectFinish(self.getDiceImage(img, 14)):
+      inFinish = True
+    if self.detectGame(self.extractImage(img, 
+      (self.variable.getEmojiDialogXY()[0], self.variable.getEmojiDialogXY()[1],
+      self.variable.getEmojiDialogWH()[0], self.variable.getEmojiDialogWH()[1]), ExtractMode.CENTER)):
+      inGame = True
+    if self.detectAD(self.getDiceImage(img, 12)):
+      hasAD = True
+    if self.detectTrophy(self.getDiceImage(img, 4)):
+      inTrophy = True
+
+    return {
+      'Lobby': inLobby, 
+      'Wait': inWaiting, 
+      'Finish': inFinish,
+      'Game': inGame,
+      'Trophy': inTrophy,
+      'AD': hasAD
+    }

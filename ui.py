@@ -9,13 +9,15 @@ from screen import *
 from mode import *
 
 class UI:
+  Version = '1.0.0'
+
   def __init__(self):
     self.window = tk.Tk()
 
     self.bg_task = Task()
 
     # let the window on top
-    self.window.title('Dice Bot')
+    self.window.title(f'Dice Bot {UI.Version}')
 
     # tab
     self.tabControl = ttk.Notebook(self.window)
@@ -96,6 +98,9 @@ class UI:
     self.btn_save_screenshot = tk.Button(self.frame_setting_btn, text='Save\nScreenShot', width=10, height=2, font=('Arial', 12))
     self.btn_save_screenshot.config(command=self.btn_save_screenshot_event, state=DISABLED)
     self.btn_save_screenshot.grid(row=1, column=1)
+    self.btn_detect = tk.Button(self.frame_setting_btn, text='Detect', width=10, height=2, font=('Arial', 12))
+    self.btn_detect.config(command=self.btn_detect_event, state=DISABLED)
+    self.btn_detect.grid(row=1, column=2)
     self.label_screenshot = tk.Label(self.frame_setting_view)
     self.label_screenshot.pack(fill=BOTH)
 
@@ -195,6 +200,15 @@ class UI:
     self.initAll()
 
   def initAll(self):
+    if os.path.exists(self.bg_task.variable.getUpdateFileName()):
+      with open(self.bg_task.variable.getUpdateFileName(), 'r') as f:
+        lines = f.readlines()
+        self.text_log.insert(tk.END, '========================================\n')
+        for line in lines:
+          if len(line.strip()) != 0:
+            self.text_log.insert(tk.END, line)
+        self.text_log.insert(tk.END, '========================================\n')
+        self.text_log.see(tk.END)  
     self.setSettingInputField()
     self.btn_load_config_event()
     self.setSelectDiceField()
@@ -357,6 +371,21 @@ class UI:
       self.btn_save_screenshot.config(state=NORMAL, text='Save\nScreenShot')
     threading.Thread(target = event).start()
 
+  def btn_detect_event(self):
+    self.log('=== Detect Screenshot ===\n')
+    def event():
+      self.btn_detect.config(state=DISABLED, text='detect...')
+      try:
+        enable_result = self.bg_task.detect.detectEnable(self.screenshot_image)
+        status_result = self.bg_task.detect.detectStatus(self.screenshot_image)
+        string = '\n'.join([f'{key}: {val}' for key, val in enable_result.items()] + 
+          [f'{key}: {val}' for key, val in status_result.items()])
+        messagebox.showinfo('Detect Result', string, parent=self.window)
+      except:
+        messagebox.showerror('Detect Error', 'Need screenshot first', parent=self.window)
+      self.btn_detect.config(state=NORMAL, text='Detect')
+    threading.Thread(target = event).start()
+
   def changeImage(self, label: tk.Label, img):
     label.configure(image=img)
     label.image = img
@@ -410,6 +439,7 @@ class UI:
     self.btn_BM.config(state=NORMAL)
     self.btn_draw.config(state=NORMAL)
     self.btn_save_screenshot.config(state=NORMAL)
+    self.btn_detect.config(state=NORMAL)
     self.btn_save_extract_images.config(state=NORMAL)
 
   def log(self, text):
