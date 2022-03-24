@@ -46,7 +46,7 @@ class UI:
 
     self.setting_stringVar = []
     def getSettingLabel(text, row):
-      tk.Label(self.frame_setting, text=text, anchor='e', width=32, font=('Arial', 10)).grid(row=row, column=0)
+      tk.Label(self.frame_setting, text=text, anchor='e', width=32, font=('Arial', 9)).grid(row=row, column=0)
       input_str = StringVar(None)
       input_field = Entry(self.frame_setting, textvariable=input_str, width=20)
       input_field.grid(row=row, column=1)
@@ -69,11 +69,13 @@ class UI:
       'Merge Float Location XY',
       'Battle XY',
       'AD Close XY',
+      'Spell XY',
       'Extract Dice Size WH',
       'Extract Dice Luminance Size WH',
       'Extract SP Luminance Size WH',
       'Extract Summon Luminance Size WH',
       'Extract Level Dice Luminance Size WH',
+      'Extract Spell Luminance Size WH',
       'Emoji Dialog WH',
       'Zoom Ratio'
     ]
@@ -224,13 +226,15 @@ class UI:
       self.setting_stringVar[14].set(dealString(self.bg_task.variable.getMergeFloatLocationXY()))
       self.setting_stringVar[15].set(dealString(self.bg_task.variable.getBattleXY()))
       self.setting_stringVar[16].set(dealString(self.bg_task.variable.getADCloseXY()))
-      self.setting_stringVar[17].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
-      self.setting_stringVar[18].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
-      self.setting_stringVar[19].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
-      self.setting_stringVar[20].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
-      self.setting_stringVar[21].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
-      self.setting_stringVar[22].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
-      self.setting_stringVar[23].set(dealString(self.bg_task.variable.getZoomRatio()))
+      self.setting_stringVar[17].set(dealString(self.bg_task.variable.getSpellXY()))
+      self.setting_stringVar[18].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
+      self.setting_stringVar[19].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
+      self.setting_stringVar[20].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
+      self.setting_stringVar[21].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
+      self.setting_stringVar[22].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
+      self.setting_stringVar[23].set(dealString(self.bg_task.variable.getExtractSpellLuSizeWH()))
+      self.setting_stringVar[24].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
+      self.setting_stringVar[25].set(dealString(self.bg_task.variable.getZoomRatio()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -257,13 +261,15 @@ class UI:
       self.bg_task.variable.setMergeFloatLocationXY(dealString(self.setting_stringVar[14].get()))
       self.bg_task.variable.setBattleXY(dealString(self.setting_stringVar[15].get()))
       self.bg_task.variable.setADCloseXY(dealString(self.setting_stringVar[16].get()))
-      self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar[17].get()))
-      self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar[18].get()))
-      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar[19].get()))
-      self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar[20].get()))
-      self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar[21].get()))
-      self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar[22].get()))
-      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[23].get(), float))
+      self.bg_task.variable.setSpellXY(dealString(self.setting_stringVar[17].get()))
+      self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar[18].get()))
+      self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar[19].get()))
+      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar[20].get()))
+      self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar[21].get()))
+      self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar[22].get()))
+      self.bg_task.variable.setExtractSpellLuSizeWH(dealString(self.setting_stringVar[23].get()))
+      self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar[24].get()))
+      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[25].get(), float))
     
   def btn_run_event(self):
     if self.isRunning == False: # enable
