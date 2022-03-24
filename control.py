@@ -134,7 +134,7 @@ class DiceControl(Control):
   def summonDice(self):
     self.tap(self.modifyZoom(self.variable.getSummonDiceXY()))
   
-  def CastSpell(self):
+  def castSpell(self):
     self.tap(self.modifyZoom(self.variable.getSpellXY()))
 
   def levelUpSP(self):
