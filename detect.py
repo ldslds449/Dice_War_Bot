@@ -319,7 +319,7 @@ class Detect:
       return False
 
   def canSpell(self, luminance: float):
-    if luminance >= 140:
+    if luminance >= 110:
       return True
     else:
       return False
