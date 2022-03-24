@@ -27,12 +27,14 @@ class Variable:
     self.merge_float_location_xy = None
     self.battle_xy = None
     self.ad_close_xy = None
+    self.spell_xy = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
     self.extract_sp_lu_size_wh = None
     self.extract_summon_lu_size_wh = None
     self.extract_level_dice_lu_size_wh = None
+    self.extract_spell_lu_size_wh = None
     self.emoji_dialog_wh = None
 
     self.detect_dice_mode = None
@@ -76,11 +78,13 @@ class Variable:
     self.merge_float_location_xy = str2Type(config.get('Coordinate', 'MergeFloatLocationXY', fallback='0 0'))
     self.battle_xy = str2Type(config.get('Coordinate', 'BattleXY', fallback='0 0'))
     self.ad_close_xy = str2Type(config.get('Coordinate', 'ADCloseXY', fallback='0 0'))
+    self.spell_xy = str2Type(config.get('Coordinate', 'SpellXY', fallback='0 0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
     self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
     self.extract_summon_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
     self.extract_level_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
+    self.extract_spell_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpellLuSizeWH', fallback='5 5'))
     self.emoji_dialog_wh = str2Type(config.get('Coordinate', 'EmojiDialogWH', fallback='30 25'))
     self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
     self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
@@ -113,11 +117,13 @@ class Variable:
     config.set('Coordinate', 'MergeFloatLocationXY', type2Str(self.merge_float_location_xy))
     config.set('Coordinate', 'BattleXY', type2Str(self.battle_xy))
     config.set('Coordinate', 'ADCloseXY', type2Str(self.ad_close_xy))
+    config.set('Coordinate', 'SpellXY', type2Str(self.spell_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
     config.set('Coordinate', 'ExtractSummonLuSizeWH', type2Str(self.extract_summon_lu_size_wh))
     config.set('Coordinate', 'ExtractLevelDiceLuSizeWH', type2Str(self.extract_level_dice_lu_size_wh))
+    config.set('Coordinate', 'ExtractSpellLuSizeWH', type2Str(self.extract_spell_lu_size_wh))
     config.set('Coordinate', 'EmojiDialogWH', type2Str(self.emoji_dialog_wh))
     config.add_section('Window')
     config.set('Window', 'ZoomRatio', type2Str(self.zoom_ratio))
@@ -172,6 +178,9 @@ class Variable:
   def setADCloseXY(self, _value: Tuple[int,int]):
     self.ad_close_xy = _value
 
+  def setSpellXY(self, _value: Tuple[int,int]):
+    self.spell_xy = _value
+
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
 
@@ -186,6 +195,9 @@ class Variable:
 
   def setExtractLevelDiceLuSizeWH(self, _value: Tuple[int,int]):
     self.extract_level_dice_lu_size_wh = _value
+
+  def setExtractSpellLuSizeWH(self, _value: Tuple[int,int]):
+    self.extract_spell_lu_size_wh = _value
 
   def setEmojiDialogWH(self, _value: Tuple[int,int]):
     self.emoji_dialog_wh = _value
@@ -249,6 +261,9 @@ class Variable:
   def getADCloseXY(self):
     return self.ad_close_xy
 
+  def getSpellXY(self):
+    return self.spell_xy
+
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh
 
@@ -263,6 +278,9 @@ class Variable:
 
   def getExtractLevelDiceLuSizeWH(self):
     return self.extract_level_dice_lu_size_wh
+
+  def getExtractSpellLuSizeWH(self):
+    return self.extract_spell_lu_size_wh
 
   def getEmojiDialogWH(self):
     return self.emoji_dialog_wh

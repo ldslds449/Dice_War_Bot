@@ -162,7 +162,7 @@ class Detect:
     img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
 
     # binary
-    _, img_binary = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)
+    _, img_binary = cv2.threshold(img_gray, 140, 255, cv2.THRESH_BINARY)
     kernel = np.array([
         [0, 0, 1, 0, 0],
         [0, 1, 1, 1, 0],
@@ -318,6 +318,12 @@ class Detect:
     else:
       return False
 
+  def canSpell(self, luminance: float):
+    if luminance >= 140:
+      return True
+    else:
+      return False
+
   # x, y, w, h
   def extractImage(self, img, region: Tuple[int, int, int, int], mode):
     if mode == ExtractMode.LEFTTOP:
@@ -359,7 +365,8 @@ class Detect:
       return (a[0]+b[0], a[1]+b[1])
 
     # color
-    color = (0, 0, 255) # red
+    red = (0, 0, 255) # red
+    green = (0, 255, 0) # green
 
     # draw board dice
     for i in range(self.variable.getBoardSize()):
@@ -370,32 +377,35 @@ class Detect:
       leftCorner = tupleAdd(leftCorner, 
         (-self.variable.getExtractDiceSizeWH()[0]//2, -self.variable.getExtractDiceSizeWH()[1]//2))
       cv2.rectangle(img, leftCorner, 
-        tupleAdd(leftCorner, self.variable.getExtractDiceSizeWH()), color, 2)
+        tupleAdd(leftCorner, self.variable.getExtractDiceSizeWH()), red, 2)
 
     # draw level
     for i in range(self.variable.getPartyDiceSize()):
       cv2.circle(img, tupleAdd(self.variable.getLevelDiceLeftXY(), 
-        (self.variable.getLevelDiceOffsetX()*i, 0)), 5, color, -1)
+        (self.variable.getLevelDiceOffsetX()*i, 0)), 5, red, -1)
 
     # draw summon
-    cv2.circle(img, self.variable.getSummonDiceXY(), 5, color, -1)
+    cv2.circle(img, self.variable.getSummonDiceXY(), 5, red, -1)
 
     # draw sp
-    cv2.circle(img, self.variable.getLevelSpXY(), 5, color, -1)
+    cv2.circle(img, self.variable.getLevelSpXY(), 5, red, -1)
 
     # draw emoji
     leftCorner = tupleAdd(self.variable.getEmojiDialogXY(), 
       (-self.variable.getEmojiDialogWH()[0]//2, -self.variable.getEmojiDialogWH()[1]//2))
     cv2.rectangle(img, leftCorner, 
-      tupleAdd(leftCorner, self.variable.getEmojiDialogWH()), color, 2)
+      tupleAdd(leftCorner, self.variable.getEmojiDialogWH()), green, 2)
     for i in range(self.variable.getEmojiSize()):
       cv2.circle(img, tupleAdd(self.variable.getEmojiLeftXY(), 
-        (self.variable.getEmojiOffsetX()*i, 0)), 5, color, -1)
+        (self.variable.getEmojiOffsetX()*i, 0)), 5, red, -1)
 
     # draw battle
-    cv2.circle(img, self.variable.getBattleXY(), 5, color, -1)
+    cv2.circle(img, self.variable.getBattleXY(), 5, green, -1)
 
     # draw AD close
-    cv2.circle(img, self.variable.getADCloseXY(), 5, color, -1)
+    cv2.circle(img, self.variable.getADCloseXY(), 5, red, -1)
+
+    # draw spell
+    cv2.circle(img, self.variable.getSpellXY(), 5, green, -1)
 
     return img

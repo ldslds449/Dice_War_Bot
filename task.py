@@ -229,6 +229,9 @@ class Task:
     sp_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
       (self.variable.getLevelSpXY()[0], self.variable.getLevelSpXY()[1],
       self.variable.getExtractSpLuSizeWH()[0], self.variable.getExtractSpLuSizeWH()[1]), ExtractMode.CENTER))
+    spell_lu = self.detect.getAverageLuminance(self.detect.extractImage(im, 
+      (self.variable.getSpellXY()[0], self.variable.getSpellXY()[1],
+      self.variable.getExtractSpellLuSizeWH()[0], self.variable.getExtractSpellLuSizeWH()[1]), ExtractMode.CENTER))
     level_lu = []
     for i in range(self.variable.getPartyDiceSize()):
       level_dice_x = self.variable.getLevelDiceLeftXY()[0] + i*self.variable.getLevelDiceOffsetX()
@@ -252,6 +255,7 @@ class Task:
 
     print(f'Summon: {summon_lu:3.1f} --- {self.detect.canSummon(summon_lu)}')
     print(f'SP: {sp_lu:3.1f} --- {self.detect.canLevelSP(sp_lu)}')
+    print(f'Spell: {spell_lu:3.1f} --- {self.detect.canSpell(spell_lu)}')
     for i in range(self.variable.getPartyDiceSize()):
       print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.detect.canLevelDice(level_lu[i])}')
 
@@ -263,6 +267,7 @@ class Task:
       count, count_sorted, location, self.board_dice, 
       self.detect.canSummon(summon_lu), self.detect.canLevelSP(sp_lu),
       [self.detect.canLevelDice(level_lu[i]) for i in range(self.variable.getPartyDiceSize())],
+      self.detect.canSpell(spell_lu),
       countTotal, self.board_dice_star
     )
     
