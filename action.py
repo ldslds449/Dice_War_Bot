@@ -163,4 +163,4 @@ class MyAction(Action):
           if len(star_1_PopGun_Loc) >= 2:
             diceControl.mergeDice(star_1_PopGun_Loc[0] + 1, star_1_PopGun_Loc[1] + 1)
     
-    time.sleep(1)
+    time.sleep(0.8)
