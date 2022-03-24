@@ -445,11 +445,18 @@ class Detect:
       level_lu.append(self.getAverageLuminance(self.extractImage(img, 
         (level_dice_x, level_dice_y,
         self.variable.getExtractLevelDiceLuSizeWH()[0], self.variable.getExtractLevelDiceLuSizeWH()[1]), ExtractMode.CENTER)))
+
+    print(f'Summon: {summon_lu:3.1f} --- {self.canSummon(summon_lu)}')
+    print(f'SP: {sp_lu:3.1f} --- {self.canLevelSP(sp_lu)}')
+    print(f'Spell: {spell_lu:3.1f} --- {self.canSpell(spell_lu)}')
+    for i in range(len(level_lu)):
+      print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.canLevelDice(level_lu[i])}')
+
     return {
-      'Summon': summon_lu, 
-      'Sp': sp_lu, 
-      'Spell': spell_lu,
-      'Level': level_lu
+      'Summon': self.canSummon(summon_lu), 
+      'Sp': self.canLevelSP(sp_lu), 
+      'Spell': self.canSpell(spell_lu),
+      'Level': [self.canLevelDice(level_lu[i]) for i in range(len(level_lu))]
     }
 
   def detectStatus(self, img):

@@ -194,10 +194,10 @@ class Task:
       return
 
     enable_result = self.detect.detectEnable(im)
-    summon_lu = enable_result['Summon']
-    sp_lu = enable_result['Sp']
-    spell_lu = enable_result['Spell']
-    level_lu = enable_result['Level']
+    canSummon = enable_result['Summon']
+    canSP = enable_result['Sp']
+    canSpell = enable_result['Spell']
+    canLevel = enable_result['Level']
 
     count = {}
     for dice in self.variable.getDiceParty() + ['Blank']:
@@ -212,21 +212,16 @@ class Task:
     count_sorted = sorted(count.items(), key=lambda x : x[1], reverse=True)
     countTotal = sum([x[1] for x in count.items() if x[0] != 'Blank'])
 
-    print(f'Summon: {summon_lu:3.1f} --- {self.detect.canSummon(summon_lu)}')
-    print(f'SP: {sp_lu:3.1f} --- {self.detect.canLevelSP(sp_lu)}')
-    print(f'Spell: {spell_lu:3.1f} --- {self.detect.canSpell(spell_lu)}')
-    for i in range(self.variable.getPartyDiceSize()):
-      print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.detect.canLevelDice(level_lu[i])}')
-
     sys.stdout.flush()
     print("\n================")
 
     MyAction.action(
       self.diceControl, self.findMergeDice,
       count, count_sorted, location, self.board_dice, 
-      self.detect.canSummon(summon_lu), self.detect.canLevelSP(sp_lu),
-      [self.detect.canLevelDice(level_lu[i]) for i in range(self.variable.getPartyDiceSize())],
-      self.detect.canSpell(spell_lu),
+      canSummon, 
+      canSP,
+      canLevel,
+      canSpell,
       countTotal, self.board_dice_star
     )
     
