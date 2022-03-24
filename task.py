@@ -161,7 +161,7 @@ class Task:
           if watchAD and hasAD:
             log('=== Detect AD ===\n')
             # deal with AD
-            time.sleep(3)
+            time.sleep(5)
             self.diceControl.watchAD()
             time.sleep(30)
             if detectLobbyAgain(): return # check if in lobby
