@@ -37,52 +37,78 @@ class UI:
     self.frame_log.grid(column=0, row=2, columnspan=5)
     self.frame_detect_btn = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_detect_btn.grid(column=5, row=0, rowspan=3, sticky=N)
-    self.frame_btn = tk.Frame(self.window, height=240)
+    self.frame_btn = tk.Frame(self.window)
     self.frame_btn.pack(expand=1, fill="x")
-    self.frame_setting = tk.Frame(self.tab_setting)
-    self.frame_setting.grid(column=0, row=0)
+    self.frame_setting = tk.Frame(self.tab_setting, pady=10, height=500)
+    self.frame_setting.grid(column=0, row=0, sticky='nswe')
+    self.frame_setting.pack_propagate(0)
+    self.frame_setting_page_btn = tk.Frame(self.tab_setting, pady=5)
+    self.frame_setting_page_btn.grid(column=0, row=1)
     self.frame_setting_btn = tk.Frame(self.tab_setting, pady=10)
-    self.frame_setting_btn.grid(column=0, row=1)
+    self.frame_setting_btn.grid(column=0, row=2)
     self.frame_setting_view = tk.Frame(self.tab_setting, padx=20)
-    self.frame_setting_view.grid(column=1, row=0, rowspan=2)
+    self.frame_setting_view.grid(column=1, row=0, rowspan=3)
+    self.tab_setting.columnconfigure(0, weight=1)
+    self.tab_setting.columnconfigure(1, weight=2)
+
+    self.setting_page_size = 3
+    self.now_page_idx = 0
+    self.frame_setting_pages = []
+    for i in range(self.setting_page_size):
+      frame_page = tk.Frame(self.frame_setting)
+      if i == 0:
+        frame_page.pack(fill=BOTH, expand=True)
+      self.frame_setting_pages.append(frame_page)
+
+    self.btn_previous_page = tk.Button(self.frame_setting_page_btn, text='<', width=10, height=1, font=('Arial', 8))
+    self.btn_previous_page.config(command=self.btn_previous_page_event)
+    self.btn_previous_page.pack(side=LEFT, padx=(0, 80))
+    self.btn_previous_page.config(state=DISABLED)
+    self.btn_next_page = tk.Button(self.frame_setting_page_btn, text='>', width=10, height=1, font=('Arial', 8))
+    self.btn_next_page.config(command=self.btn_next_page_event)
+    self.btn_next_page.pack(side=RIGHT, padx=(80, 0))
+    self.btn_next_page.config(state=(DISABLED if self.now_page_idx == self.setting_page_size-1 else NORMAL))
 
     self.setting_stringVar = []
-    def getSettingLabel(text, row):
-      tk.Label(self.frame_setting, text=text, anchor='e', width=32, font=('Arial', 9)).grid(row=row, column=0)
+    def getSettingLabel(text, row, page):
+      tk.Label(self.frame_setting_pages[page], text=text, anchor='e', width=32, font=('Arial', 9)).grid(row=row, column=0)
       input_str = StringVar(None)
-      input_field = Entry(self.frame_setting, textvariable=input_str, width=20)
+      input_field = Entry(self.frame_setting_pages[page], textvariable=input_str, width=20)
       input_field.grid(row=row, column=1)
       self.setting_stringVar.append(input_str)
-    SettingLabelList = [
-      'Control Mode',
-      'Emulator',
-      'Detect Dice Mode',
-      'ADB IP',
-      'ADB Port',
-      'Board Left Top XY',
-      'Board Dice Offset XY',
-      'Level Dice Left XY',
-      'Level Dice Offset X',
-      'Emoji Dialog XY',
-      'Emoji Left XY',
-      'Emoji Offset X',
-      'Summon Dice XY',
-      'Level SP XY',
-      'Merge Float Location XY',
-      'Battle XY',
-      'AD Close XY',
-      'Spell XY',
-      'Extract Dice Size WH',
-      'Extract Dice Luminance Size WH',
-      'Extract SP Luminance Size WH',
-      'Extract Summon Luminance Size WH',
-      'Extract Level Dice Luminance Size WH',
-      'Extract Spell Luminance Size WH',
-      'Emoji Dialog WH',
-      'Zoom Ratio'
-    ]
-    for i, label in enumerate(SettingLabelList):
-      getSettingLabel(f'{label}: ', i)
+
+    SettingLabelDict = {
+      'Control Mode': 0,
+      'Emulator': 0,
+      'Detect Dice Mode': 0,
+      'ADB IP': 0,
+      'ADB Port': 0,
+      'Board Left Top XY': 1,
+      'Board Dice Offset XY': 1,
+      'Level Dice Left XY': 1,
+      'Level Dice Offset X': 1,
+      'Emoji Dialog XY': 1,
+      'Emoji Left XY': 1,
+      'Emoji Offset X': 1,
+      'Summon Dice XY': 1,
+      'Level SP XY': 1,
+      'Merge Float Location XY': 1,
+      'Battle XY': 1,
+      'AD Close XY': 1,
+      'Spell XY': 1,
+      'Extract Dice Size WH': 2,
+      'Extract Dice Luminance Size WH': 2,
+      'Extract SP Luminance Size WH': 2,
+      'Extract Summon Luminance Size WH': 2,
+      'Extract Level Dice Luminance Size WH': 2,
+      'Extract Spell Luminance Size WH': 2,
+      'Emoji Dialog WH': 2,
+      'Zoom Ratio': 0,
+    }
+    for i,(label,page) in enumerate(SettingLabelDict.items()):
+      getSettingLabel(f'{label}: ', i, page)
+
+      
     btn_save_config = tk.Button(self.frame_setting_btn, text='Save', width=10, height=2, font=('Arial', 12))
     btn_save_config.config(command=self.btn_save_config_event)
     btn_save_config.grid(row=0, column=0)
@@ -319,6 +345,22 @@ class UI:
     t = threading.Thread(target = bm_function)
     t.start()
 
+  def btn_next_page_event(self):
+    self.frame_setting_pages[self.now_page_idx].pack_forget()
+    self.now_page_idx += 1
+    self.frame_setting_pages[self.now_page_idx].pack(fill=BOTH, expand=True)
+    if self.now_page_idx == self.setting_page_size - 1:
+      self.btn_next_page.config(state=DISABLED)
+    self.btn_previous_page.config(state=NORMAL)
+
+  def btn_previous_page_event(self):
+    self.frame_setting_pages[self.now_page_idx].pack_forget()
+    self.now_page_idx -= 1
+    self.frame_setting_pages[self.now_page_idx].pack(fill=BOTH, expand=True)
+    if self.now_page_idx == 0:
+      self.btn_previous_page.config(state=DISABLED)
+    self.btn_next_page.config(state=NORMAL)
+
   def limitImageSize(self, img):
     h,w,_ = img.shape
     height_limit = 600
@@ -397,6 +439,7 @@ class UI:
   def changeImage(self, label: tk.Label, img):
     label.configure(image=img)
     label.image = img
+    label.update()
 
   def ckeckBtn_select_dice_event(self):
     self.getSelectDiceField()
