@@ -17,3 +17,7 @@
 ## Version 1.0.3
 
 1. Add random offset to mimic human behavior.
+
+## Version 1.0.4
+
+1. Add disconnect button after connecting.

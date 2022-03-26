@@ -70,12 +70,14 @@ class UI:
     self.btn_next_page.config(state=(DISABLED if self.now_page_idx == self.setting_page_size-1 else NORMAL))
 
     self.setting_stringVar = {}
+    self.setting_entry = {}
     def getSettingLabel(text, row, page):
       tk.Label(self.frame_setting_pages[page], text=f'{text}: ', anchor='e', width=32, font=('Arial', 9)).grid(row=row, column=0)
       input_str = StringVar(None)
       input_field = Entry(self.frame_setting_pages[page], textvariable=input_str, width=20)
       input_field.grid(row=row, column=1)
       self.setting_stringVar[text] = input_str
+      self.setting_entry[text] = input_field
 
     SettingLabelDict = {
       'Control Mode': 0,
@@ -235,6 +237,7 @@ class UI:
     self.btn_connect = tk.Button(self.frame_btn, text='Connect', width=15, height=2, font=('Arial', 12))
     self.btn_connect.config(command=self.btn_ADB_connect_event)
     self.btn_connect.pack(fill=BOTH, side=RIGHT, expand=True)
+    self.isConnected = False
     self.btn_init = tk.Button(self.frame_btn, text='Init', width=15, height=3, font=('Arial', 12))
     self.btn_init.config(command=self.btn_init_event, state=DISABLED)
     self.btn_init.pack(fill=BOTH, side=RIGHT, expand=True)
@@ -473,28 +476,57 @@ class UI:
     self.window.call('wm', 'attributes', '.', '-topmost', self.topWindow_booleanVar.get())
 
   def btn_ADB_connect_event(self):
-    if self.bg_task.variable.getControlMode() == ControlMode.WIN32API:
-      self.bg_task.getWindowID()
-      self.log(f'WindowID: {self.bg_task.windowID}\n')
-      self.bg_task.init()
-      self.enableButton()
-    elif self.bg_task.variable.getControlMode() == ControlMode.ADB:
-      self.log('=== Start Connecting ===\n')
-      # connect to device
-      def adb_connect():
+    if self.isConnected == False:
+      if self.bg_task.variable.getControlMode() == ControlMode.WIN32API:
         self.btn_connect.config(state=DISABLED, text='Connecting...')
-        s, r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
-        self.log(s)
-        self.bg_task.init()
-        if r:
+        try:
+          self.bg_task.getWindowID()
+          self.log(f'WindowID: {self.bg_task.windowID}\n')
+          self.bg_task.init()
           self.enableButton()
-          self.btn_connect.config(state=DISABLED, text='Connected')
-        else:
-          messagebox.showerror('Connect Error', s, parent=self.window)
+          self.btn_connect.config(state=NORMAL, text='Disconnect')
+          self.isConnected = True
+          # disable control mode setting field
+          self.setting_entry['Control Mode'].config(state=DISABLED)
+        except RuntimeError as error:
+          messagebox.showerror('Connect Error', error, parent=self.window)
           self.btn_connect.config(state=NORMAL, text='Connect')
 
-      t = threading.Thread(target = adb_connect)
-      t.start()
+      elif self.bg_task.variable.getControlMode() == ControlMode.ADB:
+        self.log('=== Start Connecting ===\n')
+        # connect to device
+        def adb_connect():
+          self.btn_connect.config(state=DISABLED, text='Connecting...')
+          s, r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
+          self.log(s)
+          if r:
+            self.bg_task.init()
+            self.enableButton()
+            self.btn_connect.config(state=NORMAL, text='Disconnect')
+            self.isConnected = True
+            # disable control mode setting field
+            self.setting_entry['Control Mode'].config(state=DISABLED)
+          else:
+            messagebox.showerror('Connect Error', s, parent=self.window)
+            self.btn_connect.config(state=NORMAL, text='Connect')
+
+        t = threading.Thread(target = adb_connect)
+        t.start()
+    else:
+      self.log('=== Disconnecting ===\n')
+      self.isConnected = False
+      # enable control mode setting field
+      self.setting_entry['Control Mode'].config(state=NORMAL)
+      if self.bg_task.variable.getControlMode() == ControlMode.WIN32API:
+        self.btn_connect.config(state=NORMAL, text='Connect')
+      elif self.bg_task.variable.getControlMode() == ControlMode.ADB:
+        # disconnect
+        def adb_disconnect():
+          self.btn_connect.config(state=DISABLED, text='Disconnecting...')
+          ADB.disconnect()
+          self.btn_connect.config(state=NORMAL, text='Connect')
+
+        threading.Thread(target = adb_disconnect).start()
 
   def enableButton(self):
     self.btn_run.config(state=NORMAL)
