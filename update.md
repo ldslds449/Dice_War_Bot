@@ -35,3 +35,7 @@
 ## Version 1.0.7
 
 1. Fix detect delay bug.
+
+## Version 1.0.8
+
+1. Show full traceback message while error occur.

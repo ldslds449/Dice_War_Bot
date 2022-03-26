@@ -1,5 +1,6 @@
 import tkinter as tk
 import threading
+import traceback
 from tkinter import ttk
 from tkinter import *
 from tkinter import messagebox
@@ -9,7 +10,7 @@ from screen import *
 from mode import *
 
 class UI:
-  Version = '1.0.5'
+  Version = '1.0.8'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -574,8 +575,8 @@ class UI:
           self.autoPlay_booleanVar.get(), 
           self.watchAD_booleanVar.get(),
           battleMode)
-      except Exception as e:
-        self.log(f'Error: {e}')
+      except Exception:
+        self.log(f'{traceback.format_exc()}\n')
         stopDetect()
         break
       
