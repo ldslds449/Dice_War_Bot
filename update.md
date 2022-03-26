@@ -13,3 +13,7 @@
 
 1. Split setting to several page.
 2. Change waiting detect function parameters.
+
+## Version 1.0.3
+
+1. Add random offset to mimic human behavior.

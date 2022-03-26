@@ -2,7 +2,8 @@ import win32con
 import win32api
 import time
 import math
-from typing import List, Tuple
+import random as rd
+from typing import Tuple
 
 from variable import *
 from adb import *
@@ -98,6 +99,20 @@ class DiceControl(Control):
     else:
       raise Exception(f'modifyZoom:: do not support this type --- {type(value)}')
 
+  def randomOffset(self, value):
+    offset_value = self.variable.getRandomOffset()
+    if type(value) is tuple:
+      list_value = list(value)
+      for i in range(len(list_value)):
+        offset = rd.randint(-offset_value, offset_value)
+        list_value[i] = list_value[i] + offset
+      return tuple(list_value)
+    elif type(value) is int or type(value) is float:
+      offset = rd.randint(-offset_value, offset_value)
+      return int(value+offset)
+    else:
+      raise Exception(f'randomOffset:: do not support this type --- {type(value)}')
+
   def getBoardDiceXY(self, idx: int):
     idx_r = idx // self.col
     idx_c = idx % self.col
@@ -106,18 +121,18 @@ class DiceControl(Control):
     leftTopDice_y = self.modifyZoom(self.variable.getBoardDiceLeftTopXY()[1])
     offset_x = self.modifyZoom(self.variable.getBoardDiceOffsetXY()[0])
     offset_y = self.modifyZoom(self.variable.getBoardDiceOffsetXY()[1])
-    return (leftTopDice_x+idx_c*offset_x, leftTopDice_y+idx_r*offset_y)
+    return self.randomOffset((leftTopDice_x+idx_c*offset_x, leftTopDice_y+idx_r*offset_y))
 
   def getLevelDiceXY(self, idx: int):
     leftDice_x = self.modifyZoom(self.variable.getLevelDiceLeftXY()[0])
     leftDice_y = self.modifyZoom(self.variable.getLevelDiceLeftXY()[1])
     offset_x = self.modifyZoom(self.variable.getLevelDiceOffsetX())
-    return (leftDice_x+idx*offset_x, leftDice_y)
+    return self.randomOffset((leftDice_x+idx*offset_x, leftDice_y))
 
   def getEmojiXY(self, idx: int):
     leftEmoji = self.modifyZoom(self.variable.getEmojiLeftXY())
     offset_x = self.modifyZoom(self.variable.getEmojiOffsetX())
-    return (leftEmoji[0]+idx*offset_x, leftEmoji[1])
+    return self.randomOffset((leftEmoji[0]+idx*offset_x, leftEmoji[1]))
 
   def mergeDice(self, src: int, dst: int):
     src_xy = self.getBoardDiceXY(src-1) # rescale [1~15] to [0~14]
@@ -126,26 +141,27 @@ class DiceControl(Control):
 
   def dragPressDice(self, src: int):
     src_xy = self.getBoardDiceXY(src-1) # rescale [1~15] to [0~14]
-    self.drag_press(src_xy, self.modifyZoom(self.variable.getMergeFloatLocationXY()))
+    dst_xy = self.randomOffset(self.modifyZoom(self.variable.getMergeFloatLocationXY()))
+    self.drag_press(src_xy, dst_xy)
 
   def dragUpDice(self):
-    self.drag_up(self.modifyZoom(self.variable.getMergeFloatLocationXY()))
+    self.drag_up(self.randomOffset(self.modifyZoom(self.variable.getMergeFloatLocationXY())))
 
   def summonDice(self):
-    self.tap(self.modifyZoom(self.variable.getSummonDiceXY()))
+    self.tap(self.randomOffset(self.modifyZoom(self.variable.getSummonDiceXY())))
   
   def castSpell(self):
-    self.tap(self.modifyZoom(self.variable.getSpellXY()))
+    self.tap(self.randomOffset(self.modifyZoom(self.variable.getSpellXY())))
 
   def levelUpSP(self):
-    self.tap(self.modifyZoom(self.variable.getLevelSpXY()))
+    self.tap(self.randomOffset(self.modifyZoom(self.variable.getLevelSpXY())))
 
   def levelUpDice(self, idx: int):
     dice_xy = self.getLevelDiceXY(idx-1) # rescale [1~5] to [0~4]
     self.tap(dice_xy)
 
   def openEmojiDialog(self):
-    self.tap(self.modifyZoom(self.variable.getEmojiDialogXY()))
+    self.tap(self.randomOffset(self.modifyZoom(self.variable.getEmojiDialogXY())))
 
   def sendEmoji(self, idx: int):
     self.openEmojiDialog()
@@ -166,10 +182,10 @@ class DiceControl(Control):
     elif battleMode == BattleMode.BATTLE_2V2:
       self.tap(self.getBoardDiceXY(9))
     time.sleep(1)
-    self.tap(self.modifyZoom(self.variable.getBattleXY()))
+    self.tap(self.randomOffset(self.modifyZoom(self.variable.getBattleXY())))
 
   def watchAD(self):
     self.tap(self.getBoardDiceXY(12))
 
   def closeAD(self):
-    self.tap(self.modifyZoom(self.variable.getADCloseXY()))
+    self.tap(self.randomOffset(self.modifyZoom(self.variable.getADCloseXY())))

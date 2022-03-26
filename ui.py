@@ -69,13 +69,13 @@ class UI:
     self.btn_next_page.pack(side=RIGHT, padx=(80, 0))
     self.btn_next_page.config(state=(DISABLED if self.now_page_idx == self.setting_page_size-1 else NORMAL))
 
-    self.setting_stringVar = []
+    self.setting_stringVar = {}
     def getSettingLabel(text, row, page):
-      tk.Label(self.frame_setting_pages[page], text=text, anchor='e', width=32, font=('Arial', 9)).grid(row=row, column=0)
+      tk.Label(self.frame_setting_pages[page], text=f'{text}: ', anchor='e', width=32, font=('Arial', 9)).grid(row=row, column=0)
       input_str = StringVar(None)
       input_field = Entry(self.frame_setting_pages[page], textvariable=input_str, width=20)
       input_field.grid(row=row, column=1)
-      self.setting_stringVar.append(input_str)
+      self.setting_stringVar[text] = input_str
 
     SettingLabelDict = {
       'Control Mode': 0,
@@ -83,6 +83,7 @@ class UI:
       'Detect Dice Mode': 0,
       'ADB IP': 0,
       'ADB Port': 0,
+      'Random Offset': 0,
       'Board Left Top XY': 1,
       'Board Dice Offset XY': 1,
       'Level Dice Left XY': 1,
@@ -106,29 +107,39 @@ class UI:
       'Zoom Ratio': 0,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
-      getSettingLabel(f'{label}: ', i, page)
+      getSettingLabel(label, i, page)
 
-      
+    # save config
     btn_save_config = tk.Button(self.frame_setting_btn, text='Save', width=10, height=2, font=('Arial', 12))
     btn_save_config.config(command=self.btn_save_config_event)
     btn_save_config.grid(row=0, column=0)
+    
+    # load config
     btn_load_config = tk.Button(self.frame_setting_btn, text='Load', width=10, height=2, font=('Arial', 12))
     btn_load_config.config(command=self.btn_load_config_event)
     btn_load_config.grid(row=0, column=1)
+    
+    # screenshot
     self.btn_screenshot = tk.Button(self.frame_setting_btn, text='ScreenShot', width=10, height=2, font=('Arial', 12))
     self.btn_screenshot.config(command=self.btn_screenshot_event, state=DISABLED)
     self.btn_screenshot.grid(row=0, column=2)
+    self.label_screenshot = tk.Label(self.frame_setting_view)
+    self.label_screenshot.pack(fill=BOTH)
+    
+    # draw
     self.btn_draw = tk.Button(self.frame_setting_btn, text='Draw', width=10, height=2, font=('Arial', 12))
     self.btn_draw.config(command=self.btn_draw_event, state=DISABLED)
     self.btn_draw.grid(row=1, column=0)
+    
+    # save screenshot
     self.btn_save_screenshot = tk.Button(self.frame_setting_btn, text='Save\nScreenShot', width=10, height=2, font=('Arial', 12))
     self.btn_save_screenshot.config(command=self.btn_save_screenshot_event, state=DISABLED)
     self.btn_save_screenshot.grid(row=1, column=1)
+    
+    # detect
     self.btn_detect = tk.Button(self.frame_setting_btn, text='Detect', width=10, height=2, font=('Arial', 12))
     self.btn_detect.config(command=self.btn_detect_event, state=DISABLED)
     self.btn_detect.grid(row=1, column=2)
-    self.label_screenshot = tk.Label(self.frame_setting_view)
-    self.label_screenshot.pack(fill=BOTH)
 
     # board
     self.label_board_dice = []
@@ -256,32 +267,33 @@ class UI:
           return ' '.join([str(x) for x in int_list])
         else:
           return str(s)
-      self.setting_stringVar[0].set(dealString(int(self.bg_task.variable.getControlMode())))
-      self.setting_stringVar[1].set(dealString(int(self.bg_task.variable.getEmulatorMode())))
-      self.setting_stringVar[2].set(dealString(int(self.bg_task.variable.getDetectDiceMode())))
-      self.setting_stringVar[3].set(self.bg_task.variable.getADBIP())
-      self.setting_stringVar[4].set(dealString(self.bg_task.variable.getADBPort()))
-      self.setting_stringVar[5].set(dealString(self.bg_task.variable.getBoardDiceLeftTopXY()))
-      self.setting_stringVar[6].set(dealString(self.bg_task.variable.getBoardDiceOffsetXY()))
-      self.setting_stringVar[7].set(dealString(self.bg_task.variable.getLevelDiceLeftXY()))
-      self.setting_stringVar[8].set(dealString(self.bg_task.variable.getLevelDiceOffsetX()))
-      self.setting_stringVar[9].set(dealString(self.bg_task.variable.getEmojiDialogXY()))
-      self.setting_stringVar[10].set(dealString(self.bg_task.variable.getEmojiLeftXY()))
-      self.setting_stringVar[11].set(dealString(self.bg_task.variable.getEmojiOffsetX()))
-      self.setting_stringVar[12].set(dealString(self.bg_task.variable.getSummonDiceXY()))
-      self.setting_stringVar[13].set(dealString(self.bg_task.variable.getLevelSpXY()))
-      self.setting_stringVar[14].set(dealString(self.bg_task.variable.getMergeFloatLocationXY()))
-      self.setting_stringVar[15].set(dealString(self.bg_task.variable.getBattleXY()))
-      self.setting_stringVar[16].set(dealString(self.bg_task.variable.getADCloseXY()))
-      self.setting_stringVar[17].set(dealString(self.bg_task.variable.getSpellXY()))
-      self.setting_stringVar[18].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
-      self.setting_stringVar[19].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
-      self.setting_stringVar[20].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
-      self.setting_stringVar[21].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
-      self.setting_stringVar[22].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
-      self.setting_stringVar[23].set(dealString(self.bg_task.variable.getExtractSpellLuSizeWH()))
-      self.setting_stringVar[24].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
-      self.setting_stringVar[25].set(dealString(self.bg_task.variable.getZoomRatio()))
+      self.setting_stringVar['Control Mode'].set(dealString(int(self.bg_task.variable.getControlMode())))
+      self.setting_stringVar['Emulator'].set(dealString(int(self.bg_task.variable.getEmulatorMode())))
+      self.setting_stringVar['Detect Dice Mode'].set(dealString(int(self.bg_task.variable.getDetectDiceMode())))
+      self.setting_stringVar['ADB IP'].set(self.bg_task.variable.getADBIP())
+      self.setting_stringVar['ADB Port'].set(dealString(self.bg_task.variable.getADBPort()))
+      self.setting_stringVar['Random Offset'].set(dealString(self.bg_task.variable.getRandomOffset()))
+      self.setting_stringVar['Board Left Top XY'].set(dealString(self.bg_task.variable.getBoardDiceLeftTopXY()))
+      self.setting_stringVar['Board Dice Offset XY'].set(dealString(self.bg_task.variable.getBoardDiceOffsetXY()))
+      self.setting_stringVar['Level Dice Left XY'].set(dealString(self.bg_task.variable.getLevelDiceLeftXY()))
+      self.setting_stringVar['Level Dice Offset X'].set(dealString(self.bg_task.variable.getLevelDiceOffsetX()))
+      self.setting_stringVar['Emoji Dialog XY'].set(dealString(self.bg_task.variable.getEmojiDialogXY()))
+      self.setting_stringVar['Emoji Left XY'].set(dealString(self.bg_task.variable.getEmojiLeftXY()))
+      self.setting_stringVar['Emoji Offset X'].set(dealString(self.bg_task.variable.getEmojiOffsetX()))
+      self.setting_stringVar['Summon Dice XY'].set(dealString(self.bg_task.variable.getSummonDiceXY()))
+      self.setting_stringVar['Level SP XY'].set(dealString(self.bg_task.variable.getLevelSpXY()))
+      self.setting_stringVar['Merge Float Location XY'].set(dealString(self.bg_task.variable.getMergeFloatLocationXY()))
+      self.setting_stringVar['Battle XY'].set(dealString(self.bg_task.variable.getBattleXY()))
+      self.setting_stringVar['AD Close XY'].set(dealString(self.bg_task.variable.getADCloseXY()))
+      self.setting_stringVar['Spell XY'].set(dealString(self.bg_task.variable.getSpellXY()))
+      self.setting_stringVar['Extract Dice Size WH'].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
+      self.setting_stringVar['Extract Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
+      self.setting_stringVar['Extract SP Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
+      self.setting_stringVar['Extract Summon Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
+      self.setting_stringVar['Extract Level Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
+      self.setting_stringVar['Extract Spell Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpellLuSizeWH()))
+      self.setting_stringVar['Emoji Dialog WH'].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
+      self.setting_stringVar['Zoom Ratio'].set(dealString(self.bg_task.variable.getZoomRatio()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -291,32 +303,33 @@ class UI:
         s_split = s.split(' ')
         int_list = [type(x) for x in s_split]
         return int_list[0] if len(int_list) == 1 else tuple(int_list)
-      self.bg_task.variable.setControlMode(ControlMode(dealString(self.setting_stringVar[0].get())))
-      self.bg_task.variable.setEmulatorMode(Emulator(dealString(self.setting_stringVar[1].get())))
-      self.bg_task.variable.setDetectDiceMode(DetectDiceMode(dealString(self.setting_stringVar[2].get())))
-      self.bg_task.variable.setADBIP(self.setting_stringVar[3].get())
-      self.bg_task.variable.setADBPort(dealString(self.setting_stringVar[4].get()))
-      self.bg_task.variable.setBoardDiceLeftTopXY(dealString(self.setting_stringVar[5].get()))
-      self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar[6].get()))
-      self.bg_task.variable.setLevelDiceLeftXY(dealString(self.setting_stringVar[7].get()))
-      self.bg_task.variable.setLevelDiceOffsetX(dealString(self.setting_stringVar[8].get()))
-      self.bg_task.variable.setEmojiDialogXY(dealString(self.setting_stringVar[9].get()))
-      self.bg_task.variable.setEmojiLeftXY(dealString(self.setting_stringVar[10].get()))
-      self.bg_task.variable.setEmojiOffsetX(dealString(self.setting_stringVar[11].get()))
-      self.bg_task.variable.setSummonDiceXY(dealString(self.setting_stringVar[12].get()))
-      self.bg_task.variable.setLevelSpXY(dealString(self.setting_stringVar[13].get()))
-      self.bg_task.variable.setMergeFloatLocationXY(dealString(self.setting_stringVar[14].get()))
-      self.bg_task.variable.setBattleXY(dealString(self.setting_stringVar[15].get()))
-      self.bg_task.variable.setADCloseXY(dealString(self.setting_stringVar[16].get()))
-      self.bg_task.variable.setSpellXY(dealString(self.setting_stringVar[17].get()))
-      self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar[18].get()))
-      self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar[19].get()))
-      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar[20].get()))
-      self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar[21].get()))
-      self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar[22].get()))
-      self.bg_task.variable.setExtractSpellLuSizeWH(dealString(self.setting_stringVar[23].get()))
-      self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar[24].get()))
-      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar[25].get(), float))
+      self.bg_task.variable.setControlMode(ControlMode(dealString(self.setting_stringVar['Control Mode'].get())))
+      self.bg_task.variable.setEmulatorMode(Emulator(dealString(self.setting_stringVar['Emulator'].get())))
+      self.bg_task.variable.setDetectDiceMode(DetectDiceMode(dealString(self.setting_stringVar['Detect Dice Mode'].get())))
+      self.bg_task.variable.setADBIP(self.setting_stringVar['ADB IP'].get())
+      self.bg_task.variable.setADBPort(dealString(self.setting_stringVar['ADB Port'].get()))
+      self.bg_task.variable.setRandomOffset(dealString(self.setting_stringVar['Random Offset'].get()))
+      self.bg_task.variable.setBoardDiceLeftTopXY(dealString(self.setting_stringVar['Board Left Top XY'].get()))
+      self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar['Board Dice Offset XY'].get()))
+      self.bg_task.variable.setLevelDiceLeftXY(dealString(self.setting_stringVar['Level Dice Left XY'].get()))
+      self.bg_task.variable.setLevelDiceOffsetX(dealString(self.setting_stringVar['Level Dice Offset X'].get()))
+      self.bg_task.variable.setEmojiDialogXY(dealString(self.setting_stringVar['Emoji Dialog XY'].get()))
+      self.bg_task.variable.setEmojiLeftXY(dealString(self.setting_stringVar['Emoji Left XY'].get()))
+      self.bg_task.variable.setEmojiOffsetX(dealString(self.setting_stringVar['Emoji Offset X'].get()))
+      self.bg_task.variable.setSummonDiceXY(dealString(self.setting_stringVar['Summon Dice XY'].get()))
+      self.bg_task.variable.setLevelSpXY(dealString(self.setting_stringVar['Level SP XY'].get()))
+      self.bg_task.variable.setMergeFloatLocationXY(dealString(self.setting_stringVar['Merge Float Location XY'].get()))
+      self.bg_task.variable.setBattleXY(dealString(self.setting_stringVar['Battle XY'].get()))
+      self.bg_task.variable.setADCloseXY(dealString(self.setting_stringVar['AD Close XY'].get()))
+      self.bg_task.variable.setSpellXY(dealString(self.setting_stringVar['Spell XY'].get()))
+      self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar['Extract Dice Size WH'].get()))
+      self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar['Extract Dice Luminance Size WH'].get()))
+      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar['Extract SP Luminance Size WH'].get()))
+      self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar['Extract Summon Luminance Size WH'].get()))
+      self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar['Extract Level Dice Luminance Size WH'].get()))
+      self.bg_task.variable.setExtractSpellLuSizeWH(dealString(self.setting_stringVar['Extract Spell Luminance Size WH'].get()))
+      self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar['Emoji Dialog WH'].get()))
+      self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar['Zoom Ratio'].get(), float))
     
   def btn_run_event(self):
     if self.isRunning == False: # enable

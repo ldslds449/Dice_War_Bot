@@ -40,6 +40,8 @@ class Variable:
     self.detect_dice_mode = None
 
     self.zoom_ratio = 1.0
+    self.random_offset = 0
+
     self.col = 5 # constant
     self.row = 3 # constant
     self.board_size = self.row * self.col # constant
@@ -87,6 +89,7 @@ class Variable:
     self.extract_level_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
     self.extract_spell_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpellLuSizeWH', fallback='5 5'))
     self.emoji_dialog_wh = str2Type(config.get('Coordinate', 'EmojiDialogWH', fallback='30 25'))
+    self.random_offset = str2Type(config.get('Coordinate', 'RandomOffset', fallback='0'))
     self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
     self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
     self.control_mode = ControlMode(str2Type(config.get('Mode', 'ControlMode', fallback='0')))
@@ -126,6 +129,7 @@ class Variable:
     config.set('Coordinate', 'ExtractLevelDiceLuSizeWH', type2Str(self.extract_level_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpellLuSizeWH', type2Str(self.extract_spell_lu_size_wh))
     config.set('Coordinate', 'EmojiDialogWH', type2Str(self.emoji_dialog_wh))
+    config.set('Coordinate', 'RandomOffset', type2Str(self.random_offset))
     config.add_section('Window')
     config.set('Window', 'ZoomRatio', type2Str(self.zoom_ratio))
     config.add_section('Mode')
@@ -223,6 +227,9 @@ class Variable:
 
   def setDiceParty(self, _value: list):
     self.dice_party = _value
+
+  def setRandomOffset(self, _value: int):
+    self.random_offset = _value
 
   ### get ###
 
@@ -327,3 +334,6 @@ class Variable:
 
   def getUpdateFileName(self):
     return self.update_file_name
+
+  def getRandomOffset(self):
+    return self.random_offset
