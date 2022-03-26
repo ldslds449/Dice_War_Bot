@@ -21,3 +21,9 @@
 ## Version 1.0.4
 
 1. Add disconnect button after connecting.
+
+## Version 1.0.5
+
+1. Add detect delay.
+2. Handle the detect error and show message.
+3. Catch win32 API error
