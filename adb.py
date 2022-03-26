@@ -1,6 +1,8 @@
 import subprocess
 
 class ADB:
+  packageName = 'com.percent.aos.randomdicewars'
+
   @staticmethod
   def sh(command):
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -21,4 +23,9 @@ class ADB:
   @staticmethod
   def detectDiceWar(ip:str, port:int):
     r = ADB.sh(f'adb -s {ip}:{port} shell "dumpsys activity activities | grep mResumedActivity"').decode('utf-8')
-    return 'com.percent.aos.randomdicewars' in r
+    return ADB.packageName in r
+
+  @staticmethod
+  def restart():
+    ADB.sh(f'adb shell am force-stop {ADB.packageName}')
+    ADB.sh(f'adb shell monkey -p {ADB.packageName} -c android.intent.category.LAUNCHER 1')
