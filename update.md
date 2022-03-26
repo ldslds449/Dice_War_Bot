@@ -31,3 +31,7 @@
 ## Version 1.0.6
 
 1. Remove random offset of close AD function
+
+## Version 1.0.7
+
+1. Fix detect delay bug.

@@ -607,6 +607,8 @@ class UI:
         self.changeImage(self.label_detect_board_dice[i], img)
       self.window.update()
 
+      time.sleep(self.bg_task.variable.getDetectDelay())
+
     # recover the text and state
     self.btn_run.config(state=NORMAL, text='Start')
 
