@@ -126,7 +126,7 @@ class MyAction(Action):
       if canLevelDice[0] and muchPopGun:
         diceControl.levelUpDice(1)
       if canSpell:
-        diceControl.CastSpell()
+        diceControl.castSpell()
       if canSummon:
         diceControl.summonDice()
         MyAction.hasSummonDiceTimes += 1
