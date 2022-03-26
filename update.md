@@ -27,3 +27,7 @@
 1. Add detect delay.
 2. Handle the detect error and show message.
 3. Catch win32 API error
+
+## Version 1.0.6
+
+1. Remove random offset of close AD function
