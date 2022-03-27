@@ -93,11 +93,6 @@ class Task:
     return merge_dice_location
       
   def task(self, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode):
-
-    x = self.variable.getBoardDiceLeftTopXY()[0]
-    y = self.variable.getBoardDiceLeftTopXY()[1]
-    offset_x = self.variable.getBoardDiceOffsetXY()[0]
-    offset_y = self.variable.getBoardDiceOffsetXY()[1]
     
     _, im = self.screen.getScreenShot(self.variable.getZoomRatio())
     im = self.detect.Image2OpenCV(im)

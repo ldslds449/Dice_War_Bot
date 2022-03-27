@@ -1,5 +1,6 @@
 import tkinter as tk
 import threading
+import traceback
 from tkinter import ttk
 from tkinter import *
 from tkinter import messagebox
@@ -7,9 +8,10 @@ from tkinter import messagebox
 from task import *
 from screen import *
 from mode import *
+from version import *
 
 class UI:
-  Version = '1.0.0'
+  Version = '1.1.0'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -107,6 +109,8 @@ class UI:
       'Extract Spell Luminance Size WH': 2,
       'Emoji Dialog WH': 2,
       'Zoom Ratio': 0,
+      'Detect Delay': 0,
+      'Restart Delay': 0,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -260,6 +264,15 @@ class UI:
     self.btn_load_config_event()
     self.setSelectDiceField()
 
+    # check version
+    try:
+      isLatest, latest_version = Version.checkLatest(UI.Version)
+      if isLatest == False:
+        self.log(f'Find New Version {latest_version} !!!\n')
+        messagebox.showinfo('New Version', f'Find New Version {latest_version} !!!', parent=self.window)
+    except:
+      self.log(f'{traceback.format_exc()}\n')
+
   def setSettingInputField(self):
     if self.bg_task is None:
       raise Exception('setSettingInputField:: Need to set task variable first')
@@ -297,6 +310,8 @@ class UI:
       self.setting_stringVar['Extract Spell Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpellLuSizeWH()))
       self.setting_stringVar['Emoji Dialog WH'].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
       self.setting_stringVar['Zoom Ratio'].set(dealString(self.bg_task.variable.getZoomRatio()))
+      self.setting_stringVar['Detect Delay'].set(dealString(self.bg_task.variable.getDetectDelay()))
+      self.setting_stringVar['Restart Delay'].set(dealString(self.bg_task.variable.getRestartDelay()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -333,6 +348,8 @@ class UI:
       self.bg_task.variable.setExtractSpellLuSizeWH(dealString(self.setting_stringVar['Extract Spell Luminance Size WH'].get()))
       self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar['Emoji Dialog WH'].get()))
       self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar['Zoom Ratio'].get(), float))
+      self.bg_task.variable.setDetectDelay(dealString(self.setting_stringVar['Detect Delay'].get(), float))
+      self.bg_task.variable.setRestartDelay(dealString(self.setting_stringVar['Restart Delay'].get(), float))
     
   def btn_run_event(self):
     if self.isRunning == False: # enable
@@ -488,7 +505,7 @@ class UI:
           self.isConnected = True
           # disable control mode setting field
           self.setting_entry['Control Mode'].config(state=DISABLED)
-        except RuntimeError as error:
+        except Exception as error:
           messagebox.showerror('Connect Error', error, parent=self.window)
           self.btn_connect.config(state=NORMAL, text='Connect')
 
@@ -555,28 +572,35 @@ class UI:
         if not ADB.detectDiceWar(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort()):
           self.log("Error: Focus app is not Dice War App\n")
           if self.restartApp_booleanVar.get() == True:
-            self.log("Info: Restart app and continue after 60 seconds\n")
-            ADB.restart()
-            time.sleep(60) # sleep for 60 seconds
+            self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
+            ADB.restart(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
+            time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
           else:
             stopDetect()
             break
 
-      status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy']
-      # run
       previous_status = self.bg_task.status
+
+      # run
+      try:
+        battleMode = BattleMode.BATTLE_1V1 if self.battle_stringVar.get() == '1v1' else BattleMode.BATTLE_2V2
+        self.bg_task.task(self.log, 
+          self.autoPlay_booleanVar.get(), 
+          self.watchAD_booleanVar.get(),
+          battleMode)
+      except Exception:
+        self.log(f'{traceback.format_exc()}\n')
+        stopDetect()
+        break
       
-      battleMode = BattleMode.BATTLE_1V1 if self.battle_stringVar.get() == '1v1' else BattleMode.BATTLE_2V2
-      self.bg_task.task(self.log, 
-        self.autoPlay_booleanVar.get(), 
-        self.watchAD_booleanVar.get(),
-        battleMode)
-      
+      # status changed
       if previous_status != self.bg_task.status:
+        status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy']
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)])
       
       if self.bg_task.status == Status.LOBBY:
+        # initial
         if previous_status == Status.LOBBY:
           self.bg_task.diceControl.battle(battleMode)
         else:
@@ -584,6 +608,7 @@ class UI:
             self.log('Detect lobby, stop detecting\n')
             stopDetect()
             break
+
       # update ui
       for i, name in enumerate(self.bg_task.board_dice):
         idx = self.bg_task.detect.dice_name_idx_dict[name]
@@ -595,6 +620,8 @@ class UI:
         img = self.bg_task.detect.OpenCV2TK(img)
         self.changeImage(self.label_detect_board_dice[i], img)
       self.window.update()
+
+      time.sleep(self.bg_task.variable.getDetectDelay())
 
     # recover the text and state
     self.btn_run.config(state=NORMAL, text='Start')

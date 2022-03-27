@@ -26,6 +26,6 @@ class ADB:
     return ADB.packageName in r
 
   @staticmethod
-  def restart():
-    ADB.sh(f'adb shell am force-stop {ADB.packageName}')
-    ADB.sh(f'adb shell monkey -p {ADB.packageName} -c android.intent.category.LAUNCHER 1')
+  def restart(ip:str, port:int):
+    ADB.sh(f'adb -s {ip}:{port} shell am force-stop {ADB.packageName}')
+    ADB.sh(f'adb -s {ip}:{port} shell monkey -p {ADB.packageName} -c android.intent.category.LAUNCHER 1')

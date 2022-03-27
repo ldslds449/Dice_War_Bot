@@ -188,4 +188,4 @@ class DiceControl(Control):
     self.tap(self.getBoardDiceXY(12))
 
   def closeAD(self):
-    self.tap(self.randomOffset(self.modifyZoom(self.variable.getADCloseXY())))
+    self.tap(self.modifyZoom(self.variable.getADCloseXY()))

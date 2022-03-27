@@ -41,6 +41,8 @@ class Variable:
 
     self.zoom_ratio = 1.0
     self.random_offset = 0
+    self.detect_delay = None
+    self.restart_delay = None
 
     self.col = 5 # constant
     self.row = 3 # constant
@@ -97,6 +99,8 @@ class Variable:
     self.adb_ip = config.get('ADB', 'IP', fallback='127.0.0.1')
     self.adb_port = str2Type(config.get('ADB', 'Port', fallback='5555'), int)
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
+    self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
+    self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
 
   ### write to config file ###
   def saveToConfigFile(self):
@@ -141,6 +145,9 @@ class Variable:
     config.set('ADB', 'Port', type2Str(self.adb_port))
     config.add_section('Dice')
     config.set('Dice', 'DiceParty', type2Str(tuple(self.dice_party)))
+    config.add_section('Detect')
+    config.set('Detect', 'DetectDelay', type2Str(self.detect_delay))
+    config.set('Detect', 'RestartDelay', type2Str(self.restart_delay))
 
     with open(self.config_file_name, 'w') as f:
       config.write(f)
@@ -230,6 +237,12 @@ class Variable:
 
   def setRandomOffset(self, _value: int):
     self.random_offset = _value
+
+  def setDetectDelay(self, _value: float):
+    self.detect_delay = _value
+  
+  def setRestartDelay(self, _value: float):
+    self.restart_delay = _value
 
   ### get ###
 
@@ -337,3 +350,9 @@ class Variable:
 
   def getRandomOffset(self):
     return self.random_offset
+
+  def getDetectDelay(self):
+    return self.detect_delay
+  
+  def getRestartDelay(self):
+    return self.restart_delay
