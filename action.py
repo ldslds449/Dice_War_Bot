@@ -127,6 +127,7 @@ class MyAction(Action):
         diceControl.levelUpDice(1)
       if canSpell:
         diceControl.castSpell()
+        time.sleep(1.2)
       if canSummon:
         diceControl.summonDice()
         MyAction.hasSummonDiceTimes += 1
