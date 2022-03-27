@@ -39,3 +39,7 @@
 ## Version 1.0.8
 
 1. Show full traceback message while error occur.
+
+## Version 1.0.9
+
+1. Set option to restarting detect delay.

@@ -10,7 +10,7 @@ from screen import *
 from mode import *
 
 class UI:
-  Version = '1.0.8'
+  Version = '1.0.9'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -109,6 +109,7 @@ class UI:
       'Emoji Dialog WH': 2,
       'Zoom Ratio': 0,
       'Detect Delay': 0,
+      'Restart Delay': 0,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -300,6 +301,7 @@ class UI:
       self.setting_stringVar['Emoji Dialog WH'].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
       self.setting_stringVar['Zoom Ratio'].set(dealString(self.bg_task.variable.getZoomRatio()))
       self.setting_stringVar['Detect Delay'].set(dealString(self.bg_task.variable.getDetectDelay()))
+      self.setting_stringVar['Restart Delay'].set(dealString(self.bg_task.variable.getRestartDelay()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -337,6 +339,7 @@ class UI:
       self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar['Emoji Dialog WH'].get()))
       self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar['Zoom Ratio'].get(), float))
       self.bg_task.variable.setDetectDelay(dealString(self.setting_stringVar['Detect Delay'].get(), float))
+      self.bg_task.variable.setRestartDelay(dealString(self.setting_stringVar['Restart Delay'].get(), float))
     
   def btn_run_event(self):
     if self.isRunning == False: # enable
@@ -561,7 +564,7 @@ class UI:
           if self.restartApp_booleanVar.get() == True:
             self.log("Info: Restart app and continue after 60 seconds\n")
             ADB.restart()
-            time.sleep(60) # sleep for 60 seconds
+            time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
           else:
             stopDetect()
             break
