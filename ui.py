@@ -8,9 +8,10 @@ from tkinter import messagebox
 from task import *
 from screen import *
 from mode import *
+from version import *
 
 class UI:
-  Version = '1.0.9'
+  Version = '1.1.0'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -262,6 +263,15 @@ class UI:
     self.setSettingInputField()
     self.btn_load_config_event()
     self.setSelectDiceField()
+
+    # check version
+    try:
+      isLatest, latest_version = Version.checkLatest(UI.Version)
+      if isLatest == False:
+        self.log(f'Find New Version {latest_version} !!!\n')
+        messagebox.showinfo('New Version', f'Find New Version {latest_version} !!!', parent=self.window)
+    except:
+      self.log(f'{traceback.format_exc()}\n')
 
   def setSettingInputField(self):
     if self.bg_task is None:
@@ -562,8 +572,8 @@ class UI:
         if not ADB.detectDiceWar(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort()):
           self.log("Error: Focus app is not Dice War App\n")
           if self.restartApp_booleanVar.get() == True:
-            self.log("Info: Restart app and continue after 60 seconds\n")
-            ADB.restart()
+            self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
+            ADB.restart(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
             time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
           else:
             stopDetect()

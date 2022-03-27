@@ -43,3 +43,8 @@
 ## Version 1.0.9
 
 1. Set option to restarting detect delay.
+
+## Version 1.1.0
+
+1. Add version check.
+2. Fix restart app bugs.
