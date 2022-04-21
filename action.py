@@ -106,12 +106,12 @@ class MyAction(Action):
     diceControl: DiceControl, findMergeDice: Callable,
     count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], boardDice: list,
     canSummon: bool, canLevelSp: bool, canLevelDice: List, canSpell: bool,
-    countTotal: int, boardDiceStar: list):
+    countTotal: int, boardDiceStar: list, team: list):
 
     countBlank = count['Blank']
     # team = ['Slime', 'Charm', 'Flash', 'Slingshot']
     # team = ['Fire', 'Wind', 'Flash', 'Summoner']
-    team = ['Fire', 'Flash', 'Charm', 'Gun']
+    team = team.remove('Growth') if 'Growth' in team else team
     if canSpell:
       diceControl.castSpell()
     # flag
