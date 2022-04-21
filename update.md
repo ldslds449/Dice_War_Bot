@@ -56,3 +56,7 @@
 ## Version 1.2.1
 
 1. Fix action bug
+
+## Version 1.2.2
+
+1. Fix action bug
