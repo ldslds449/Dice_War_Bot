@@ -111,7 +111,8 @@ class MyAction(Action):
     countBlank = count['Blank']
     # team = ['Slime', 'Charm', 'Flash', 'Slingshot']
     # team = ['Fire', 'Wind', 'Flash', 'Summoner']
-    team = team.remove('Growth') if 'Growth' in team else team
+    if 'Growth' in team:
+      team.remove('Growth')
     if canSpell:
       diceControl.castSpell()
     # flag
