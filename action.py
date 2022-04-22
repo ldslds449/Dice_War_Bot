@@ -1,6 +1,7 @@
 from typing import Callable, Dict, List
 import abc
 import time
+import random as rd
 
 from control import *
 
@@ -13,9 +14,48 @@ class Action:
     countTotal: int, boardDiceStar: list):
     return NotImplemented
 
-import random as rd
-
 class MyAction(Action):
+  @staticmethod
+  def get_star(dice_loc, boardDiceStar):
+    star = boardDiceStar[dice_loc]
+    return star
+
+  @staticmethod
+  def isMerge(star):
+    star_prob = star / 10
+    merge_prob = rd.uniform(0, 1)
+
+    if star >= 5:
+      return False
+    elif star >= 3:
+      star_prob = star_prob*2 + 0.1
+    else:
+      star_prob = star_prob
+    print('star_prob:', star_prob)
+    print('merge_prob:', merge_prob)
+
+    return merge_prob > star_prob
+
+  @staticmethod
+  def probabilisticMerge(diceControl: DiceControl, findMergeDice: Callable,
+    count, location, boardDiceStar, mergeDice, exceptDice):
+
+    if count[mergeDice] <= 1: return
+    rdidx = rd.randrange(count[mergeDice])
+    srcidx_ = location[mergeDice][rdidx]
+    src_star = MyAction.get_star(srcidx_, boardDiceStar)
+    print('selected ', mergeDice, 'stars:', str(src_star))
+    if not MyAction.isMerge(src_star): return
+    srcidx = srcidx_ + 1
+
+    merge_dice_location = findMergeDice(srcidx, exceptDice)
+
+    if len(merge_dice_location) > 0:
+      dstidx = merge_dice_location[rd.randrange(0, len(merge_dice_location))] + 1
+      if srcidx != dstidx:
+        diceControl.mergeDice(srcidx, dstidx)
+        time.sleep(1)
+  
   @staticmethod
   def randomMerge(diceControl: DiceControl, findMergeDice: Callable,
     count, location, mergeDice, exceptDice):
@@ -47,7 +87,7 @@ class MyAction(Action):
         diceControl.mergeDice(srcidx, dstidx)
         time.sleep(1)
 
-  hasSummonFirstDice = False
+  hasSummonFourDice = False
   hasLevelUpFirstSp = False
   hasLevelUpSecondThirdSp = 0
   hasSummonDiceTimes = 0
@@ -55,7 +95,7 @@ class MyAction(Action):
   
   @staticmethod
   def init():
-    MyAction.hasSummonFirstDice = False
+    MyAction.hasSummonFourDice = False
     MyAction.hasLevelUpFirstSp = False
     MyAction.hasLevelUpSecondThirdSp = 0
     MyAction.hasSummonDiceTimes = 0
@@ -121,6 +161,12 @@ class MyAction(Action):
         diceControl.levelUpSP()
         MyAction.hasLevelUpFirstSp = True    
     else:
+      for name in team:
+        if countBlank > 2:
+          break
+        if count[name] > 0:
+          MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar, name, ['Growth'])
+
       if canLevelSp:
         diceControl.levelUpSP()
       if canLevelDice[3] and muchPopGun:
@@ -130,16 +176,6 @@ class MyAction(Action):
         time.sleep(1.2)
       if canSummon:
         diceControl.summonDice()
-        MyAction.hasSummonDiceTimes += 1
-      if noBlank and MyAction.hasLevelUpSecondThirdSp < 2:
-        if canLevelSp:
-          diceControl.levelUpSP()
-          MyAction.hasLevelUpSecondThirdSp += 1
-      elif MyAction.hasSummonDiceTimes >= 30 and not MyAction.SummonDiceFortyTimes:
-        if canLevelSp:
-          diceControl.levelUpSP()
-          MyAction.SummonDiceFortyTimes = True  
-
       else:
         # if hasMimic and not earlyGame:
         #   MyAction.randomMerge(diceControl, findMergeDice, count, location, 'Mimic', ['Pop_Gun'])

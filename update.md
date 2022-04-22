@@ -48,3 +48,7 @@
 
 1. Add version check.
 2. Fix restart app bugs.
+
+## Version 1.2.0
+
+1. Change party setting UI

@@ -1,6 +1,7 @@
 import tkinter as tk
 import threading
 import traceback
+from functools import partial
 from tkinter import ttk
 from tkinter import *
 from tkinter import messagebox
@@ -11,10 +12,11 @@ from mode import *
 from version import *
 
 class UI:
-  Version = '1.1.0'
+  Version = '1.2.0'
 
   def __init__(self):
     self.window = tk.Tk()
+    self.window.withdraw()
 
     self.bg_task = Task()
 
@@ -36,7 +38,7 @@ class UI:
     self.frame_select_dice = tk.Frame(self.tab_detect, padx=20)
     self.frame_select_dice.grid(column=0, row=1, columnspan=4)
     self.frame_log = tk.Frame(self.tab_detect, pady=10, padx=10)
-    self.frame_log.grid(column=0, row=2, columnspan=5)
+    self.frame_log.grid(column=0, row=2, columnspan=4)
     self.frame_detect_btn = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_detect_btn.grid(column=5, row=0, rowspan=3, sticky=N)
     self.frame_btn = tk.Frame(self.window)
@@ -166,13 +168,15 @@ class UI:
       self.label_detect_board_dice.append(label)
 
     # select dice
-    self.select_dice_booleanVar = []
-    for i, name in enumerate(self.bg_task.detect.dice_name):
-      chkValue = tk.BooleanVar() 
-      chkValue.set(False)
-      checkBtn = tk.Checkbutton(self.frame_select_dice, text=name, var=chkValue, command=self.ckeckBtn_select_dice_event) 
-      checkBtn.grid(row=i//8, column=i%8, sticky="W")
-      self.select_dice_booleanVar.append(chkValue)
+    self.select_dice_label = []
+    self.select_dice_name = [""] * self.bg_task.variable.getPartyDiceSize()
+    for i in range(self.bg_task.variable.getPartyDiceSize()):
+      label = tk.Label(self.frame_select_dice, padx=5, pady=10)
+      event = partial(self.press_select_dice_event, i)
+      label.bind('<Button-1>', event)
+      self.changeImage(label, self.bg_task.detect.dice_image_tk_resize[self.bg_task.detect.dice_name_idx_dict['Blank']])
+      label.pack(side = LEFT)
+      self.select_dice_label.append(label)
 
     # log
     scrollbar_log = tk.Scrollbar(self.frame_log)
@@ -263,6 +267,8 @@ class UI:
     self.setSettingInputField()
     self.btn_load_config_event()
     self.setSelectDiceField()
+
+    self.window.deiconify()
 
     # check version
     try:
@@ -474,20 +480,42 @@ class UI:
     label.image = img
     label.update()
 
-  def ckeckBtn_select_dice_event(self):
-    self.getSelectDiceField()
+  def press_select_dice_event(self, idx, _):
+    # pop window
+    select_dice_window = Toplevel(self.window)
+    select_dice_window.withdraw()
+    select_dice_window.title("Select Dice")
 
+    for i,(name,img) in enumerate(zip(self.bg_task.detect.dice_name, self.bg_task.detect.dice_image_tk_resize)):
+      label_text = tk.Label(select_dice_window, text=name)
+      label_img = tk.Label(select_dice_window)
+      self.changeImage(label_img, img)
+      label_img.grid(row=(i//8)*2, column=i%8, sticky="W")
+      label_text.grid(row=(i//8)*2+1, column=i%8, sticky="W")
+
+      def update(update_name, update_img, _):
+        self.select_dice_name[idx] = update_name
+        self.changeImage(self.select_dice_label[idx], update_img)
+        self.frame_select_dice.update()
+        select_dice_window.destroy()
+        self.getSelectDiceField()
+
+      event = partial(update, name, img)
+
+      label_img.bind('<Button-1>', event)
+      label_text.bind('<Button-1>', event)
+
+    select_dice_window.wm_transient(self.window)
+    select_dice_window.deiconify()
+    
   def getSelectDiceField(self):
-    select_dice = []
-    for var, name in zip(self.select_dice_booleanVar, self.bg_task.detect.dice_name):
-      if var.get() == True:
-        select_dice.append(name)
-    self.bg_task.variable.setDiceParty(select_dice)
+    self.bg_task.variable.setDiceParty(self.select_dice_name)
 
   def setSelectDiceField(self):
-    for var, name in zip(self.select_dice_booleanVar, self.bg_task.detect.dice_name):
-      if name in self.bg_task.variable.getDiceParty():
-        var.set(True)
+    for i,dice in enumerate(self.bg_task.variable.getDiceParty()):
+      self.select_dice_name[i] = dice
+      dice_idx = self.bg_task.detect.dice_name_idx_dict[dice]
+      self.changeImage(self.select_dice_label[i], self.bg_task.detect.dice_image_tk_resize[dice_idx])
 
   def checkBtn_topWindow(self):
     self.window.call('wm', 'attributes', '.', '-topmost', self.topWindow_booleanVar.get())
