@@ -217,6 +217,7 @@ class Task:
       canSP,
       canLevel,
       canSpell,
-      countTotal, self.board_dice_star
+      countTotal, self.board_dice_star,
+      self.variable.getDiceParty()
     )
     
