@@ -30,3 +30,7 @@ class Status(IntEnum):
   GAME = 2
   FINISH = 3
   TROPHY = 4
+
+class ADBMode(IntEnum):
+  IP = 0
+  ID = 1

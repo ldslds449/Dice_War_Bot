@@ -357,6 +357,9 @@ class Detect:
   def resize(self, img, size):
     return cv2.resize(img, size)
 
+  def load(self, fname):
+    return cv2.imread(fname)
+
   def save(self, img, fname):
     cv2.imwrite(fname, img)
 

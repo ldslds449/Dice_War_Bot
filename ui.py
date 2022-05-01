@@ -5,6 +5,7 @@ from functools import partial
 from tkinter import ttk
 from tkinter import *
 from tkinter import messagebox
+from tkinter import filedialog as fd
 
 from task import *
 from screen import *
@@ -12,7 +13,7 @@ from mode import *
 from version import *
 
 class UI:
-  Version = '1.2.2'
+  Version = '1.2.3'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -87,8 +88,10 @@ class UI:
       'Control Mode': 0,
       'Emulator': 0,
       'Detect Dice Mode': 0,
+      'ADB Mode': 0,
       'ADB IP': 0,
       'ADB Port': 0,
+      'ADB ID': 0,
       'Random Offset': 0,
       'Board Left Top XY': 1,
       'Board Dice Offset XY': 1,
@@ -137,12 +140,17 @@ class UI:
     # draw
     self.btn_draw = tk.Button(self.frame_setting_btn, text='Draw', width=10, height=2, font=('Arial', 12))
     self.btn_draw.config(command=self.btn_draw_event, state=DISABLED)
-    self.btn_draw.grid(row=1, column=0)
+    self.btn_draw.grid(row=0, column=3)
     
     # save screenshot
     self.btn_save_screenshot = tk.Button(self.frame_setting_btn, text='Save\nScreenShot', width=10, height=2, font=('Arial', 12))
     self.btn_save_screenshot.config(command=self.btn_save_screenshot_event, state=DISABLED)
-    self.btn_save_screenshot.grid(row=1, column=1)
+    self.btn_save_screenshot.grid(row=1, column=0)
+
+    # load screenshot
+    self.btn_load_screenshot = tk.Button(self.frame_setting_btn, text='Load\nScreenShot', width=10, height=2, font=('Arial', 12))
+    self.btn_load_screenshot.config(command=self.btn_load_screenshot_event, state=DISABLED)
+    self.btn_load_screenshot.grid(row=1, column=1)
     
     # detect
     self.btn_detect = tk.Button(self.frame_setting_btn, text='Detect', width=10, height=2, font=('Arial', 12))
@@ -292,8 +300,10 @@ class UI:
       self.setting_stringVar['Control Mode'].set(dealString(int(self.bg_task.variable.getControlMode())))
       self.setting_stringVar['Emulator'].set(dealString(int(self.bg_task.variable.getEmulatorMode())))
       self.setting_stringVar['Detect Dice Mode'].set(dealString(int(self.bg_task.variable.getDetectDiceMode())))
+      self.setting_stringVar['ADB Mode'].set(dealString(int(self.bg_task.variable.getADBMode())))
       self.setting_stringVar['ADB IP'].set(self.bg_task.variable.getADBIP())
       self.setting_stringVar['ADB Port'].set(dealString(self.bg_task.variable.getADBPort()))
+      self.setting_stringVar['ADB ID'].set(self.bg_task.variable.getADBID())
       self.setting_stringVar['Random Offset'].set(dealString(self.bg_task.variable.getRandomOffset()))
       self.setting_stringVar['Board Left Top XY'].set(dealString(self.bg_task.variable.getBoardDiceLeftTopXY()))
       self.setting_stringVar['Board Dice Offset XY'].set(dealString(self.bg_task.variable.getBoardDiceOffsetXY()))
@@ -330,8 +340,10 @@ class UI:
       self.bg_task.variable.setControlMode(ControlMode(dealString(self.setting_stringVar['Control Mode'].get())))
       self.bg_task.variable.setEmulatorMode(Emulator(dealString(self.setting_stringVar['Emulator'].get())))
       self.bg_task.variable.setDetectDiceMode(DetectDiceMode(dealString(self.setting_stringVar['Detect Dice Mode'].get())))
+      self.bg_task.variable.setADBMode(ADBMode(dealString(self.setting_stringVar['ADB Mode'].get())))
       self.bg_task.variable.setADBIP(self.setting_stringVar['ADB IP'].get())
       self.bg_task.variable.setADBPort(dealString(self.setting_stringVar['ADB Port'].get()))
+      self.bg_task.variable.setADBID(self.setting_stringVar['ADB ID'].get())
       self.bg_task.variable.setRandomOffset(dealString(self.setting_stringVar['Random Offset'].get()))
       self.bg_task.variable.setBoardDiceLeftTopXY(dealString(self.setting_stringVar['Board Left Top XY'].get()))
       self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar['Board Dice Offset XY'].get()))
@@ -460,10 +472,28 @@ class UI:
       self.btn_save_screenshot.config(state=NORMAL, text='Save\nScreenShot')
     threading.Thread(target = event).start()
 
+  def btn_load_screenshot_event(self):
+    self.log('=== Load Screenshot Image ===\n')
+    filetypes = (
+      ('Image files', '*.png'),
+      ('All files', '*.*')
+    )
+    filename = fd.askopenfilename(
+      title='Select a image file',
+      initialdir='./extract',
+      filetypes=filetypes)
+    self.log(f'FilePath: {filename}\n')
+
+    # read image
+    self.screenshot_image = self.bg_task.detect.load(filename)
+    # limit
+    self.screenshot_image_limit = self.limitImageSize(self.screenshot_image)
+    self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image_limit))
+
   def btn_detect_event(self):
     self.log('=== Detect Screenshot ===\n')
     def event():
-      self.btn_detect.config(state=DISABLED, text='detect...')
+      self.btn_detect.config(state=DISABLED, text='Detect...')
       try:
         enable_result = self.bg_task.detect.detectEnable(self.screenshot_image)
         status_result = self.bg_task.detect.detectStatus(self.screenshot_image)
@@ -542,9 +572,15 @@ class UI:
         # connect to device
         def adb_connect():
           self.btn_connect.config(state=DISABLED, text='Connecting...')
-          s, r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
-          self.log(s)
-          if r:
+          
+          # initial value
+          r = True
+          if self.bg_task.variable.getADBMode() == ADBMode.IP:
+            s, r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
+            self.log(s)
+          elif self.bg_task.variable.getADBMode() == ADBMode.ID:
+            self.log('Use device ID, skip connection\n')
+          if r: # success
             self.bg_task.init()
             self.enableButton()
             self.btn_connect.config(state=NORMAL, text='Disconnect')
@@ -580,6 +616,7 @@ class UI:
     self.btn_BM.config(state=NORMAL)
     self.btn_draw.config(state=NORMAL)
     self.btn_save_screenshot.config(state=NORMAL)
+    self.btn_load_screenshot.config(state=NORMAL)
     self.btn_detect.config(state=NORMAL)
     self.btn_save_extract_images.config(state=NORMAL)
 
@@ -597,11 +634,18 @@ class UI:
     while self.isRunning:
       # detect dice war app
       if self.bg_task.variable.getControlMode() == ControlMode.ADB:
-        if not ADB.detectDiceWar(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort()):
+        if self.bg_task.variable.getADBMode() == ADBMode.IP:
+          inDiceWar = ADB.detectDiceWar(f"{self.bg_task.variable.getADBIP()}:{self.bg_task.variable.getADBPort()}")
+        elif self.bg_task.variable.getADBMode() == ADBMode.ID:
+          inDiceWar = ADB.detectDiceWar(self.bg_task.variable.getADBID())
+        if not inDiceWar:
           self.log("Error: Focus app is not Dice War App\n")
           if self.restartApp_booleanVar.get() == True:
             self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
-            ADB.restart(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
+            if self.bg_task.variable.getADBMode() == ADBMode.IP:
+              ADB.restart(f"{self.bg_task.variable.getADBIP()}:{self.bg_task.variable.getADBPort()}")
+            elif self.bg_task.variable.getADBMode() == ADBMode.ID:
+              ADB.restart(self.bg_task.variable.getADBID())
             time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
           else:
             stopDetect()

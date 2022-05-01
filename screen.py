@@ -10,17 +10,16 @@ from typing import Tuple
 from control import *
 
 class Screen:
-    def __init__(self, _mode: ControlMode, _hwnd: int = None, _ip: str = None, _port: int = None):
+    def __init__(self, _mode: ControlMode, _hwnd: int = None, _adb_device_code: str = None):
         self.mode = _mode
         self.hwnd = _hwnd
-        self.ip = _ip
-        self.port = _port
+        self.adb_device_code = _adb_device_code
         if self.mode == ControlMode.WIN32API:
             if self.mode is None:
                 raise Exception('Need hwnd in WIN32API mode')
         elif self.mode == ControlMode.ADB:
-            if self.port is None or self.ip is None:
-                raise Exception('Need ip and port in ADB mode')
+            if self.adb_device_code is None:
+                raise Exception('Need adb device code in ADB mode')
 
     def getWindowSizeInfo(self):
         left, top, right, bot = win32gui.GetWindowRect(self.hwnd)
@@ -77,7 +76,7 @@ class Screen:
 
             return ((im is not None), im)
         elif self.mode == ControlMode.ADB:
-            command = f'adb -s {self.ip}:{self.port} shell screencap -p'
+            command = f'adb -s {self.adb_device_code} shell screencap -p'
             result = ADB.sh(command)
             image_bytes = result.replace(b'\r\n', b'\n')
             img = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)

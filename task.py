@@ -27,10 +27,14 @@ class Task:
     self.detect = Detect("./image/dice", self.variable)
 
   def init(self):
+    if self.variable.getADBMode() == ADBMode.IP:
+      adb_device_code = f"{self.variable.getADBIP()}:{self.variable.getADBPort()}"
+    elif self.variable.getADBMode() == ADBMode.ID:
+      adb_device_code = self.variable.getADBID()
     self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID, 
-      _ip=self.variable.getADBIP(), _port=self.variable.getADBPort())
+      _adb_device_code = adb_device_code)
     self.diceControl = DiceControl(self.variable.getControlMode(), _hwnd=self.windowID, 
-      _ip=self.variable.getADBIP(), _port=self.variable.getADBPort())
+      _adb_device_code = adb_device_code)
     self.diceControl.setVariable(self.variable)
 
   def getWindowID(self):
@@ -211,13 +215,20 @@ class Task:
     print("\n================")
 
     MyAction.action(
-      self.diceControl, self.findMergeDice,
-      count, count_sorted, location, self.board_dice, 
-      canSummon, 
-      canSP,
-      canLevel,
-      canSpell,
-      countTotal, self.board_dice_star,
-      self.variable.getDiceParty()
+      diceControl=self.diceControl, 
+      findMergeDice=self.findMergeDice,
+      count=count, 
+      count_sorted=count_sorted, 
+      location=location, 
+      boardDice=self.board_dice, 
+      canSummon=canSummon, 
+      canLevelSp=canSP,
+      canLevelDice=canLevel,
+      canSpell=canSpell,
+      countTotal=countTotal, 
+      boardDiceStar=self.board_dice_star,
+      team=self.variable.getDiceParty().copy()
     )
+
+
     

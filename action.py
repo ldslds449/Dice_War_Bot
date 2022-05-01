@@ -102,17 +102,23 @@ class MyAction(Action):
     MyAction.SummonDiceFortyTimes = False
 
   @staticmethod
-  def action(
-    diceControl: DiceControl, findMergeDice: Callable,
-    count: Dict[str, int], count_sorted: Dict[str, int], location: Dict[str, List], boardDice: list,
-    canSummon: bool, canLevelSp: bool, canLevelDice: List, canSpell: bool,
-    countTotal: int, boardDiceStar: list, team: list):
+  def action(**kwargs):
+
+    diceControl = kwargs['diceControl']
+    findMergeDice = kwargs['findMergeDice']
+    count = kwargs['count']
+    count_sorted = kwargs['count_sorted']
+    location = kwargs['location']
+    boardDice = kwargs['boardDice']
+    canSummon = kwargs['canSummon']
+    canLevelSp = kwargs['canLevelSp']
+    canLevelDice = kwargs['canLevelDice']
+    canSpell = kwargs['canSpell']
+    countTotal = kwargs['countTotal']
+    boardDiceStar = kwargs['boardDiceStar']
+    team = kwargs['team']
 
     countBlank = count['Blank']
-    # team = ['Slime', 'Charm', 'Flash', 'Slingshot']
-    # team = ['Fire', 'Wind', 'Flash', 'Summoner']
-    if 'Growth' in team:
-      team.remove('Growth')
     if canSpell:
       diceControl.castSpell()
     # flag
@@ -153,8 +159,8 @@ class MyAction(Action):
             elif d[0] == team[2] and canLevelDice[2]:
               diceControl.levelUpDice(3)
               break
-            elif d[0] == team[3] and canLevelDice[3]:
-              diceControl.levelUpDice(4)
+            elif d[0] == team[4] and canLevelDice[4]:
+              diceControl.levelUpDice(5)
               break
         if canSummon:
           diceControl.summonDice()
