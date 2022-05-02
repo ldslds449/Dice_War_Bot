@@ -66,3 +66,9 @@
 1. Change parameter type in function --- action.
 2. Add load screenshot button.
 3. Add ADB mode to specific using ip and port or device id.
+
+## Version 1.2.4
+
+1. Add StrictOrderMerge for Joker dice.
+2. Add lateGame judgement.
+3. Add new action loop for Joker dice.
