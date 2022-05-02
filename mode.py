@@ -30,6 +30,7 @@ class Status(IntEnum):
   GAME = 2
   FINISH = 3
   TROPHY = 4
+  FINISH_ANIMATION = 5
 
 class ADBMode(IntEnum):
   IP = 0

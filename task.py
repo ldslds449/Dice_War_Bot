@@ -150,8 +150,8 @@ class Task:
       elif self.status == Status.GAME:
         if inLobby:
           self.status = Status.LOBBY
-        elif inFinish:
-          self.status = Status.FINISH
+        else:
+          self.status = Status.FINISH_ANIMATION
       elif self.status == Status.FINISH:
         if inLobby:
           self.status = Status.LOBBY
@@ -190,6 +190,9 @@ class Task:
           self.status = Status.LOBBY
         elif inTrophy:
           self.diceControl.skip()
+      elif self.status == Status.FINISH_ANIMATION:
+        if inFinish:
+          self.status = Status.FINISH
 
     if self.status != Status.GAME:
       return
