@@ -72,3 +72,9 @@
 1. Add StrictOrderMerge for Joker dice.
 2. Add lateGame judgement.
 3. Add new action loop for Joker dice.
+
+## Version 1.2.5
+
+1. Add result statistic
+2. Add file dialog when saving the screenshot
+3. Change init button to result result button
