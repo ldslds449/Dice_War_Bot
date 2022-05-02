@@ -93,3 +93,7 @@
 
 1. Modify log message
 2. Modify star detection algorithm
+
+## Version 1.2.9
+
+1. Use two screenshot to avoid detecting error on dice star

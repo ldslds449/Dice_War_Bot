@@ -101,26 +101,38 @@ class Task:
     _, im = self.screen.getScreenShot(self.variable.getZoomRatio())
     im = self.detect.Image2OpenCV(im)
 
+    # use for detecting joker star
+    _, im2 = self.screen.getScreenShot(self.variable.getZoomRatio())
+    im2 = self.detect.Image2OpenCV(im2)
+
     self.board_dice = []
     self.detect_board_dice_img = []
     self.board_dice_star = []
     self.board_dice_lu = []
     def detectDice(i):
       img = self.detect.getDiceImage(im, i)
+      img2 = self.detect.getDiceImage(im2, i)
       res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], self.variable.getDetectDiceMode())
       res_star = self.detect.detectStar(img.copy())
+      res2_star = self.detect.detectStar(img2.copy())
+
+      # select the max value of star
+      if res_star == 7 or res2_star == 7:
+        dice_star = res2_star if res_star == 7 else res_star
+      else:
+        dice_star = max(res_star, res2_star)
 
       dice_lu = self.detect.getAverageLuminance(
         self.detect.getDiceImage(im, i, self.variable.getExtractDiceLuSizeWH()))
 
       self.detect_board_dice_img.append(img)
-      self.board_dice_star.append(res_star)
+      self.board_dice_star.append(dice_star)
       self.board_dice.append(res[0])
       self.board_dice_lu.append(dice_lu)
 
       if i != 0 and i % self.variable.getCol() == 0 :
         print("")
-      print(f"{res[0]:10}({res_star})", end="")
+      print(f"{res[0]:10}({res_star}/{res2_star})", end="")
       if i+1 == self.variable.getBoardSize():
         print("")
 
