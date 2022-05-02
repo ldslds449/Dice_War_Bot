@@ -134,6 +134,7 @@ class Task:
     inGame = status_result['Game']
     inTrophy = status_result['Trophy']
     hasAD = status_result['AD']
+    self.result = status_result['Result']
 
     def detectLobbyAgain():
       _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
@@ -175,6 +176,7 @@ class Task:
             self.diceControl.closeAD()
             time.sleep(5)
           else:
+            time.sleep(5)
             self.diceControl.skip() # leave this stage
       elif self.status == Status.LOBBY:
         MyAction.init()

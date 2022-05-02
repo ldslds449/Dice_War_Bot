@@ -1,3 +1,4 @@
+from telnetlib import STATUS
 import tkinter as tk
 import threading
 import traceback
@@ -106,6 +107,7 @@ class UI:
       'Battle XY': 1,
       'AD Close XY': 1,
       'Spell XY': 1,
+      'Damage List XY': 1,
       'Extract Dice Size WH': 2,
       'Extract Dice Luminance Size WH': 2,
       'Extract SP Luminance Size WH': 2,
@@ -244,6 +246,12 @@ class UI:
     label_status = tk.Label(self.frame_detect_btn, padx=5, pady=5, textvariable=self.status_StringVar)
     label_status.pack(fill=BOTH, expand=True, side=TOP)
 
+    # Result Label
+    self.result_StringVar = StringVar()
+    self.result_StringVar.set('0 / 0')
+    label_result = tk.Label(self.frame_detect_btn, padx=5, pady=5, textvariable=self.result_StringVar)
+    label_result.pack(fill=BOTH, expand=True, side=TOP)
+
     # button
     self.btn_run = tk.Button(self.frame_btn, text='Start', width=15, height=3, font=('Arial', 12))
     self.btn_run.pack(fill=BOTH, side=LEFT, expand=True)
@@ -254,9 +262,9 @@ class UI:
     self.btn_connect.config(command=self.btn_ADB_connect_event)
     self.btn_connect.pack(fill=BOTH, side=RIGHT, expand=True)
     self.isConnected = False
-    self.btn_init = tk.Button(self.frame_btn, text='Init', width=15, height=3, font=('Arial', 12))
-    self.btn_init.config(command=self.btn_init_event, state=DISABLED)
-    self.btn_init.pack(fill=BOTH, side=RIGHT, expand=True)
+    self.btn_result = tk.Button(self.frame_btn, text='Reset Result', width=15, height=3, font=('Arial', 12))
+    self.btn_result.config(command=self.btn_reset_event, state=DISABLED)
+    self.btn_result.pack(fill=BOTH, side=RIGHT, expand=True)
 
     self.window.protocol("WM_DELETE_WINDOW", self.onClosing)
 
@@ -318,6 +326,7 @@ class UI:
       self.setting_stringVar['Battle XY'].set(dealString(self.bg_task.variable.getBattleXY()))
       self.setting_stringVar['AD Close XY'].set(dealString(self.bg_task.variable.getADCloseXY()))
       self.setting_stringVar['Spell XY'].set(dealString(self.bg_task.variable.getSpellXY()))
+      self.setting_stringVar['Damage List XY'].set(dealString(self.bg_task.variable.getDamageListXY()))
       self.setting_stringVar['Extract Dice Size WH'].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
       self.setting_stringVar['Extract Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
       self.setting_stringVar['Extract SP Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
@@ -358,6 +367,7 @@ class UI:
       self.bg_task.variable.setBattleXY(dealString(self.setting_stringVar['Battle XY'].get()))
       self.bg_task.variable.setADCloseXY(dealString(self.setting_stringVar['AD Close XY'].get()))
       self.bg_task.variable.setSpellXY(dealString(self.setting_stringVar['Spell XY'].get()))
+      self.bg_task.variable.setDamageListXY(dealString(self.setting_stringVar['Damage List XY'].get()))
       self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar['Extract Dice Size WH'].get()))
       self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar['Extract Dice Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar['Extract SP Luminance Size WH'].get()))
@@ -384,9 +394,9 @@ class UI:
       self.isRunning = False
       self.log('=== Stop Detecting ===\n')
 
-  def btn_init_event(self):
-    self.log('=== Init ===\n')
-    MyAction.init()
+  def btn_reset_event(self):
+    self.log('=== Reset Result ===\n')
+    self.result_StringVar.set('0 / 0')
 
   def btn_bm_event(self):
     def bm_function():
@@ -466,7 +476,16 @@ class UI:
       if not os.path.exists('extract'):
         os.mkdir('extract')
       try:
-        self.bg_task.detect.save(self.screenshot_image, os.path.join('extract', 'screenshot.png'))
+        filename = fd.asksaveasfilename(
+          initialfile='screenshot.png',
+          initialdir= './extract',
+          defaultextension=".png",
+          filetypes=[("Image files","*.png"),("All Files","*.*")])
+        if not filename.endswith('.png'):
+          filename += '.png'
+        self.log(f'FilePath: {filename}\n')
+
+        self.bg_task.detect.save(self.screenshot_image, filename)
       except AttributeError:
         messagebox.showerror('Save Error', 'Need screenshot first', parent=self.window)
       self.btn_save_screenshot.config(state=NORMAL, text='Save\nScreenShot')
@@ -478,17 +497,23 @@ class UI:
       ('Image files', '*.png'),
       ('All files', '*.*')
     )
+    initFolder = './extract'
+    if not os.path.exists('extract'):
+      initFolder = './'
     filename = fd.askopenfilename(
       title='Select a image file',
-      initialdir='./extract',
+      initialdir=initFolder,
       filetypes=filetypes)
     self.log(f'FilePath: {filename}\n')
 
-    # read image
-    self.screenshot_image = self.bg_task.detect.load(filename)
-    # limit
-    self.screenshot_image_limit = self.limitImageSize(self.screenshot_image)
-    self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image_limit))
+    try:
+      # read image
+      self.screenshot_image = self.bg_task.detect.load(filename)
+      # limit
+      self.screenshot_image_limit = self.limitImageSize(self.screenshot_image)
+      self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image_limit))
+    except Exception as e:
+      messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
 
   def btn_detect_event(self):
     self.log('=== Detect Screenshot ===\n')
@@ -611,7 +636,7 @@ class UI:
 
   def enableButton(self):
     self.btn_run.config(state=NORMAL)
-    self.btn_init.config(state=NORMAL)
+    self.btn_result.config(state=NORMAL)
     self.btn_screenshot.config(state=NORMAL)
     self.btn_BM.config(state=NORMAL)
     self.btn_draw.config(state=NORMAL)
@@ -670,6 +695,16 @@ class UI:
         status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy']
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)])
+
+        # record result
+        if self.bg_task.status == Status.FINISH:
+          win = int(self.result_StringVar.get().split('/')[0])
+          lose = int(self.result_StringVar.get().split('/')[1])
+          if self.bg_task.result == True:
+            win += 1
+          else:
+            lose += 1
+          self.result_StringVar.set(f'{win} / {lose}')
       
       if self.bg_task.status == Status.LOBBY:
         # initial

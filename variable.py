@@ -18,6 +18,7 @@ class Variable:
     self.battle_xy = None
     self.ad_close_xy = None
     self.spell_xy = None
+    self.damage_list_xy = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
@@ -76,6 +77,7 @@ class Variable:
     self.battle_xy = str2Type(config.get('Coordinate', 'BattleXY', fallback='0 0'))
     self.ad_close_xy = str2Type(config.get('Coordinate', 'ADCloseXY', fallback='0 0'))
     self.spell_xy = str2Type(config.get('Coordinate', 'SpellXY', fallback='0 0'))
+    self.damage_list_xy = str2Type(config.get('Coordinate', 'DamageListXY', fallback='0 0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
     self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
@@ -120,6 +122,7 @@ class Variable:
     config.set('Coordinate', 'BattleXY', type2Str(self.battle_xy))
     config.set('Coordinate', 'ADCloseXY', type2Str(self.ad_close_xy))
     config.set('Coordinate', 'SpellXY', type2Str(self.spell_xy))
+    config.set('Coordinate', 'DamageListXY', type2Str(self.damage_list_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
@@ -188,6 +191,9 @@ class Variable:
 
   def setSpellXY(self, _value: Tuple[int,int]):
     self.spell_xy = _value
+
+  def setDamageListXY(self, _value: Tuple[int,int]):
+    self.damage_list_xy = _value
 
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
@@ -286,6 +292,9 @@ class Variable:
 
   def getSpellXY(self):
     return self.spell_xy
+
+  def getDamageListXY(self):
+    return self.damage_list_xy
 
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh
