@@ -78,3 +78,8 @@
 1. Add result statistic
 2. Add file dialog when saving the screenshot
 3. Change init button to result result button
+
+## Version 1.2.6
+
+1. Fix joker bug
+2. Fix result statistic bug

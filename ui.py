@@ -14,7 +14,7 @@ from mode import *
 from version import *
 
 class UI:
-  Version = '1.2.5'
+  Version = '1.2.6'
 
   def __init__(self):
     self.window = tk.Tk()

@@ -150,7 +150,7 @@ class Task:
       elif self.status == Status.GAME:
         if inLobby:
           self.status = Status.LOBBY
-        else:
+        elif inFinish:
           self.status = Status.FINISH
       elif self.status == Status.FINISH:
         if inLobby:
@@ -176,7 +176,7 @@ class Task:
             self.diceControl.closeAD()
             time.sleep(5)
           else:
-            time.sleep(5)
+            time.sleep(3)
             self.diceControl.skip() # leave this stage
       elif self.status == Status.LOBBY:
         MyAction.init()

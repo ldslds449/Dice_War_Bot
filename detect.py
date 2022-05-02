@@ -280,7 +280,7 @@ class Detect:
   # False: Lose
   def detectResult(self, img):
     lower = [19, 81, 230]
-    upper = [30, 140, 255]
+    upper = [30, 150, 255]
     ratio = self.colorDetect(img, lower, upper)
 
     print(f'Result {ratio}')
