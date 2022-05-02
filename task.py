@@ -193,6 +193,7 @@ class Task:
       elif self.status == Status.FINISH_ANIMATION:
         if inFinish:
           self.status = Status.FINISH
+          time.sleep(3)
 
     if self.status != Status.GAME:
       return

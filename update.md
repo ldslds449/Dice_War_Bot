@@ -88,3 +88,8 @@
 
 1. Fix misclick on report button
 2. Fix init bug
+
+## Version 1.2.8
+
+1. Modify log message
+2. Modify star detection algorithm

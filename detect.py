@@ -158,29 +158,32 @@ class Detect:
     return result[0]
 
   def detectStar(self, img):
-    img_resize = cv2.resize(img, (50, 50))
+    img_resize = cv2.resize(img, self.resize_size)
     img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
 
     # binary
-    _, img_binary = cv2.threshold(img_gray, 140, 255, cv2.THRESH_BINARY)
+    _, img_binary = cv2.threshold(img_gray, 130, 255, cv2.THRESH_BINARY)
     kernel = np.array([
-        [0, 0, 1, 0, 0],
         [0, 1, 1, 1, 0],
         [1, 1, 1, 1, 1],
-        [0, 1, 1, 1, 0],
-        [0, 0, 1, 0, 0]
+        [1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 0]
     ], np.uint8)
-    img_erosion = cv2.erode(img_binary, kernel, iterations = 1)
+    img_erosion = cv2.erode(~img_binary, kernel, iterations = 1)
     img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
     contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     star_count_binary = 0
     for cnt in contours:
       area = cv2.contourArea(cnt)
       perimeter = cv2.arcLength(cnt,True)
-      _, radius = cv2.minEnclosingCircle(cnt)
+      (x,y), radius = cv2.minEnclosingCircle(cnt)
+      center = (int(x),int(y))
       radius = int(radius)
-      if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 15:
-          star_count_binary += 1
+      if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 30:
+        if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
+          continue
+        star_count_binary += 1
 
     # edge detection
     img_edge = cv2.Canny(image=img_gray, threshold1=350, threshold2=400)
