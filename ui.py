@@ -1,4 +1,3 @@
-from telnetlib import STATUS
 import tkinter as tk
 import threading
 import traceback
@@ -14,7 +13,7 @@ from mode import *
 from version import *
 
 class UI:
-  Version = '1.2.8'
+  Version = '1.3.0'
 
   def __init__(self):
     self.window = tk.Tk()

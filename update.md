@@ -93,3 +93,13 @@
 
 1. Modify log message
 2. Modify star detection algorithm
+
+## Version 1.2.9
+
+1. Use two screenshot to avoid detecting error on dice star
+
+## Version 1.3.0
+
+1. Finish Task 6 and add Stage 6
+2. Stage 5 when summon 25 dices
+3. Move old Stage 5 to Stage 6
