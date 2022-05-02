@@ -83,3 +83,8 @@
 
 1. Fix joker bug
 2. Fix result statistic bug
+
+## Version 1.2.7
+
+1. Fix misclick on report button
+2. Fix init bug

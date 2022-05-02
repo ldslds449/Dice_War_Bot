@@ -14,7 +14,7 @@ from mode import *
 from version import *
 
 class UI:
-  Version = '1.2.6'
+  Version = '1.2.7'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -283,6 +283,8 @@ class UI:
     self.setSettingInputField()
     self.btn_load_config_event()
     self.setSelectDiceField()
+
+    MyAction.init()
 
     self.window.deiconify()
 
@@ -692,7 +694,7 @@ class UI:
       
       # status changed
       if previous_status != self.bg_task.status:
-        status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy']
+        status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy', 'Finish\nAnimation']
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)])
 
