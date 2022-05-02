@@ -51,12 +51,35 @@
 
 ## Version 1.2.0
 
-1. Change party setting UI
+1. Change party setting UI.
 
 ## Version 1.2.1
 
-1. Fix action bug
+1. Fix action bug.
 
 ## Version 1.2.2
 
-1. Fix action bug
+1. Fix action bug.
+
+## Version 1.2.3
+
+1. Change parameter type in function --- action.
+2. Add load screenshot button.
+3. Add ADB mode to specific using ip and port or device id.
+
+## Version 1.2.4
+
+1. Add StrictOrderMerge for Joker dice.
+2. Add lateGame judgement.
+3. Add new action loop for Joker dice.
+
+## Version 1.2.5
+
+1. Add result statistic
+2. Add file dialog when saving the screenshot
+3. Change init button to result result button
+
+## Version 1.2.6
+
+1. Fix joker bug
+2. Fix result statistic bug

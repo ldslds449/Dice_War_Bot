@@ -21,11 +21,11 @@ class ADB:
     ADB.sh('adb kill-server')
 
   @staticmethod
-  def detectDiceWar(ip:str, port:int):
-    r = ADB.sh(f'adb -s {ip}:{port} shell "dumpsys activity activities | grep mResumedActivity"').decode('utf-8')
+  def detectDiceWar(adb_device_code:str):
+    r = ADB.sh(f'adb -s {adb_device_code} shell "dumpsys activity activities | grep mResumedActivity"').decode('utf-8')
     return ADB.packageName in r
 
   @staticmethod
-  def restart(ip:str, port:int):
-    ADB.sh(f'adb -s {ip}:{port} shell am force-stop {ADB.packageName}')
-    ADB.sh(f'adb -s {ip}:{port} shell monkey -p {ADB.packageName} -c android.intent.category.LAUNCHER 1')
+  def restart(adb_device_code:str):
+    ADB.sh(f'adb -s {adb_device_code} shell am force-stop {ADB.packageName}')
+    ADB.sh(f'adb -s {adb_device_code} shell monkey -p {ADB.packageName} -c android.intent.category.LAUNCHER 1')

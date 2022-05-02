@@ -3,16 +3,6 @@ from mode import *
 from configparser import ConfigParser
 import os
 
-# lParam = win32api.MAKELONG(90, 480)
-# lParam = win32api.MAKELONG(140, 480)
-# lParam = win32api.MAKELONG(90, 530)
-# lParam = win32api.MAKELONG(40, 580) # SP
-# lParam = win32api.MAKELONG(340, 580) # Summon
-# lParam = win32api.MAKELONG(190, 640) # Level
-# lParam = win32api.MAKELONG(130, 640) # Level
-# lParam = win32api.MAKELONG(40, 390) # Emoji
-# lParam = win32api.MAKELONG(100, 390) # Emoji
-
 class Variable:
   def __init__(self):
     self.board_dice_left_top_xy = None
@@ -28,6 +18,7 @@ class Variable:
     self.battle_xy = None
     self.ad_close_xy = None
     self.spell_xy = None
+    self.damage_list_xy = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
@@ -54,8 +45,10 @@ class Variable:
 
     self.emulator_mode = None
     self.control_mode = None
+    self.adb_mode = None
     self.adb_port = None
     self.adb_ip = None
+    self.adb_id = None
 
     self.dice_party = None
 
@@ -84,6 +77,7 @@ class Variable:
     self.battle_xy = str2Type(config.get('Coordinate', 'BattleXY', fallback='0 0'))
     self.ad_close_xy = str2Type(config.get('Coordinate', 'ADCloseXY', fallback='0 0'))
     self.spell_xy = str2Type(config.get('Coordinate', 'SpellXY', fallback='0 0'))
+    self.damage_list_xy = str2Type(config.get('Coordinate', 'DamageListXY', fallback='0 0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
     self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
@@ -96,8 +90,10 @@ class Variable:
     self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
     self.control_mode = ControlMode(str2Type(config.get('Mode', 'ControlMode', fallback='0')))
     self.detect_dice_mode = DetectDiceMode(str2Type(config.get('Mode', 'DetectDiceMode', fallback='0')))
+    self.adb_mode = ADBMode(str2Type(config.get('Mode', 'ADBMode', fallback='0')))
     self.adb_ip = config.get('ADB', 'IP', fallback='127.0.0.1')
     self.adb_port = str2Type(config.get('ADB', 'Port', fallback='5555'), int)
+    self.adb_id = str2Type(config.get('ADB', 'ID', fallback=''), str)
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
     self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
     self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
@@ -126,6 +122,7 @@ class Variable:
     config.set('Coordinate', 'BattleXY', type2Str(self.battle_xy))
     config.set('Coordinate', 'ADCloseXY', type2Str(self.ad_close_xy))
     config.set('Coordinate', 'SpellXY', type2Str(self.spell_xy))
+    config.set('Coordinate', 'DamageListXY', type2Str(self.damage_list_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
@@ -140,9 +137,11 @@ class Variable:
     config.set('Mode', 'Emulator', type2Str(int(self.emulator_mode)))
     config.set('Mode', 'ControlMode', type2Str(int(self.control_mode)))
     config.set('Mode', 'DetectDiceMode', type2Str(int(self.detect_dice_mode)))
+    config.set('Mode', 'ADBMode', type2Str(int(self.adb_mode)))
     config.add_section('ADB')
     config.set('ADB', 'IP', self.adb_ip)
     config.set('ADB', 'Port', type2Str(self.adb_port))
+    config.set('ADB', 'ID', self.adb_id)
     config.add_section('Dice')
     config.set('Dice', 'DiceParty', type2Str(tuple(self.dice_party)))
     config.add_section('Detect')
@@ -193,6 +192,9 @@ class Variable:
   def setSpellXY(self, _value: Tuple[int,int]):
     self.spell_xy = _value
 
+  def setDamageListXY(self, _value: Tuple[int,int]):
+    self.damage_list_xy = _value
+
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
 
@@ -226,11 +228,17 @@ class Variable:
   def setDetectDiceMode(self, _value: DetectDiceMode):
     self.detect_dice_mode = _value
 
-  def setADBIP(self, _value: int):
+  def setADBMode(self, _value: ADBMode):
+    self.adb_mode = _value
+
+  def setADBIP(self, _value: str):
     self.adb_ip = _value
 
   def setADBPort(self, _value: int):
     self.adb_port = _value
+
+  def setADBID(self, _value: str):
+    self.adb_id = _value
 
   def setDiceParty(self, _value: list):
     self.dice_party = _value
@@ -285,6 +293,9 @@ class Variable:
   def getSpellXY(self):
     return self.spell_xy
 
+  def getDamageListXY(self):
+    return self.damage_list_xy
+
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh
 
@@ -336,11 +347,17 @@ class Variable:
   def getDetectDiceMode(self):
     return self.detect_dice_mode
 
+  def getADBMode(self):
+    return self.adb_mode
+
   def getADBIP(self):
     return self.adb_ip
 
   def getADBPort(self):
     return self.adb_port
+
+  def getADBID(self):
+    return self.adb_id
 
   def getDiceParty(self):
     return self.dice_party

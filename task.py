@@ -27,10 +27,14 @@ class Task:
     self.detect = Detect("./image/dice", self.variable)
 
   def init(self):
+    if self.variable.getADBMode() == ADBMode.IP:
+      adb_device_code = f"{self.variable.getADBIP()}:{self.variable.getADBPort()}"
+    elif self.variable.getADBMode() == ADBMode.ID:
+      adb_device_code = self.variable.getADBID()
     self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID, 
-      _ip=self.variable.getADBIP(), _port=self.variable.getADBPort())
+      _adb_device_code = adb_device_code)
     self.diceControl = DiceControl(self.variable.getControlMode(), _hwnd=self.windowID, 
-      _ip=self.variable.getADBIP(), _port=self.variable.getADBPort())
+      _adb_device_code = adb_device_code)
     self.diceControl.setVariable(self.variable)
 
   def getWindowID(self):
@@ -130,6 +134,7 @@ class Task:
     inGame = status_result['Game']
     inTrophy = status_result['Trophy']
     hasAD = status_result['AD']
+    self.result = status_result['Result']
 
     def detectLobbyAgain():
       _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
@@ -145,7 +150,7 @@ class Task:
       elif self.status == Status.GAME:
         if inLobby:
           self.status = Status.LOBBY
-        else:
+        elif inFinish:
           self.status = Status.FINISH
       elif self.status == Status.FINISH:
         if inLobby:
@@ -171,6 +176,7 @@ class Task:
             self.diceControl.closeAD()
             time.sleep(5)
           else:
+            time.sleep(3)
             self.diceControl.skip() # leave this stage
       elif self.status == Status.LOBBY:
         MyAction.init()
@@ -211,13 +217,20 @@ class Task:
     print("\n================")
 
     MyAction.action(
-      self.diceControl, self.findMergeDice,
-      count, count_sorted, location, self.board_dice, 
-      canSummon, 
-      canSP,
-      canLevel,
-      canSpell,
-      countTotal, self.board_dice_star,
-      self.variable.getDiceParty()
+      diceControl=self.diceControl, 
+      findMergeDice=self.findMergeDice,
+      count=count, 
+      count_sorted=count_sorted, 
+      location=location, 
+      boardDice=self.board_dice, 
+      canSummon=canSummon, 
+      canLevelSp=canSP,
+      canLevelDice=canLevel,
+      canSpell=canSpell,
+      countTotal=countTotal, 
+      boardDiceStar=self.board_dice_star,
+      team=self.variable.getDiceParty().copy()
     )
+
+
     

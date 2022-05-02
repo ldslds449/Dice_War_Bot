@@ -208,46 +208,40 @@ class Detect:
     max_star_value = max(star_count_binary, star_count_edge)
     return 7 if max_star_value == 0 else max_star_value
 
-  def detectLobby(self, img):
+  def colorDetect(self, img, lower, upper):
     img = cv2.resize(img, self.resize_size)
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    hsv_color1 = np.asarray([100, 216, 252])
-    hsv_color2 = np.asarray([105, 226, 255])
+    hsv_color1 = np.asarray(lower)
+    hsv_color2 = np.asarray(upper)
 
     mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
     extract_pixel_count = np.sum(mask)//255
     ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+    return ratio
+
+  def detectLobby(self, img):
+    lower = [100, 216, 252]
+    upper = [105, 226, 255]
+    ratio = self.colorDetect(img, lower, upper)
 
     print(f'Lobby {ratio}')
 
     return ratio > 0.55
 
   def detectWaiting(self, img):
-    img = cv2.resize(img, self.resize_size)
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    hsv_color1 = np.asarray([121, 148, 67])
-    hsv_color2 = np.asarray([129, 183, 121])
-
-    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
-    extract_pixel_count = np.sum(mask)//255
-    ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+    lower = [121, 148, 67]
+    upper = [129, 183, 121]
+    ratio = self.colorDetect(img, lower, upper)
 
     print(f'Wait {ratio}')
 
     return ratio > 0.90
 
   def detectFinish(self, img):
-    img = cv2.resize(img, self.resize_size)
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    hsv_color1 = np.asarray([125, 161, 69])
-    hsv_color2 = np.asarray([129, 193, 101])
-
-    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
-    extract_pixel_count = np.sum(mask)//255
-    ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+    lower = [125, 161, 69]
+    upper = [129, 193, 101]
+    ratio = self.colorDetect(img, lower, upper)
 
     print(f'Finish {ratio}')
 
@@ -265,34 +259,33 @@ class Detect:
     return count >= w*h*0.65
 
   def detectAD(self, img):
-    img = cv2.resize(img, self.resize_size)
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    hsv_color1 = np.asarray([66, 153, 181])
-    hsv_color2 = np.asarray([71, 176, 212])
-
-    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
-    extract_pixel_count = np.sum(mask)//255
-    ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+    lower = [66, 153, 181]
+    upper = [71, 176, 212]
+    ratio = self.colorDetect(img, lower, upper)
 
     print(f'AD {ratio}')
 
     return ratio > 0.35
 
   def detectTrophy(self, img):
-    img = cv2.resize(img, self.resize_size)
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    hsv_color1 = np.asarray([124, 180, 70])
-    hsv_color2 = np.asarray([126, 183, 73])
-
-    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
-    extract_pixel_count = np.sum(mask)//255
-    ratio = extract_pixel_count/self.resize_size[0]/self.resize_size[1]
+    lower = [124, 180, 70]
+    upper = [126, 183, 73]
+    ratio = self.colorDetect(img, lower, upper)
 
     print(f'Trophy {ratio}')
 
     return ratio > 0.90
+
+  # True: Win
+  # False: Lose
+  def detectResult(self, img):
+    lower = [19, 81, 230]
+    upper = [30, 150, 255]
+    ratio = self.colorDetect(img, lower, upper)
+
+    print(f'Result {ratio}')
+
+    return ratio > 0.80
 
   def canSummon(self, luminance: float):
     if luminance >= 180:
@@ -356,6 +349,9 @@ class Detect:
 
   def resize(self, img, size):
     return cv2.resize(img, size)
+
+  def load(self, fname):
+    return cv2.imread(fname)
 
   def save(self, img, fname):
     cv2.imwrite(fname, img)
@@ -466,6 +462,7 @@ class Detect:
     inGame = False
     inTrophy = False
     hasAD = False
+    result = False
 
     if self.detectLobby(self.getDiceImage(img, 8)):
       inLobby = True
@@ -482,6 +479,10 @@ class Detect:
       hasAD = True
     if self.detectTrophy(self.getDiceImage(img, 4)):
       inTrophy = True
+    # use middle top of the image
+    if self.detectResult(self.extractImage(img, 
+      (img.shape[1]//2, 20, 5, 5), ExtractMode.CENTER)):
+      result = True
 
     return {
       'Lobby': inLobby, 
@@ -489,5 +490,6 @@ class Detect:
       'Finish': inFinish,
       'Game': inGame,
       'Trophy': inTrophy,
-      'AD': hasAD
+      'AD': hasAD,
+      'Result': result,
     }

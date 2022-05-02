@@ -10,17 +10,16 @@ from adb import *
 from mode import ControlMode
 
 class Control:
-  def __init__(self, _mode: ControlMode, _hwnd = None, _ip = None, _port = None):
+  def __init__(self, _mode: ControlMode, _hwnd = None, _adb_device_code = None):
     self.mode = _mode
     if self.mode == ControlMode.WIN32API:
       self.hwnd = _hwnd
       if self.hwnd is None:
         raise Exception('Need hwnd parameter in WIN32API mode')
     elif self.mode == ControlMode.ADB:
-      self.ip = _ip
-      self.port = _port
-      if self.port is None or self.ip is None:
-        raise Exception('Need ip and port parameter in ADB mode')
+      self.adb_device_code = _adb_device_code
+      if self.adb_device_code is None:
+        raise Exception('Need adb device code parameter in ADB mode')
 
   def sh(self, *commands):
     if self.mode == ControlMode.WIN32API:
@@ -36,7 +35,7 @@ class Control:
       self.sh(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, clickPos)
       self.sh(self.hwnd, win32con.WM_LBUTTONUP, None, clickPos)
     elif self.mode == ControlMode.ADB:
-      command = f'adb -s {self.ip}:{self.port} shell input tap {pos[0]} {pos[1]}'
+      command = f'adb -s {self.adb_device_code} shell input tap {pos[0]} {pos[1]}'
       self.sh(command)
 
   def drag_press(self, src: Tuple[int, int], dst: Tuple[int, int]):
@@ -71,19 +70,19 @@ class Control:
       offset_y = src[1] - dst[1]
       dist = int(math.sqrt(abs(offset_x)**2 + abs(offset_y)**2))
       duration = int((dist // 3) * 5)
-      command = f'adb -s {self.ip}:{self.port} shell input swipe {src[0]} {src[1]} {dst[0]} {dst[1]} {duration}'
+      command = f'adb -s {self.adb_device_code} shell input swipe {src[0]} {src[1]} {dst[0]} {dst[1]} {duration}'
       self.sh(command)
 
   def back(self):
     if self.mode == ControlMode.WIN32API:
       pass # not supported
     elif self.mode == ControlMode.ADB:
-      command = f'adb -s {self.ip}:{self.port} shell input keyevent KEYCODE_BACK'
+      command = f'adb -s {self.adb_device_code} shell input keyevent KEYCODE_BACK'
       self.sh(command)
 
 class DiceControl(Control):
-  def __init__(self, _mode: ControlMode, _hwnd = None, _ip = None, _port = None):
-    super(DiceControl, self).__init__(_mode, _hwnd, _ip, _port)
+  def __init__(self, _mode: ControlMode, _hwnd = None, _adb_device_code = None):
+    super(DiceControl, self).__init__(_mode, _hwnd, _adb_device_code)
 
   def setVariable(self, _variable: Variable):
     self.variable = _variable
