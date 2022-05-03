@@ -284,7 +284,7 @@ class MyAction(Action):
                 lateGameCounter += len(findStarCount(name, 5))
                 lateGameCounter += len(findStarCount(name, 6))
                 lateGameCounter += len(findStarCount(name, 7))
-              if lateGameCounter > 2:
+              if lateGameCounter >= 2:
                 MyAction.lateGame = True
 
             if not MyAction.lateGame and not MyAction.midLateGame:
@@ -293,7 +293,9 @@ class MyAction(Action):
               print('Stage 5')
             else:
               print('Stage 6')
-
+            if canLevelSp:
+              diceControl.levelUpSP()
+              MyAction.SpLevelTimes += 1
             for name in team:
               if name == 'Growth':
                 continue
@@ -321,3 +323,4 @@ class MyAction(Action):
                 if canLevelDice[level_location]:
                   diceControl.levelUpDice(level_location+1) # 1: offset
                   break
+    time.sleep(0.3)
