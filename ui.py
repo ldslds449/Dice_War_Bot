@@ -14,7 +14,7 @@ from version import *
 
 class UI:
 
-  Version = '1.3.3'
+  Version = '1.3.5'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -47,7 +47,6 @@ class UI:
     self.frame_btn.pack(expand=1, fill="x")
     self.frame_setting = tk.Frame(self.tab_setting, pady=10, height=500)
     self.frame_setting.grid(column=0, row=0, sticky='nswe')
-    self.frame_setting.pack_propagate(0)
     self.frame_setting_page_btn = tk.Frame(self.tab_setting, pady=5)
     self.frame_setting_page_btn.grid(column=0, row=1)
     self.frame_setting_btn = tk.Frame(self.tab_setting, pady=10)

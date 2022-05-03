@@ -1,0 +1,8 @@
+pywin32
+opencv-python
+dhash
+sewar
+Pillow
+numpy
+tk
+requests2

@@ -1,4 +1,3 @@
-import enum
 import cv2
 import glob
 import os
@@ -186,7 +185,7 @@ class Detect:
         star_count_binary += 1
 
     # edge detection
-    img_edge = cv2.Canny(image=img_gray, threshold1=350, threshold2=400)
+    img_edge = cv2.Canny(image=img_gray, threshold1=300, threshold2=400)
     contours, _ = cv2.findContours(img_edge, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     star_count_edge = 0
     centers = []

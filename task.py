@@ -199,7 +199,6 @@ class Task:
             time.sleep(5)
           else:
             self.result = result
-            self.detect.save(im, f'extract/{time.strftime("%Y%m%d-%H%M%S")}.png')
             self.diceControl.skip() # leave this stage
             time.sleep(0.5)
             self.diceControl.skip() # click again
