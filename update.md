@@ -97,3 +97,7 @@
 ## Version 1.2.9
 
 1. Use two screenshot to avoid detecting error on dice star
+
+## Version 1.2.10
+
+1. Fix state error when stop detecting immediately after finish the game.

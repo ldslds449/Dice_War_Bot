@@ -206,6 +206,8 @@ class Task:
         if inFinish:
           self.status = Status.FINISH
           time.sleep(3)
+        elif inLobby:
+          self.status = Status.LOBBY
 
     if self.status != Status.GAME:
       return
