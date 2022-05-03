@@ -227,7 +227,7 @@ class MyAction(Action):
           MyAction.hasSummonDiceTimes += 1
           if MyAction.hasSummonDiceTimes >= 4:
             MyAction.hasSummonFourDice = True
-      # Stage 2 ~ 6
+      # Stage 2 ~ 5
       else:
         # joker copy
         order = ['Growth']
@@ -247,7 +247,7 @@ class MyAction(Action):
             diceControl.levelUpSP()
             MyAction.SpLevelTimes += 1 # Sp level reach lv2
 
-        # Stage 3 ~ 6
+        # Stage 3 ~ 5
         else:
           # summon a dice
           if canSummon:
@@ -272,29 +272,27 @@ class MyAction(Action):
               diceControl.levelUpSP()
               MyAction.SpLevelTimes += 1
 
-          # Stage 4 ~ 6
+          # Stage 4 ~ 5
           elif countBlank < 2 and MyAction.SpLevelTimes >= 3:
-            if not MyAction.lateGame:
-              lateGameCounter = 0
-              for name in team:
-                lateGameCounter += len(findStarCount(name, 5))
-                lateGameCounter += len(findStarCount(name, 6))
-                lateGameCounter += len(findStarCount(name, 7))
-              if lateGameCounter > 2:
-                MyAction.lateGame = True
+            # if not MyAction.lateGame:
+              # lateGameCounter = 0
+              # for name in team:
+                # lateGameCounter += len(findStarCount(name, 5))
+                # lateGameCounter += len(findStarCount(name, 6))
+                # lateGameCounter += len(findStarCount(name, 7))
+              # if lateGameCounter > 2:
+                # MyAction.lateGame = True
 
-            if not MyAction.lateGame and not MyAction.midLateGame:
+            if not MyAction.midLateGame:
               print('Stage 4')
-            elif not MyAction.lateGame:
-              print('Stage 5')
             else:
-              print('Stage 6')
+              print('Stage 5')
 
             for name in team:
               if name == 'Growth':
                 continue
               elif name == 'Joker':
-                if MyAction.midLateGame or MyAction.lateGame:
+                if MyAction.midLateGame:
                   order = ['Growth', 'Joker']
                   other = [dice for dice in team if dice not in order]
                   order += other
@@ -306,7 +304,7 @@ class MyAction(Action):
               elif count[name] > 2:
                 MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar, name, ['Growth', 'Joker'])
                 
-            if MyAction.lateGame:
+            if MyAction.midLateGame:
               for d,_ in count_sorted:
                 # skip Joker, Growth and Blank 
                 if d == 'Joker' or d == 'Growth' or d == 'Blank':
