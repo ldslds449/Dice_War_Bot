@@ -192,14 +192,16 @@ class MyAction(Action):
               lateGameCounter += len(findStarCount(name, 5))
               lateGameCounter += len(findStarCount(name, 6))
               lateGameCounter += len(findStarCount(name, 7))
-            if lateGameCounter > 2:
+            if lateGameCounter >= 2:
               MyAction.lateGame = True
               
           if not MyAction.lateGame:
             print('Stage 4')
           else:
             print('Stage 5')
-
+          if canLevelSp:
+            diceControl.levelUpSP()
+            MyAction.SpLevelTimes += 1
           for name in team:
             if count[name] > 2:
               MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar, name, ['Growth'])
