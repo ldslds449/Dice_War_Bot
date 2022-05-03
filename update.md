@@ -115,3 +115,7 @@
 ## Version 1.3.3
 
 1. Fix result bug
+
+## Version 1.3.4
+1. Remove Stage 6
+2. Add requirements.txt
