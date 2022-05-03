@@ -107,3 +107,7 @@
 ## Version 1.3.1
 
 1. Fix state error when stop detecting immediately after finish the game.
+
+## Version 1.3.2
+
+1. Auto add 'SolorX' to team list when 'Solor' in team list

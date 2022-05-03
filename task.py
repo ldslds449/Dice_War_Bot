@@ -112,6 +112,14 @@ class Task:
     def detectDice(i):
       img = self.detect.getDiceImage(im, i)
       img2 = self.detect.getDiceImage(im2, i)
+
+      # generate dice detect list
+      dice_detect_list = self.variable.getDiceParty() + ['Blank']
+      if 'Solor' in dice_detect_list and 'SolorX' not in dice_detect_list:
+        dice_detect_list += ['SolorX']
+      if 'SolorX' in dice_detect_list and 'Solor' not in dice_detect_list:
+        dice_detect_list += ['Solor']
+
       res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], self.variable.getDetectDiceMode())
       res_star = self.detect.detectStar(img.copy())
       res2_star = self.detect.detectStar(img2.copy())
