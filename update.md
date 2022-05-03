@@ -117,5 +117,11 @@
 1. Fix result bug
 
 ## Version 1.3.4
+
 1. Remove Stage 6
 2. Add requirements.txt
+
+## Version 1.3.5
+
+1. Modify the window size
+2. Fix star detection bug
