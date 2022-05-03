@@ -88,3 +88,30 @@
 
 1. Fix misclick on report button
 2. Fix init bug
+
+## Version 1.2.8
+
+1. Modify log message
+2. Modify star detection algorithm
+
+## Version 1.2.9
+
+1. Use two screenshot to avoid detecting error on dice star
+
+## Version 1.3.0
+
+1. Finish Task 6 and add Stage 6
+2. Stage 5 when summon 25 dices
+3. Move old Stage 5 to Stage 6
+
+## Version 1.3.1
+
+1. Fix state error when stop detecting immediately after finish the game.
+
+## Version 1.3.2
+
+1. Auto add 'SolorX' to team list when 'Solor' in team list
+
+## Version 1.3.3
+
+1. Fix result bug

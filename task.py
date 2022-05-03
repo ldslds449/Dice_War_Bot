@@ -1,6 +1,7 @@
 import sys
 import win32gui
 import win32con
+import time
 from typing import Callable
 from tkinter import Variable
 
@@ -101,26 +102,46 @@ class Task:
     _, im = self.screen.getScreenShot(self.variable.getZoomRatio())
     im = self.detect.Image2OpenCV(im)
 
+    # use for detecting joker star
+    _, im2 = self.screen.getScreenShot(self.variable.getZoomRatio())
+    im2 = self.detect.Image2OpenCV(im2)
+
     self.board_dice = []
     self.detect_board_dice_img = []
     self.board_dice_star = []
     self.board_dice_lu = []
     def detectDice(i):
       img = self.detect.getDiceImage(im, i)
+      img2 = self.detect.getDiceImage(im2, i)
+
+      # generate dice detect list
+      dice_detect_list = self.variable.getDiceParty() + ['Blank']
+      if 'Solor' in dice_detect_list and 'SolorX' not in dice_detect_list:
+        dice_detect_list += ['SolorX']
+      if 'SolorX' in dice_detect_list and 'Solor' not in dice_detect_list:
+        dice_detect_list += ['Solor']
+
       res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], self.variable.getDetectDiceMode())
       res_star = self.detect.detectStar(img.copy())
+      res2_star = self.detect.detectStar(img2.copy())
+
+      # select the max value of star
+      if res_star == 7 or res2_star == 7:
+        dice_star = res2_star if res_star == 7 else res_star
+      else:
+        dice_star = max(res_star, res2_star)
 
       dice_lu = self.detect.getAverageLuminance(
         self.detect.getDiceImage(im, i, self.variable.getExtractDiceLuSizeWH()))
 
       self.detect_board_dice_img.append(img)
-      self.board_dice_star.append(res_star)
+      self.board_dice_star.append(dice_star)
       self.board_dice.append(res[0])
       self.board_dice_lu.append(dice_lu)
 
       if i != 0 and i % self.variable.getCol() == 0 :
         print("")
-      print(f"{res[0]:10}({res_star})", end="")
+      print(f"{res[0]:10}({res_star}/{res2_star})", end="")
       if i+1 == self.variable.getBoardSize():
         print("")
 
@@ -134,7 +155,8 @@ class Task:
     inGame = status_result['Game']
     inTrophy = status_result['Trophy']
     hasAD = status_result['AD']
-    self.result = status_result['Result']
+    result = status_result['Result']
+    self.result = None
 
     def detectLobbyAgain():
       _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
@@ -176,8 +198,12 @@ class Task:
             self.diceControl.closeAD()
             time.sleep(5)
           else:
-            time.sleep(3)
+            self.result = result
+            self.detect.save(im, f'extract/{time.strftime("%Y%m%d-%H%M%S")}.png')
             self.diceControl.skip() # leave this stage
+            time.sleep(0.5)
+            self.diceControl.skip() # click again
+            time.sleep(5)
       elif self.status == Status.LOBBY:
         MyAction.init()
         if inWaiting:
@@ -193,6 +219,9 @@ class Task:
       elif self.status == Status.FINISH_ANIMATION:
         if inFinish:
           self.status = Status.FINISH
+          time.sleep(5)
+        elif inLobby:
+          self.status = Status.LOBBY
 
     if self.status != Status.GAME:
       return
