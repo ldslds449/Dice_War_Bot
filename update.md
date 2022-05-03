@@ -111,3 +111,7 @@
 ## Version 1.3.2
 
 1. Auto add 'SolorX' to team list when 'Solor' in team list
+
+## Version 1.3.3
+
+1. Fix result bug

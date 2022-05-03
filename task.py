@@ -1,6 +1,7 @@
 import sys
 import win32gui
 import win32con
+import time
 from typing import Callable
 from tkinter import Variable
 
@@ -154,7 +155,8 @@ class Task:
     inGame = status_result['Game']
     inTrophy = status_result['Trophy']
     hasAD = status_result['AD']
-    self.result = status_result['Result']
+    result = status_result['Result']
+    self.result = None
 
     def detectLobbyAgain():
       _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
@@ -196,8 +198,12 @@ class Task:
             self.diceControl.closeAD()
             time.sleep(5)
           else:
-            time.sleep(3)
+            self.result = result
+            self.detect.save(im, f'extract/{time.strftime("%Y%m%d-%H%M%S")}.png')
             self.diceControl.skip() # leave this stage
+            time.sleep(0.5)
+            self.diceControl.skip() # click again
+            time.sleep(5)
       elif self.status == Status.LOBBY:
         MyAction.init()
         if inWaiting:
@@ -213,7 +219,7 @@ class Task:
       elif self.status == Status.FINISH_ANIMATION:
         if inFinish:
           self.status = Status.FINISH
-          time.sleep(3)
+          time.sleep(5)
         elif inLobby:
           self.status = Status.LOBBY
 

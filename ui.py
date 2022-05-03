@@ -14,7 +14,7 @@ from version import *
 
 class UI:
 
-  Version = '1.3.2'
+  Version = '1.3.3'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -698,15 +698,15 @@ class UI:
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)].replace(" ","\n"))
 
-        # record result
-        if self.bg_task.status == Status.FINISH:
-          win = int(self.result_StringVar.get().split('/')[0])
-          lose = int(self.result_StringVar.get().split('/')[1])
-          if self.bg_task.result == True:
-            win += 1
-          else:
-            lose += 1
-          self.result_StringVar.set(f'{win} / {lose}')
+      # record result
+      if self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
+        win = int(self.result_StringVar.get().split('/')[0])
+        lose = int(self.result_StringVar.get().split('/')[1])
+        if self.bg_task.result == True:
+          win += 1
+        else:
+          lose += 1
+        self.result_StringVar.set(f'{win} / {lose}')
       
       if self.bg_task.status == Status.LOBBY:
         # initial
