@@ -14,7 +14,7 @@ from version import *
 
 class UI:
 
-  Version = '1.3.5'
+  Version = '1.3.6'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -117,6 +117,7 @@ class UI:
       'Zoom Ratio': 0,
       'Detect Delay': 0,
       'Restart Delay': 0,
+      'Freeze Threshold': 0,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -279,8 +280,9 @@ class UI:
             self.text_log.insert(tk.END, line)
         self.text_log.insert(tk.END, '========================================\n')
         self.text_log.see(tk.END)  
-    self.setSettingInputField()
     self.btn_load_config_event()
+    self.setSettingInputField()
+    self.setCheckBoxFlag()
     self.setSelectDiceField()
 
     MyAction.init()
@@ -295,6 +297,24 @@ class UI:
         messagebox.showinfo('New Version', f'Find New Version {latest_version} !!!', parent=self.window)
     except:
       self.log(f'{traceback.format_exc()}\n')
+
+  def setCheckBoxFlag(self):
+    if self.bg_task is None:
+      raise Exception('setCheckBoxFlag:: Need to set task variable first')
+    else:
+      self.autoPlay_booleanVar.set(self.bg_task.variable.getAutoPlay())
+      self.topWindow_booleanVar.set(self.bg_task.variable.getTopWindow())
+      self.watchAD_booleanVar.set(self.bg_task.variable.getWatchAD())
+      self.restartApp_booleanVar.set(self.bg_task.variable.getRestartApp())
+
+  def getCheckBoxFlag(self):
+    if self.bg_task is None:
+      raise Exception('getCheckBoxFlag:: Need to set task variable first')
+    else:
+      self.bg_task.variable.setAutoPlay(self.autoPlay_booleanVar.get())
+      self.bg_task.variable.setTopWindow(self.topWindow_booleanVar.get())
+      self.bg_task.variable.setWatchAD(self.watchAD_booleanVar.get())
+      self.bg_task.variable.setRestartApp(self.restartApp_booleanVar.get())
 
   def setSettingInputField(self):
     if self.bg_task is None:
@@ -338,6 +358,7 @@ class UI:
       self.setting_stringVar['Zoom Ratio'].set(dealString(self.bg_task.variable.getZoomRatio()))
       self.setting_stringVar['Detect Delay'].set(dealString(self.bg_task.variable.getDetectDelay()))
       self.setting_stringVar['Restart Delay'].set(dealString(self.bg_task.variable.getRestartDelay()))
+      self.setting_stringVar['Freeze Threshold'].set(dealString(self.bg_task.variable.getFreezeThreshold()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -379,12 +400,15 @@ class UI:
       self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar['Zoom Ratio'].get(), float))
       self.bg_task.variable.setDetectDelay(dealString(self.setting_stringVar['Detect Delay'].get(), float))
       self.bg_task.variable.setRestartDelay(dealString(self.setting_stringVar['Restart Delay'].get(), float))
+      self.bg_task.variable.setFreezeThreshold(dealString(self.setting_stringVar['Freeze Threshold'].get()))
     
   def btn_run_event(self):
     if self.isRunning == False: # enable
       if self.bg_task is not None:
         if self.thread_bg_task is None or not self.thread_bg_task.is_alive():
           self.getSettingInputField()
+          self.getCheckBoxFlag()
+          self.getSelectDiceField()
           self.isRunning = True
           self.thread_bg_task = threading.Thread(target = self.run_bg_task)
           self.thread_bg_task.start()
@@ -450,6 +474,8 @@ class UI:
   def btn_save_config_event(self):
     self.log('=== Save Config ===\n')
     self.getSettingInputField()
+    self.getCheckBoxFlag()
+    self.getSelectDiceField()
     self.bg_task.variable.saveToConfigFile()
     self.checkBtn_watchAD.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
     self.checkBtn_restartApp.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
@@ -458,6 +484,8 @@ class UI:
     self.log('=== Load Config ===\n')
     self.bg_task.variable.loadFromConfigFile()
     self.setSettingInputField()
+    self.setCheckBoxFlag()
+    self.setSelectDiceField()
 
   def btn_save_extract_images_event(self):
     self.log('=== Save Extract Images ===\n')
@@ -657,6 +685,14 @@ class UI:
       self.btn_run.config(text='Start')
       self.log('=== Stop Detecting ===\n')
 
+    def restartApp():
+      if self.bg_task.variable.getADBMode() == ADBMode.IP:
+        ADB.restart(f"{self.bg_task.variable.getADBIP()}:{self.bg_task.variable.getADBPort()}")
+      elif self.bg_task.variable.getADBMode() == ADBMode.ID:
+        ADB.restart(self.bg_task.variable.getADBID())
+      
+    # ---------------------------------------- #
+
     while self.isRunning:
       # detect dice war app
       if self.bg_task.variable.getControlMode() == ControlMode.ADB:
@@ -668,15 +704,13 @@ class UI:
           self.log("Error: Focus app is not Dice War App\n")
           if self.restartApp_booleanVar.get() == True:
             self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
-            if self.bg_task.variable.getADBMode() == ADBMode.IP:
-              ADB.restart(f"{self.bg_task.variable.getADBIP()}:{self.bg_task.variable.getADBPort()}")
-            elif self.bg_task.variable.getADBMode() == ADBMode.ID:
-              ADB.restart(self.bg_task.variable.getADBID())
+            restartApp()
             time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
           else:
             stopDetect()
             break
-
+      
+      # record previous state
       previous_status = self.bg_task.status
 
       # run
@@ -696,6 +730,17 @@ class UI:
         status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy', 'Finish Animation']
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)].replace(" ","\n"))
+
+      # check freeze
+      if self.bg_task.same_screenshot_cnt >= self.bg_task.variable.getFreezeThreshold():
+        self.log("Error: Dice War App freezes\n")
+        if self.restartApp_booleanVar.get() == True:
+          self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
+          restartApp()
+          time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
+        else:
+          stopDetect()
+          break
 
       # record result
       if self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
@@ -729,6 +774,7 @@ class UI:
         self.changeImage(self.label_detect_board_dice[i], img)
       self.window.update()
 
+      # detect delay
       time.sleep(self.bg_task.variable.getDetectDelay())
 
     # recover the text and state

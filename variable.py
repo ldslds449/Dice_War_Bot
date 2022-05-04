@@ -1,4 +1,5 @@
 from typing import Tuple
+from xmlrpc.client import Boolean
 from mode import *
 from configparser import ConfigParser
 import os
@@ -28,12 +29,11 @@ class Variable:
     self.extract_spell_lu_size_wh = None
     self.emoji_dialog_wh = None
 
-    self.detect_dice_mode = None
-
     self.zoom_ratio = 1.0
     self.random_offset = 0
     self.detect_delay = None
     self.restart_delay = None
+    self.freeze_threshold = None
 
     self.col = 5 # constant
     self.row = 3 # constant
@@ -46,9 +46,16 @@ class Variable:
     self.emulator_mode = None
     self.control_mode = None
     self.adb_mode = None
+    self.detect_dice_mode = None
+
     self.adb_port = None
     self.adb_ip = None
     self.adb_id = None
+
+    self.auto_play = None
+    self.top_window = None
+    self.watch_ad = None
+    self.restart_app = None
 
     self.dice_party = None
 
@@ -97,6 +104,12 @@ class Variable:
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
     self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
     self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
+    self.freeze_threshold = str2Type(config.get('Detect', 'FreezeThreshold', fallback='10'))
+    # eval('True') = True, eval('False') = False
+    self.auto_play = str2Type(config.get('Flag', 'AutoPlay', fallback='False'), eval) 
+    self.top_window = str2Type(config.get('Flag', 'TopWindow', fallback='False'), eval)
+    self.watch_ad = str2Type(config.get('Flag', 'WatchAD', fallback='False'), eval)
+    self.restart_app = str2Type(config.get('Flag', 'RestartApp', fallback='False'), eval)
 
   ### write to config file ###
   def saveToConfigFile(self):
@@ -147,6 +160,12 @@ class Variable:
     config.add_section('Detect')
     config.set('Detect', 'DetectDelay', type2Str(self.detect_delay))
     config.set('Detect', 'RestartDelay', type2Str(self.restart_delay))
+    config.set('Detect', 'FreezeThreshold', type2Str(self.freeze_threshold))
+    config.add_section('Flag')
+    config.set('Flag', 'AutoPlay', type2Str(self.auto_play))
+    config.set('Flag', 'TopWindow', type2Str(self.top_window))
+    config.set('Flag', 'WatchAD', type2Str(self.watch_ad))
+    config.set('Flag', 'RestartApp', type2Str(self.restart_app))
 
     with open(self.config_file_name, 'w') as f:
       config.write(f)
@@ -251,6 +270,21 @@ class Variable:
   
   def setRestartDelay(self, _value: float):
     self.restart_delay = _value
+
+  def setFreezeThreshold(self, _value: int):
+    self.freeze_threshold = _value
+
+  def setAutoPlay(self, _value: bool):
+    self.auto_play = _value
+
+  def setTopWindow(self, _value: bool):
+    self.top_window = _value
+
+  def setWatchAD(self, _value: bool):
+    self.watch_ad = _value
+
+  def setRestartApp(self, _value: bool):
+    self.restart_app = _value
 
   ### get ###
 
@@ -373,3 +407,19 @@ class Variable:
   
   def getRestartDelay(self):
     return self.restart_delay
+
+  def getFreezeThreshold(self):
+    return self.freeze_threshold
+
+  def getAutoPlay(self):
+    return self.auto_play
+
+  def getTopWindow(self):
+    return self.top_window
+
+  def getWatchAD(self):
+    return self.watch_ad
+
+  def getRestartApp(self):
+    return self.restart_app
+

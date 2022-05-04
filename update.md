@@ -125,3 +125,8 @@
 
 1. Modify the window size
 2. Fix star detection bug
+
+## Version 1.3.6
+
+1. Add app freeze detection
+2. Record the flags to ini file
