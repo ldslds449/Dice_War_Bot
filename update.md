@@ -130,3 +130,8 @@
 
 1. Add app freeze detection
 2. Record the flags to ini file
+
+## Version 1.3.7
+
+1. Fix app freeze detection bug
+2. Modify default value of freeze threshold

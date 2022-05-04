@@ -104,7 +104,7 @@ class Variable:
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
     self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
     self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
-    self.freeze_threshold = str2Type(config.get('Detect', 'FreezeThreshold', fallback='10'))
+    self.freeze_threshold = str2Type(config.get('Detect', 'FreezeThreshold', fallback='20'))
     # eval('True') = True, eval('False') = False
     self.auto_play = str2Type(config.get('Flag', 'AutoPlay', fallback='False'), eval) 
     self.top_window = str2Type(config.get('Flag', 'TopWindow', fallback='False'), eval)
