@@ -1,5 +1,4 @@
 from typing import Tuple
-from xmlrpc.client import Boolean
 from mode import *
 from configparser import ConfigParser
 import os
@@ -57,6 +56,9 @@ class Variable:
     self.watch_ad = None
     self.restart_app = None
 
+    self.win = None
+    self.lose = None
+
     self.dice_party = None
 
   ### read from config file ###
@@ -110,6 +112,8 @@ class Variable:
     self.top_window = str2Type(config.get('Flag', 'TopWindow', fallback='False'), eval)
     self.watch_ad = str2Type(config.get('Flag', 'WatchAD', fallback='False'), eval)
     self.restart_app = str2Type(config.get('Flag', 'RestartApp', fallback='False'), eval)
+    self.win = str2Type(config.get('Record', 'Win', fallback='0'))
+    self.lose = str2Type(config.get('Record', 'Lose', fallback='0'))
 
   ### write to config file ###
   def saveToConfigFile(self):
@@ -166,6 +170,9 @@ class Variable:
     config.set('Flag', 'TopWindow', type2Str(self.top_window))
     config.set('Flag', 'WatchAD', type2Str(self.watch_ad))
     config.set('Flag', 'RestartApp', type2Str(self.restart_app))
+    config.add_section('Record')
+    config.set('Record', 'Win', type2Str(self.win))
+    config.set('Record', 'Lose', type2Str(self.lose))
 
     with open(self.config_file_name, 'w') as f:
       config.write(f)
@@ -285,6 +292,12 @@ class Variable:
 
   def setRestartApp(self, _value: bool):
     self.restart_app = _value
+
+  def setWin(self, _value: int):
+    self.win = _value
+
+  def setLose(self, _value: int):
+    self.lose = _value
 
   ### get ###
 
@@ -423,3 +436,8 @@ class Variable:
   def getRestartApp(self):
     return self.restart_app
 
+  def getWin(self):
+    return self.win
+
+  def getLose(self):
+    return self.lose

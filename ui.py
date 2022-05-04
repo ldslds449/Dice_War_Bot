@@ -1,6 +1,8 @@
 import tkinter as tk
 import threading
 import traceback
+import win32clipboard
+from io import BytesIO
 from functools import partial
 from tkinter import ttk
 from tkinter import *
@@ -11,10 +13,11 @@ from task import *
 from screen import *
 from mode import *
 from version import *
+from draw import *
 
 class UI:
 
-  Version = '1.3.7'
+  Version = '1.3.8'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -213,6 +216,9 @@ class UI:
     self.btn_BM = tk.Button(self.frame_detect_btn, text='BM', width=15, height=2, font=('Arial', 10))
     self.btn_BM.config(command=self.btn_bm_event, state=DISABLED)
     self.btn_BM.pack(fill=BOTH, expand=True, side=TOP)
+    self.btn_share_party = tk.Button(self.frame_detect_btn, text='Share Party', width=15, height=2, font=('Arial', 10))
+    self.btn_share_party.config(command=self.btn_share_party_event, state=NORMAL)
+    self.btn_share_party.pack(fill=BOTH, expand=True, side=TOP)
 
     # auto play
     self.autoPlay_booleanVar = tk.BooleanVar() 
@@ -247,8 +253,10 @@ class UI:
     label_status.pack(fill=BOTH, expand=True, side=TOP)
 
     # Result Label
+    self.result_win = 0
+    self.result_lose = 0
     self.result_StringVar = StringVar()
-    self.result_StringVar.set('0 / 0')
+    self.result_StringVar.set(f"{self.result_win} / {self.result_lose}")
     label_result = tk.Label(self.frame_detect_btn, padx=5, pady=5, textvariable=self.result_StringVar)
     label_result.pack(fill=BOTH, expand=True, side=TOP)
 
@@ -263,7 +271,7 @@ class UI:
     self.btn_connect.pack(fill=BOTH, side=RIGHT, expand=True)
     self.isConnected = False
     self.btn_result = tk.Button(self.frame_btn, text='Reset Result', width=15, height=3, font=('Arial', 12))
-    self.btn_result.config(command=self.btn_reset_event, state=DISABLED)
+    self.btn_result.config(command=self.btn_reset_event, state=NORMAL)
     self.btn_result.pack(fill=BOTH, side=RIGHT, expand=True)
 
     self.window.protocol("WM_DELETE_WINDOW", self.onClosing)
@@ -284,6 +292,7 @@ class UI:
     self.setSettingInputField()
     self.setCheckBoxFlag()
     self.setSelectDiceField()
+    self.setResult()
 
     MyAction.init()
 
@@ -421,7 +430,19 @@ class UI:
 
   def btn_reset_event(self):
     self.log('=== Reset Result ===\n')
-    self.result_StringVar.set('0 / 0')
+    self.result_win = 0
+    self.result_lose = 0
+    self.result_StringVar.set(f"{self.result_win} / {self.result_lose}")
+    self.getResult()
+
+  def setResult(self):
+    self.result_win = self.bg_task.variable.getWin()
+    self.result_lose = self.bg_task.variable.getLose()
+    self.result_StringVar.set(f"{self.result_win} / {self.result_lose}")
+
+  def getResult(self):
+    self.bg_task.variable.setWin(self.result_win)
+    self.bg_task.variable.setLose(self.result_lose)
 
   def btn_bm_event(self):
     def bm_function():
@@ -430,6 +451,50 @@ class UI:
       self.btn_BM.config(state=NORMAL, text='BM')
     t = threading.Thread(target = bm_function)
     t.start()
+
+  def btn_share_party_event(self):
+    # pop window
+    share_window = Toplevel(self.window)
+    share_window.withdraw()
+    share_window.title("Share Party")
+
+    label_img = tk.Label(share_window)
+    label_img.pack(fill=BOTH, expand=True, side=TOP)
+
+    # draw a draw
+    img = Draw.getBlankImage((320,100))
+    # add dice
+    for i, dice in enumerate(self.select_dice_name):
+      idx = self.bg_task.detect.dice_name_idx_dict[dice]
+      dice_img = self.bg_task.detect.dice_image_PIL_resize[idx]
+      x = i * (self.bg_task.detect.resize_size[0] + 5) + 25
+      img = Draw.addImage(img, dice_img, (x, 10))
+    # add text
+    total = self.result_win + self.result_lose
+    win_rate = (self.result_win/total)*100 if total > 0 else 0.0
+    lose_rate = (self.result_lose/total)*100 if total > 0 else 0.0
+    img = Draw.addText(img, (-1, 70),
+      f"Win: {self.result_win} ({win_rate:.1f} %)    Lose: {self.result_lose} ({lose_rate:.1f} %)",
+      16)
+    self.changeImage(label_img, self.bg_task.detect.Image2TK(img))
+
+    def copy_to_clipboard(image):
+      output = BytesIO()
+      image.convert('RGB').save(output, 'BMP')
+      data = output.getvalue()[14:]
+      output.close()
+
+      win32clipboard.OpenClipboard()
+      win32clipboard.EmptyClipboard()
+      win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+      win32clipboard.CloseClipboard()
+
+    btn_copy = tk.Button(share_window, text='Copy Image', width=15, height=2, font=('Arial', 10))
+    btn_copy.pack(fill=BOTH, expand=True, side=TOP)
+    btn_copy.config(command=partial(copy_to_clipboard, img), state=NORMAL)
+
+    share_window.wm_transient(self.window)
+    share_window.deiconify()
 
   def btn_next_page_event(self):
     self.frame_setting_pages[self.now_page_idx].pack_forget()
@@ -665,7 +730,6 @@ class UI:
 
   def enableButton(self):
     self.btn_run.config(state=NORMAL)
-    self.btn_result.config(state=NORMAL)
     self.btn_screenshot.config(state=NORMAL)
     self.btn_BM.config(state=NORMAL)
     self.btn_draw.config(state=NORMAL)
@@ -744,13 +808,12 @@ class UI:
 
       # record result
       if self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
-        win = int(self.result_StringVar.get().split('/')[0])
-        lose = int(self.result_StringVar.get().split('/')[1])
         if self.bg_task.result == True:
-          win += 1
+          self.result_win += 1
         else:
-          lose += 1
-        self.result_StringVar.set(f'{win} / {lose}')
+          self.result_lose += 1
+        self.result_StringVar.set(f"{self.result_win} / {self.result_lose}")
+        self.getResult()
       
       if self.bg_task.status == Status.LOBBY:
         # initial
@@ -789,6 +852,7 @@ class UI:
     self.isRunning = False
     if self.bg_task.variable.getControlMode() == ControlMode.ADB:
       ADB.disconnect()
+    self.btn_save_config_event()
 
   def RUN(self):
     self.log('=== Finish Initial ===\n')
