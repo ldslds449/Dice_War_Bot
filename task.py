@@ -114,12 +114,13 @@ class Task:
     im2 = self.detect.Image2OpenCV(im2)
 
     # calculate hash value of screenshot
-    im_hash = dhash.dhash_int(im, size=16)
+    im_hash = dhash.dhash_int(self.detect.OpenCV2Image(im), size=64)
     if self.prev_screenshot_hash == im_hash:
       self.same_screenshot_cnt += 1
     else:
       self.same_screenshot_cnt = 0
       self.prev_screenshot_hash = im_hash
+    print(f"Same screenshot count: {self.same_screenshot_cnt}")
 
     self.board_dice = []
     self.detect_board_dice_img = []
