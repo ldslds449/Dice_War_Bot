@@ -25,14 +25,14 @@ class Task:
     self.variable.loadFromConfigFile()
 
     # present state
-    self.status = Status.LOBBY
+    self.status = Status.FINISH
 
     self.detect = Detect("./image/dice", self.variable)
 
     # same screenshot counter
     self.same_screenshot_cnt = 0
     # previous screenshot hash value
-    self.prev_screenshot_hash = None
+    self.prev_screenshot_hash = 0
 
   def init(self):
     if self.variable.getADBMode() == ADBMode.IP:
@@ -114,12 +114,14 @@ class Task:
     im2 = self.detect.Image2OpenCV(im2)
 
     # calculate hash value of screenshot
-    im_hash = dhash.dhash_int(self.detect.OpenCV2Image(im), size=64)
-    if self.prev_screenshot_hash == im_hash:
+    im_hash = dhash.dhash_int(self.detect.OpenCV2Image(im), size=8)
+    bit_diff = dhash.get_num_bits_different(self.prev_screenshot_hash, im_hash)
+    if bit_diff < 4:
       self.same_screenshot_cnt += 1
     else:
       self.same_screenshot_cnt = 0
-      self.prev_screenshot_hash = im_hash
+    self.prev_screenshot_hash = im_hash
+    print(f"Hash bit differenct count: {bit_diff}")
     print(f"Same screenshot count: {self.same_screenshot_cnt}")
 
     self.board_dice = []

@@ -135,3 +135,8 @@
 
 1. Fix app freeze detection bug
 2. Modify default value of freeze threshold
+
+## Version 1.3.8
+
+1. Add share party button to share the party information and copy the image to clipboard
+2. Record result value to ini file
