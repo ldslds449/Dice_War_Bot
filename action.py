@@ -240,6 +240,9 @@ class MyAction(Action):
 
         # if joker has copied
         if hasJokerCopy:
+          if canSummon:
+            diceControl.summonDice()
+            MyAction.hasSummonDiceTimes += 1
           # detect dices again
           return
 
@@ -301,7 +304,7 @@ class MyAction(Action):
                 if MyAction.midLateGame:
                   order = ['Growth', 'Joker']
                   other = [dice for dice in team if dice not in order]
-                  order += other
+                  order = order + other
                   MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice, boardDiceStar, name, 4, [], order)
                 else:
                   order = ['Growth', 'Joker']
@@ -321,4 +324,4 @@ class MyAction(Action):
                 if canLevelDice[level_location]:
                   diceControl.levelUpDice(level_location+1) # 1: offset
                   break
-    time.sleep(0.3)
+    time.sleep(0.15)
