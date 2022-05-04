@@ -2,6 +2,7 @@ import sys
 import win32gui
 import win32con
 import time
+import dhash
 from typing import Callable
 from tkinter import Variable
 
@@ -23,9 +24,15 @@ class Task:
     self.variable = Variable()
     self.variable.loadFromConfigFile()
 
+    # present state
     self.status = Status.LOBBY
 
     self.detect = Detect("./image/dice", self.variable)
+
+    # same screenshot counter
+    self.same_screenshot_cnt = 0
+    # previous screenshot hash value
+    self.prev_screenshot_hash = None
 
   def init(self):
     if self.variable.getADBMode() == ADBMode.IP:
@@ -105,6 +112,14 @@ class Task:
     # use for detecting joker star
     _, im2 = self.screen.getScreenShot(self.variable.getZoomRatio())
     im2 = self.detect.Image2OpenCV(im2)
+
+    # calculate hash value of screenshot
+    im_hash = dhash.dhash_int(im, size=16)
+    if self.prev_screenshot_hash == im_hash:
+      self.same_screenshot_cnt += 1
+    else:
+      self.same_screenshot_cnt = 0
+      self.prev_screenshot_hash = im_hash
 
     self.board_dice = []
     self.detect_board_dice_img = []
