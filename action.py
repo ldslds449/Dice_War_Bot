@@ -332,4 +332,3 @@ class MyAction(Action):
                 if canLevelDice[level_location]:
                   diceControl.levelUpDice(level_location+1) # 1: offset
                   break
-    time.sleep(0.15)

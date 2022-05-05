@@ -140,3 +140,9 @@
 
 1. Add share party button to share the party information and copy the image to clipboard
 2. Record result value to ini file
+
+## Version 1.3.9
+
+1. Revise Meteor's isMerge
+2. Center the windows
+3. Fix the bugs of Solar

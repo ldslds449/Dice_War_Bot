@@ -17,7 +17,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.3.8'
+  Version = '1.3.9'
 
   def __init__(self):
     self.window = tk.Tk()
