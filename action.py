@@ -21,16 +21,23 @@ class MyAction(Action):
     return star
 
   @staticmethod
-  def isMerge(star):
+  def isMerge(star, dice):
     star_prob = star / 10
     merge_prob = rd.uniform(0, 1)
-
-    if star >= 5:
-      return False
-    elif star >= 3:
-      star_prob = star_prob*2 - 0.1
+    if dice == "Meteor":
+      if star >= 4:
+        return False
+      elif star == 3:
+        star_prob = star_prob*3 
+      else:
+        star_prob = star_prob - 0.1
     else:
-      star_prob = star_prob
+      if star >= 5:
+        return False
+      elif star >= 3:
+        star_prob = star_prob*2 - 0.1
+      else:
+        star_prob = star_prob
 
     return merge_prob > star_prob
 
@@ -42,7 +49,8 @@ class MyAction(Action):
     rdidx = rd.randrange(count[mergeDice])
     srcidx_ = location[mergeDice][rdidx]
     src_star = MyAction.get_star(srcidx_, boardDiceStar)
-    if not MyAction.isMerge(src_star): return
+    
+    if not MyAction.isMerge(src_star, mergeDice): return
     srcidx = srcidx_ + 1
 
     merge_dice_location = findMergeDice(srcidx, exceptDice)
