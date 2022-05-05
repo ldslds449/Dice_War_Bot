@@ -146,3 +146,7 @@
 1. Revise Meteor's isMerge
 2. Center the windows
 3. Fix the bugs of Solar
+
+## Version 1.3.10
+
+1. Fix detect bug when dice is 7-star

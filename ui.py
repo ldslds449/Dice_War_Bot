@@ -17,7 +17,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.3.9'
+  Version = '1.3.10'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -34,6 +34,8 @@ class UI:
     self.tabControl.add(self.tab_detect, text='Detect')
     self.tab_setting = ttk.Frame(self.tabControl)
     self.tabControl.add(self.tab_setting, text='Setting')
+    self.tab_test = ttk.Frame(self.tabControl)
+    # self.tabControl.add(self.tab_test, text='Test')
     self.tabControl.pack(expand=1, fill="both")
 
     self.frame_board = tk.Frame(self.tab_detect, width=200, height=400, pady=10, padx=10)

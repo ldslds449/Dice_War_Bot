@@ -161,28 +161,32 @@ class Detect:
     img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
 
     # binary
-    _, img_binary = cv2.threshold(img_gray, 130, 255, cv2.THRESH_BINARY)
-    kernel = np.array([
-        [0, 1, 1, 1, 0],
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1],
-        [0, 1, 1, 1, 0]
-    ], np.uint8)
-    img_erosion = cv2.erode(~img_binary, kernel, iterations = 1)
-    img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
-    contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    star_count_binary = 0
-    for cnt in contours:
-      area = cv2.contourArea(cnt)
-      perimeter = cv2.arcLength(cnt,True)
-      (x,y), radius = cv2.minEnclosingCircle(cnt)
-      center = (int(x),int(y))
-      radius = int(radius)
-      if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 30:
-        if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
-          continue
-        star_count_binary += 1
+    def binary_detect(img, apply_erosion_dilation):
+      _, img_binary = cv2.threshold(img_gray, 130, 255, cv2.THRESH_BINARY)
+      kernel = np.array([
+          [0, 1, 1, 1, 0],
+          [1, 1, 1, 1, 1],
+          [1, 1, 1, 1, 1],
+          [1, 1, 1, 1, 1],
+          [0, 1, 1, 1, 0]
+      ], np.uint8)
+      img_erosion = cv2.erode(~img_binary, kernel, iterations = 1)
+      img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
+      contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+      star_count_binary = 0
+      for cnt in contours:
+        area = cv2.contourArea(cnt)
+        perimeter = cv2.arcLength(cnt,True)
+        (x,y), radius = cv2.minEnclosingCircle(cnt)
+        center = (int(x),int(y))
+        radius = int(radius)
+        if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 30:
+          if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
+            continue
+          star_count_binary += 1
+      return star_count_binary
+
+    star_count_binary = binary_detect(img_gray, True)
 
     # edge detection
     img_edge = cv2.Canny(image=img_gray, threshold1=300, threshold2=400)
@@ -208,6 +212,11 @@ class Detect:
           centers.append(center)
 
     max_star_value = max(star_count_binary, star_count_edge)
+
+    # star 7 detection (distinguish between star 1 or star 7)
+    if max_star_value == 1:
+      max_star_value = binary_detect(img_gray, False)
+    
     return 7 if max_star_value == 0 else max_star_value
 
   def colorDetect(self, img, lower, upper):
