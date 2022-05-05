@@ -21,16 +21,23 @@ class MyAction(Action):
     return star
 
   @staticmethod
-  def isMerge(star):
+  def isMerge(star, dice):
     star_prob = star / 10
     merge_prob = rd.uniform(0, 1)
-
-    if star >= 5:
-      return False
-    elif star >= 3:
-      star_prob = star_prob*2 - 0.1
+    if dice == "Meteor":
+      if star >= 4:
+        return False
+      elif star == 3:
+        star_prob = star_prob*3 
+      else:
+        star_prob = star_prob - 0.1
     else:
-      star_prob = star_prob
+      if star >= 5:
+        return False
+      elif star >= 3:
+        star_prob = star_prob*2 - 0.1
+      else:
+        star_prob = star_prob
 
     return merge_prob > star_prob
 
@@ -42,7 +49,8 @@ class MyAction(Action):
     rdidx = rd.randrange(count[mergeDice])
     srcidx_ = location[mergeDice][rdidx]
     src_star = MyAction.get_star(srcidx_, boardDiceStar)
-    if not MyAction.isMerge(src_star): return
+    
+    if not MyAction.isMerge(src_star, mergeDice): return
     srcidx = srcidx_ + 1
 
     merge_dice_location = findMergeDice(srcidx, exceptDice)
@@ -120,6 +128,8 @@ class MyAction(Action):
   @staticmethod
   def init():
     MyAction.hasSummonFourDice = False
+    MyAction.hasLevelUpFirstSp = False
+    MyAction.hasLevelUpSecondThirdSp = 0
     MyAction.hasSummonDiceTimes = 0
     MyAction.SpLevelTimes = 0
     MyAction.midLateGame = False
@@ -148,7 +158,7 @@ class MyAction(Action):
     
     countTotal = sum([v for k, v in count.items() if k != 'Blank'])
     earlyGame = countTotal <= 12
-    midLateGameParam = 20
+    midLateGameParam = 25
     hasJoker = 'Joker' in team
     
     def findStarCount(dice:str, star: int):
@@ -194,14 +204,16 @@ class MyAction(Action):
               lateGameCounter += len(findStarCount(name, 5))
               lateGameCounter += len(findStarCount(name, 6))
               lateGameCounter += len(findStarCount(name, 7))
-            if lateGameCounter > 2:
+            if lateGameCounter >= 2:
               MyAction.lateGame = True
               
           if not MyAction.lateGame:
             print('Stage 4')
           else:
             print('Stage 5')
-
+          if canLevelSp:
+            diceControl.levelUpSP()
+            MyAction.SpLevelTimes += 1
           for name in team:
             if count[name] > 2:
               MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar, name, ['Growth'])
@@ -236,6 +248,9 @@ class MyAction(Action):
 
         # if joker has copied
         if hasJokerCopy:
+          if canSummon:
+            diceControl.summonDice()
+            MyAction.hasSummonDiceTimes += 1
           # detect dices again
           return
 
@@ -287,7 +302,9 @@ class MyAction(Action):
               print('Stage 4')
             else:
               print('Stage 5')
-
+            if canLevelSp:
+              diceControl.levelUpSP()
+              MyAction.SpLevelTimes += 1
             for name in team:
               if name == 'Growth':
                 continue
@@ -295,7 +312,7 @@ class MyAction(Action):
                 if MyAction.midLateGame:
                   order = ['Growth', 'Joker']
                   other = [dice for dice in team if dice not in order]
-                  order += other
+                  order = order + other
                   MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice, boardDiceStar, name, 4, [], order)
                 else:
                   order = ['Growth', 'Joker']
@@ -315,3 +332,4 @@ class MyAction(Action):
                 if canLevelDice[level_location]:
                   diceControl.levelUpDice(level_location+1) # 1: offset
                   break
+    time.sleep(0.15)
