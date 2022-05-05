@@ -307,6 +307,23 @@ class UI:
     except:
       self.log(f'{traceback.format_exc()}\n')
 
+  def centerWindowRelativeToParent(self, parent, window):
+    x = parent.winfo_x()
+    y = parent.winfo_y()
+    p_w = parent.winfo_width()
+    p_h = parent.winfo_height()
+    c_w = window.winfo_width()
+    c_h = window.winfo_height()
+
+    offset_x = (p_w - c_w) // 2
+    offset_y = (p_h - c_h) // 2
+
+    print(x, y)
+    print(p_w, p_h)
+    print(c_w, c_h)
+
+    window.geometry(f"+{x+offset_x}+{y+offset_y}")
+
   def setCheckBoxFlag(self):
     if self.bg_task is None:
       raise Exception('setCheckBoxFlag:: Need to set task variable first')
@@ -478,7 +495,7 @@ class UI:
       16)
     self.changeImage(label_img, self.bg_task.detect.Image2TK(img))
 
-    def copy_to_clipboard(image):
+    def copy_to_clipboard_and_close(image, window):
       output = BytesIO()
       image.convert('RGB').save(output, 'BMP')
       data = output.getvalue()[14:]
@@ -489,12 +506,17 @@ class UI:
       win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
       win32clipboard.CloseClipboard()
 
+      window.destroy()
+
     btn_copy = tk.Button(share_window, text='Copy Image', width=15, height=2, font=('Arial', 10))
     btn_copy.pack(fill=BOTH, expand=True, side=TOP)
-    btn_copy.config(command=partial(copy_to_clipboard, img), state=NORMAL)
+    btn_copy.config(command=partial(copy_to_clipboard_and_close, img, share_window), state=NORMAL)
 
-    share_window.wm_transient(self.window)
+    share_window.attributes('-alpha', 0.0)
+    share_window.update_idletasks()
     share_window.deiconify()
+    self.centerWindowRelativeToParent(self.window, share_window)
+    share_window.attributes('-alpha', 1.0)
 
   def btn_next_page_event(self):
     self.frame_setting_pages[self.now_page_idx].pack_forget()
@@ -654,8 +676,11 @@ class UI:
       label_img.bind('<Button-1>', event)
       label_text.bind('<Button-1>', event)
 
-    select_dice_window.wm_transient(self.window)
+    select_dice_window.update_idletasks()
+    select_dice_window.attributes('-alpha', 0.0)
     select_dice_window.deiconify()
+    self.centerWindowRelativeToParent(self.window, select_dice_window)
+    select_dice_window.attributes('-alpha', 1.0)
     
   def getSelectDiceField(self):
     self.bg_task.variable.setDiceParty(self.select_dice_name)

@@ -116,11 +116,11 @@ class Task:
     # calculate hash value of screenshot
     im_hash = dhash.dhash_int(self.detect.OpenCV2Image(im), size=8)
     bit_diff = dhash.get_num_bits_different(self.prev_screenshot_hash, im_hash)
-    if bit_diff < 4:
+    if bit_diff < 3:
       self.same_screenshot_cnt += 1
     else:
       self.same_screenshot_cnt = 0
-    self.prev_screenshot_hash = im_hash
+      self.prev_screenshot_hash = im_hash
     print(f"Hash bit differenct count: {bit_diff}")
     print(f"Same screenshot count: {self.same_screenshot_cnt}")
 
@@ -134,10 +134,10 @@ class Task:
 
       # generate dice detect list
       dice_detect_list = self.variable.getDiceParty() + ['Blank']
-      if 'Solor' in dice_detect_list and 'SolorX' not in dice_detect_list:
-        dice_detect_list += ['SolorX']
-      if 'SolorX' in dice_detect_list and 'Solor' not in dice_detect_list:
-        dice_detect_list += ['Solor']
+      if 'Solar' in dice_detect_list and 'SolarX' not in dice_detect_list:
+        dice_detect_list += ['SolarX']
+      if 'SolarX' in dice_detect_list and 'Solar' not in dice_detect_list:
+        dice_detect_list += ['Solar']
 
       res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], self.variable.getDetectDiceMode())
       res_star = self.detect.detectStar(img.copy())
