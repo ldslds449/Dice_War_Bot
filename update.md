@@ -150,3 +150,11 @@
 ## Version 1.3.10
 
 1. Fix detect bug when dice is 7-star
+
+## Version 1.3.11
+
+1. Fix detect bug when dice is 7-star
+2. Fix detect dice bug
+3. Fix detect star bug when dice is Fire
+4. Now the image space will be reserved at the beginning
+5. Add test tab to test detecting the dices

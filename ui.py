@@ -17,7 +17,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.3.10'
+  Version = '1.3.11'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -27,6 +27,10 @@ class UI:
 
     # let the window on top
     self.window.title(f'Dice Bot {UI.Version}')
+    # call onClosing in when closing the window
+    self.window.protocol("WM_DELETE_WINDOW", self.onClosing)
+
+    zero_img = tk.PhotoImage()
 
     # tab
     self.tabControl = ttk.Notebook(self.window)
@@ -35,7 +39,7 @@ class UI:
     self.tab_setting = ttk.Frame(self.tabControl)
     self.tabControl.add(self.tab_setting, text='Setting')
     self.tab_test = ttk.Frame(self.tabControl)
-    # self.tabControl.add(self.tab_test, text='Test')
+    self.tabControl.add(self.tab_test, text='Test')
     self.tabControl.pack(expand=1, fill="both")
 
     self.frame_board = tk.Frame(self.tab_detect, width=200, height=400, pady=10, padx=10)
@@ -60,6 +64,10 @@ class UI:
     self.frame_setting_view.grid(column=1, row=0, rowspan=3)
     self.tab_setting.columnconfigure(0, weight=1)
     self.tab_setting.columnconfigure(1, weight=2)
+    self.frame_test_view = tk.Frame(self.tab_test, padx=20, pady=20)
+    self.frame_test_view.grid(column=0, row=0)
+    self.frame_test_btn = tk.Frame(self.tab_test, padx=20)
+    self.frame_test_btn.grid(column=0, row=1)
 
     self.setting_page_size = 3
     self.now_page_idx = 0
@@ -141,7 +149,8 @@ class UI:
     self.btn_screenshot = tk.Button(self.frame_setting_btn, text='ScreenShot', width=10, height=2, font=('Arial', 12))
     self.btn_screenshot.config(command=self.btn_screenshot_event, state=DISABLED)
     self.btn_screenshot.grid(row=0, column=2)
-    self.label_screenshot = tk.Label(self.frame_setting_view)
+    self.label_screenshot = tk.Label(self.frame_setting_view, image=zero_img)
+    self.label_screenshot.config(width=300, height=600)
     self.label_screenshot.pack(fill=BOTH)
     
     # draw
@@ -168,17 +177,20 @@ class UI:
     self.label_board_dice = []
     self.label_board_star = []
     for i in range(15):
-      label = tk.Label(self.frame_board, padx=5, pady=5)
+      label = tk.Label(self.frame_board, image=zero_img, padx=5, pady=5)
+      label.config(width=self.bg_task.detect.resize_size[0], height=self.bg_task.detect.resize_size[1])
       label.grid(row=i//5, column=(i%5)*2)
       self.label_board_dice.append(label)
       label = tk.Label(self.frame_board, padx=5, pady=5)
+      label.config(width=2)
       label.grid(row=i//5, column=(i%5)*2+1)
       self.label_board_star.append(label)
 
     # screenshot
     self.label_detect_board_dice = []
     for i in range(15):
-      label = tk.Label(self.frame_screenshot, padx=5, pady=5)
+      label = tk.Label(self.frame_screenshot, image=zero_img, padx=5, pady=5)
+      label.config(width=self.bg_task.detect.resize_size[0], height=self.bg_task.detect.resize_size[1])
       label.grid(row=i//5, column=i%5)
       self.label_detect_board_dice.append(label)
 
@@ -276,7 +288,21 @@ class UI:
     self.btn_result.config(command=self.btn_reset_event, state=NORMAL)
     self.btn_result.pack(fill=BOTH, side=RIGHT, expand=True)
 
-    self.window.protocol("WM_DELETE_WINDOW", self.onClosing)
+    # test button
+    btn_select_dice = tk.Button(self.frame_test_btn, text='Load Dice Image', width=15, height=3, font=('Arial', 12))
+    btn_select_dice.config(command=self.btn_test_dice_event, state=NORMAL)
+    btn_select_dice.grid(row=0, column=0)
+
+    # test view
+    self.label_test_dice_img = tk.Label(self.frame_test_view, image=zero_img, padx=5, pady=5)
+    self.label_test_dice_img.config(width=self.bg_task.detect.resize_size[0], height=self.bg_task.detect.resize_size[1])
+    self.label_test_dice_img.grid(row=0, column=0)
+    self.label_test_detect_img = tk.Label(self.frame_test_view, image=zero_img, padx=5, pady=5)
+    self.label_test_detect_img.config(width=self.bg_task.detect.resize_size[0], height=self.bg_task.detect.resize_size[1])
+    self.label_test_detect_img.grid(row=0, column=1)
+    self.test_detect_star_StringVar = StringVar()
+    label_test_detect_star = tk.Label(self.frame_test_view, textvariable=self.test_detect_star_StringVar, padx=5, pady=5)
+    label_test_detect_star.grid(row=0, column=2)
 
     self.initAll()
 
@@ -696,6 +722,34 @@ class UI:
   def checkBtn_topWindow(self):
     self.window.call('wm', 'attributes', '.', '-topmost', self.topWindow_booleanVar.get())
 
+  def btn_test_dice_event(self):
+    self.log('=== Load Dice Image ===\n')
+    filetypes = (
+      ('Image files', '*.png'),
+      ('All files', '*.*')
+    )
+    initFolder = './extract'
+    if not os.path.exists('extract'):
+      initFolder = './'
+    filename = fd.askopenfilename(
+      title='Select a image file',
+      initialdir=initFolder,
+      filetypes=filetypes)
+    self.log(f'FilePath: {filename}\n')
+
+    try:
+      # read image
+      dice_img = self.bg_task.detect.load(filename)
+      self.changeImage(self.label_test_dice_img, self.bg_task.detect.OpenCV2TK(dice_img))
+      # detect dice
+      dice_detect = self.bg_task.detect.detectDice(dice_img, None, self.bg_task.variable.getDetectDiceMode())
+      self.changeImage(self.label_test_detect_img, self.bg_task.detect.dice_image_tk_resize[self.bg_task.detect.dice_name_idx_dict[dice_detect[0]]])
+      # detect star
+      star_detect = self.bg_task.detect.detectStar(dice_img)
+      self.test_detect_star_StringVar.set(str(star_detect))
+    except Exception as e:
+      messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
+
   def btn_ADB_connect_event(self):
     if self.isConnected == False:
       if self.bg_task.variable.getControlMode() == ControlMode.WIN32API:
@@ -822,17 +876,6 @@ class UI:
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)].replace(" ","\n"))
 
-      # check freeze
-      if self.bg_task.same_screenshot_cnt >= self.bg_task.variable.getFreezeThreshold():
-        self.log("Error: Dice War App freezes\n")
-        if self.restartApp_booleanVar.get() == True:
-          self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
-          restartApp()
-          time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
-        else:
-          stopDetect()
-          break
-
       # record result
       if self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
         if self.bg_task.result == True:
@@ -841,16 +884,6 @@ class UI:
           self.result_lose += 1
         self.result_StringVar.set(f"{self.result_win} / {self.result_lose}")
         self.getResult()
-      
-      if self.bg_task.status == Status.LOBBY:
-        # initial
-        if previous_status == Status.LOBBY:
-          self.bg_task.diceControl.battle(battleMode)
-        else:
-          if not self.autoPlay_booleanVar.get():
-            self.log('Detect lobby, stop detecting\n')
-            stopDetect()
-            break
 
       # update ui
       for i, name in enumerate(self.bg_task.board_dice):
@@ -863,6 +896,27 @@ class UI:
         img = self.bg_task.detect.OpenCV2TK(img)
         self.changeImage(self.label_detect_board_dice[i], img)
       self.window.update()
+
+      # check freeze
+      if self.bg_task.same_screenshot_cnt >= self.bg_task.variable.getFreezeThreshold():
+        self.log("Error: Dice War App freezes\n")
+        if self.restartApp_booleanVar.get() == True:
+          self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
+          restartApp()
+          time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
+        else:
+          stopDetect()
+          break
+
+      if self.bg_task.status == Status.LOBBY:
+        # initial
+        if previous_status == Status.LOBBY:
+          self.bg_task.diceControl.battle(battleMode)
+        else:
+          if not self.autoPlay_booleanVar.get():
+            self.log('Detect lobby, stop detecting\n')
+            stopDetect()
+            break
 
       # detect delay
       time.sleep(self.bg_task.variable.getDetectDelay())

@@ -97,7 +97,7 @@ class Detect:
           rank_dict[name] = 0
 
       if mode == DetectDiceMode.COMBINE:
-        for i, (n, r) in enumerate(result):
+        for i, (n, r) in enumerate(result1):
           score[n] = i + (0 if n not in score else score[n])
       elif mode == DetectDiceMode.HIST_COMBINE:
         # combine Intersection & Bhattacharyya
@@ -162,7 +162,7 @@ class Detect:
 
     # binary
     def binary_detect(img, apply_erosion_dilation):
-      _, img_binary = cv2.threshold(img_gray, 130, 255, cv2.THRESH_BINARY)
+      _, img_binary = cv2.threshold(img, 130, 255, cv2.THRESH_BINARY)
       kernel = np.array([
           [0, 1, 1, 1, 0],
           [1, 1, 1, 1, 1],
@@ -170,8 +170,13 @@ class Detect:
           [1, 1, 1, 1, 1],
           [0, 1, 1, 1, 0]
       ], np.uint8)
-      img_erosion = cv2.erode(~img_binary, kernel, iterations = 1)
-      img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
+
+      if apply_erosion_dilation:
+        img_erosion = cv2.erode(~img_binary, kernel, iterations = 1)
+        img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
+      else:
+        img_dilation = ~img_binary
+        
       contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
       star_count_binary = 0
       for cnt in contours:
@@ -181,6 +186,7 @@ class Detect:
         center = (int(x),int(y))
         radius = int(radius)
         if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 30:
+          # center must be in this region
           if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
             continue
           star_count_binary += 1
@@ -200,6 +206,9 @@ class Detect:
       center = (int(x),int(y))
       radius = int(radius)
       if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 15:
+        # center must be in this region
+        if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
+          continue
         # find if is overlap
         overlap = False
         for c in centers:
@@ -211,10 +220,11 @@ class Detect:
           star_count_edge += 1
           centers.append(center)
 
+    print(star_count_binary, star_count_edge)
     max_star_value = max(star_count_binary, star_count_edge)
 
     # star 7 detection (distinguish between star 1 or star 7)
-    if max_star_value == 1:
+    if star_count_binary == 1 and star_count_edge == 0:
       max_star_value = binary_detect(img_gray, False)
     
     return 7 if max_star_value == 0 else max_star_value
