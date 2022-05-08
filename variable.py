@@ -19,6 +19,8 @@ class Variable:
     self.ad_close_xy = None
     self.spell_xy = None
     self.damage_list_xy = None
+    self.party_list_1v1_left_xy = None
+    self.party_list_1v1_offset_x = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
@@ -27,6 +29,7 @@ class Variable:
     self.extract_level_dice_lu_size_wh = None
     self.extract_spell_lu_size_wh = None
     self.emoji_dialog_wh = None
+    self.extract_party_list_1v1_size_wh = None
 
     self.zoom_ratio = 1.0
     self.random_offset = 0
@@ -87,12 +90,15 @@ class Variable:
     self.ad_close_xy = str2Type(config.get('Coordinate', 'ADCloseXY', fallback='0 0'))
     self.spell_xy = str2Type(config.get('Coordinate', 'SpellXY', fallback='0 0'))
     self.damage_list_xy = str2Type(config.get('Coordinate', 'DamageListXY', fallback='0 0'))
+    self.party_list_1v1_left_xy = str2Type(config.get('Coordinate', 'PartyList1v1LeftXY', fallback='0 0'))
+    self.party_list_1v1_offset_x = str2Type(config.get('Coordinate', 'PartyList1v1OffsetX', fallback='0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
     self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
     self.extract_summon_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
     self.extract_level_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
     self.extract_spell_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpellLuSizeWH', fallback='5 5'))
+    self.extract_party_list_1v1_size_wh = str2Type(config.get('Coordinate', 'ExtractPartyList1v1SizeWH', fallback='20 20'))
     self.emoji_dialog_wh = str2Type(config.get('Coordinate', 'EmojiDialogWH', fallback='30 25'))
     self.random_offset = str2Type(config.get('Coordinate', 'RandomOffset', fallback='0'))
     self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
@@ -140,12 +146,15 @@ class Variable:
     config.set('Coordinate', 'ADCloseXY', type2Str(self.ad_close_xy))
     config.set('Coordinate', 'SpellXY', type2Str(self.spell_xy))
     config.set('Coordinate', 'DamageListXY', type2Str(self.damage_list_xy))
+    config.set('Coordinate', 'PartyList1v1LeftXY', type2Str(self.party_list_1v1_left_xy))
+    config.set('Coordinate', 'PartyList1v1OffsetX', type2Str(self.party_list_1v1_offset_x))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
     config.set('Coordinate', 'ExtractSummonLuSizeWH', type2Str(self.extract_summon_lu_size_wh))
     config.set('Coordinate', 'ExtractLevelDiceLuSizeWH', type2Str(self.extract_level_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpellLuSizeWH', type2Str(self.extract_spell_lu_size_wh))
+    config.set('Coordinate', 'ExtractPartyList1v1SizeWH', type2Str(self.extract_party_list_1v1_size_wh))
     config.set('Coordinate', 'EmojiDialogWH', type2Str(self.emoji_dialog_wh))
     config.set('Coordinate', 'RandomOffset', type2Str(self.random_offset))
     config.add_section('Window')
@@ -220,6 +229,12 @@ class Variable:
 
   def setDamageListXY(self, _value: Tuple[int,int]):
     self.damage_list_xy = _value
+  
+  def setPartyList1v1LeftXY(self, _value: Tuple[int,int]):
+    self.party_list_1v1_left_xy = _value
+
+  def setPartyList1v1OffsetX(self, _value: Tuple[int,int]):
+    self.party_list_1v1_offset_x = _value
 
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
@@ -238,6 +253,9 @@ class Variable:
 
   def setExtractSpellLuSizeWH(self, _value: Tuple[int,int]):
     self.extract_spell_lu_size_wh = _value
+
+  def setExtractPartyList1v1SizeWH(self, _value: Tuple[int,int]):
+    self.extract_party_list_1v1_size_wh = _value
 
   def setEmojiDialogWH(self, _value: Tuple[int,int]):
     self.emoji_dialog_wh = _value
@@ -343,6 +361,12 @@ class Variable:
   def getDamageListXY(self):
     return self.damage_list_xy
 
+  def getPartyList1v1LeftXY(self):
+    return self.party_list_1v1_left_xy
+
+  def getPartyList1v1OffsetX(self):
+    return self.party_list_1v1_offset_x
+
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh
 
@@ -360,6 +384,9 @@ class Variable:
 
   def getExtractSpellLuSizeWH(self):
     return self.extract_spell_lu_size_wh
+
+  def getExtractPartyList1v1SizeWH(self):
+    return self.extract_party_list_1v1_size_wh
 
   def getEmojiDialogWH(self):
     return self.emoji_dialog_wh

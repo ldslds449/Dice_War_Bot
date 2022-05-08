@@ -2,7 +2,6 @@ import cv2
 import win32gui
 import win32ui
 import win32con
-import cv2
 import numpy as np
 from PIL import Image
 from typing import Tuple
@@ -76,10 +75,12 @@ class Screen:
 
             return ((im is not None), im)
         elif self.mode == ControlMode.ADB:
-            command = f'adb -s {self.adb_device_code} shell screencap -p'
-            result = ADB.sh(command)
-            image_bytes = result.replace(b'\r\n', b'\n')
-            img = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
-            img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            img = img.resize((int(img.width*zoom_ratio), int(img.height*zoom_ratio)))
+            command = f'adb -s {self.adb_device_code} exec-out screencap -p'
+            try:
+                result = ADB.sh(command)
+                img = cv2.imdecode(np.frombuffer(result, np.uint8), cv2.IMREAD_COLOR)
+                img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+                img = img.resize((int(img.width*zoom_ratio), int(img.height*zoom_ratio)))
+            except:
+                return (False, None)
             return (True, img)

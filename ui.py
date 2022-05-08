@@ -2,8 +2,15 @@ import tkinter as tk
 import threading
 import traceback
 import win32clipboard
+import matplotlib
 from io import BytesIO
 from functools import partial
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+  FigureCanvasTkAgg,
+  NavigationToolbar2Tk
+)
+
 from tkinter import ttk
 from tkinter import *
 from tkinter import messagebox
@@ -17,7 +24,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.3.11'
+  Version = '1.4.0'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -34,13 +41,18 @@ class UI:
 
     # tab
     self.tabControl = ttk.Notebook(self.window)
+
     self.tab_detect = ttk.Frame(self.tabControl)
     self.tabControl.add(self.tab_detect, text='Detect')
     self.tab_setting = ttk.Frame(self.tabControl)
     self.tabControl.add(self.tab_setting, text='Setting')
+    self.tab_statistic = ttk.Frame(self.tabControl)
+    self.tabControl.add(self.tab_statistic, text='Statistic')
     self.tab_test = ttk.Frame(self.tabControl)
     self.tabControl.add(self.tab_test, text='Test')
+
     self.tabControl.pack(expand=1, fill="both")
+    self.tabControl.bind('<<NotebookTabChanged>>', self.updateStatistic)
 
     self.frame_board = tk.Frame(self.tab_detect, width=200, height=400, pady=10, padx=10)
     self.frame_board.grid(column=0, row=0, columnspan=2)
@@ -64,6 +76,8 @@ class UI:
     self.frame_setting_view.grid(column=1, row=0, rowspan=3)
     self.tab_setting.columnconfigure(0, weight=1)
     self.tab_setting.columnconfigure(1, weight=2)
+    self.frame_statistic_chart = tk.Frame(self.tab_statistic)
+    self.frame_statistic_chart.pack(fill="both")
     self.frame_test_view = tk.Frame(self.tab_test, padx=20, pady=20)
     self.frame_test_view.grid(column=0, row=0)
     self.frame_test_btn = tk.Frame(self.tab_test, padx=20)
@@ -131,6 +145,9 @@ class UI:
       'Detect Delay': 0,
       'Restart Delay': 0,
       'Freeze Threshold': 0,
+      'Party List 1v1 Left XY': 1,
+      'Party List 1v1 Offset X': 1,
+      'Extract Party List 1v1 Size WH': 2,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -150,7 +167,7 @@ class UI:
     self.btn_screenshot.config(command=self.btn_screenshot_event, state=DISABLED)
     self.btn_screenshot.grid(row=0, column=2)
     self.label_screenshot = tk.Label(self.frame_setting_view, image=zero_img)
-    self.label_screenshot.config(width=300, height=600)
+    self.label_screenshot.config(width=350, height=600)
     self.label_screenshot.pack(fill=BOTH)
     
     # draw
@@ -304,6 +321,17 @@ class UI:
     label_test_detect_star = tk.Label(self.frame_test_view, textvariable=self.test_detect_star_StringVar, padx=5, pady=5)
     label_test_detect_star.grid(row=0, column=2)
 
+    # draw statistic
+    matplotlib.use('TkAgg')
+    self.statistic_figure = Figure(figsize=(7, 5), dpi=100)
+    self.statistic_figure_canvas = FigureCanvasTkAgg(self.statistic_figure, self.frame_statistic_chart)
+    NavigationToolbar2Tk(self.statistic_figure_canvas, self.frame_statistic_chart)
+    self.statistic_axes = self.statistic_figure.add_subplot()
+    self.statistic_axes.bar(self.bg_task.dice_statistic.keys(), self.bg_task.dice_statistic.values())
+    self.statistic_axes.set_title('Occurrence of dices in 1v1 mode')
+    self.statistic_axes.set_ylabel('Times')
+    self.statistic_figure_canvas.get_tk_widget().pack()
+
     self.initAll()
 
   def initAll(self):
@@ -402,12 +430,15 @@ class UI:
       self.setting_stringVar['AD Close XY'].set(dealString(self.bg_task.variable.getADCloseXY()))
       self.setting_stringVar['Spell XY'].set(dealString(self.bg_task.variable.getSpellXY()))
       self.setting_stringVar['Damage List XY'].set(dealString(self.bg_task.variable.getDamageListXY()))
+      self.setting_stringVar['Party List 1v1 Left XY'].set(dealString(self.bg_task.variable.getPartyList1v1LeftXY()))
+      self.setting_stringVar['Party List 1v1 Offset X'].set(dealString(self.bg_task.variable.getPartyList1v1OffsetX()))
       self.setting_stringVar['Extract Dice Size WH'].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
       self.setting_stringVar['Extract Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
       self.setting_stringVar['Extract SP Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
       self.setting_stringVar['Extract Summon Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
       self.setting_stringVar['Extract Level Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
       self.setting_stringVar['Extract Spell Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpellLuSizeWH()))
+      self.setting_stringVar['Extract Party List 1v1 Size WH'].set(dealString(self.bg_task.variable.getExtractPartyList1v1SizeWH()))
       self.setting_stringVar['Emoji Dialog WH'].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
       self.setting_stringVar['Zoom Ratio'].set(dealString(self.bg_task.variable.getZoomRatio()))
       self.setting_stringVar['Detect Delay'].set(dealString(self.bg_task.variable.getDetectDelay()))
@@ -444,12 +475,15 @@ class UI:
       self.bg_task.variable.setADCloseXY(dealString(self.setting_stringVar['AD Close XY'].get()))
       self.bg_task.variable.setSpellXY(dealString(self.setting_stringVar['Spell XY'].get()))
       self.bg_task.variable.setDamageListXY(dealString(self.setting_stringVar['Damage List XY'].get()))
+      self.bg_task.variable.setPartyList1v1LeftXY(dealString(self.setting_stringVar['Party List 1v1 Left XY'].get()))
+      self.bg_task.variable.setPartyList1v1OffsetX(dealString(self.setting_stringVar['Party List 1v1 Offset X'].get()))
       self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar['Extract Dice Size WH'].get()))
       self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar['Extract Dice Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar['Extract SP Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar['Extract Summon Luminance Size WH'].get()))
       self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar['Extract Level Dice Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSpellLuSizeWH(dealString(self.setting_stringVar['Extract Spell Luminance Size WH'].get()))
+      self.bg_task.variable.setExtractPartyList1v1SizeWH(dealString(self.setting_stringVar['Extract Party List 1v1 Size WH'].get()))
       self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar['Emoji Dialog WH'].get()))
       self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar['Zoom Ratio'].get(), float))
       self.bg_task.variable.setDetectDelay(dealString(self.setting_stringVar['Detect Delay'].get(), float))
@@ -823,6 +857,20 @@ class UI:
     print(text)
     self.text_log.insert(tk.END, text)
     self.text_log.see(tk.END)  
+
+  def updateStatistic(self, _):
+    if hasattr(self, 'statistic_figure_canvas') and self.tabControl.index(self.tabControl.select()) == 2:
+      data = sorted(self.bg_task.dice_statistic.items(), key=lambda x: x[1], reverse=True)
+      data = dict(data)
+      data_x = data.keys()
+      data_y = data.values()
+      self.statistic_axes.clear()
+      self.statistic_axes.bar(data_x, data_y)
+      self.statistic_axes.set_title('Number of occurrences of dices in 1v1 mode')
+      self.statistic_axes.set_ylabel('Number of occurrences')
+      self.statistic_axes.tick_params(labelrotation=90)
+      self.statistic_figure.tight_layout(rect=[0.05,0.10,0.95,0.95])
+      self.statistic_figure_canvas.draw()
 
   def run_bg_task(self):
     def stopDetect():

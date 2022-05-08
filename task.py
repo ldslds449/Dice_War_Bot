@@ -29,6 +29,8 @@ class Task:
 
     self.detect = Detect("./image/dice", self.variable)
 
+    self.dice_statistic = {}
+
     # same screenshot counter
     self.same_screenshot_cnt = 0
     # previous screenshot hash value
@@ -103,8 +105,29 @@ class Task:
               merge_dice_location.append(i)
     
     return merge_dice_location
-      
+
+  def detect1v1PartyList(self, img):
+    print("1v1 Party List: ")
+    
+    for i in range(self.variable.getPartyDiceSize()):
+      x = self.variable.getPartyList1v1LeftXY()[0] + self.variable.getPartyList1v1OffsetX()*i
+      y = self.variable.getPartyList1v1LeftXY()[1]
+      dice_img = self.detect.extractImage(img, (x, y, 
+        self.variable.getExtractPartyList1v1SizeWH()[0],
+        self.variable.getExtractPartyList1v1SizeWH()[1]), ExtractMode.CENTER)
+      dice_detect = self.detect.detectDice(dice_img, None, self.variable.getDetectDiceMode())
+
+      # add to dictionary
+      if dice_detect[0] not in self.dice_statistic:
+        self.dice_statistic[dice_detect[0]] = 0
+      self.dice_statistic[dice_detect[0]] += 1
+
+      print(dice_detect, end=" ")
+    print("")
+
   def task(self, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode):
+
+    screenshot_start = time.time()
     
     _, im = self.screen.getScreenShot(self.variable.getZoomRatio())
     im = self.detect.Image2OpenCV(im)
@@ -113,7 +136,10 @@ class Task:
     _, im2 = self.screen.getScreenShot(self.variable.getZoomRatio())
     im2 = self.detect.Image2OpenCV(im2)
 
+    print(f'Screenshot Time: {time.time() - screenshot_start}')
+    
     # calculate hash value of screenshot
+    same_screenshot_start = time.time()
     im_hash = dhash.dhash_int(self.detect.OpenCV2Image(im), size=8)
     bit_diff = dhash.get_num_bits_different(self.prev_screenshot_hash, im_hash)
     if bit_diff < 3:
@@ -123,6 +149,7 @@ class Task:
       self.prev_screenshot_hash = im_hash
     print(f"Hash bit differenct count: {bit_diff}")
     print(f"Same screenshot count: {self.same_screenshot_cnt}")
+    print(f'Same Screenshot Time: {time.time() - same_screenshot_start}')
 
     self.board_dice = []
     self.detect_board_dice_img = []
@@ -163,10 +190,16 @@ class Task:
       if i+1 == self.variable.getBoardSize():
         print("")
 
+    # detect for all dice and star
+    detect_start = time.time()
     self.forAllDiceOnBoard(detectDice)
+    print(f'Detect Time: {time.time() - detect_start}')
 
     # detect status
+    detect_status_start = time.time()
     status_result = self.detect.detectStatus(im)
+    print(f'Detect Status Time: {time.time() - detect_status_start}')
+
     inLobby = status_result['Lobby']
     inWaiting = status_result['Wait']
     inFinish = status_result['Finish']
@@ -175,6 +208,7 @@ class Task:
     hasAD = status_result['AD']
     result = status_result['Result']
     self.result = None
+
 
     def detectLobbyAgain():
       _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
@@ -216,6 +250,10 @@ class Task:
             self.diceControl.closeAD()
             time.sleep(5)
           else:
+            # detect opponent party list (1v1)
+            if battleMode == BattleMode.BATTLE_1V1:
+              self.detect1v1PartyList(im)
+
             self.result = result
             self.diceControl.skip() # leave this stage
             time.sleep(0.5)

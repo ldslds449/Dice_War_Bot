@@ -158,3 +158,11 @@
 3. Fix detect star bug when dice is Fire
 4. Now the image space will be reserved at the beginning
 5. Add test tab to test detecting the dices
+
+## Version 1.4.0
+
+1. Fix detect star bug when dice is 7-star
+2. Fix detect star bug when dice is Charm
+3. Speed up the screenshot
+4. Add dice statistic in 1v1 mode
+5. Fix screenshot width in setting tab

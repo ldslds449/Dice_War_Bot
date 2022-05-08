@@ -157,12 +157,10 @@ class Detect:
     return result[0]
 
   def detectStar(self, img):
-    img_resize = cv2.resize(img, self.resize_size)
-    img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
 
     # binary
-    def binary_detect(img, apply_erosion_dilation):
-      _, img_binary = cv2.threshold(img, 130, 255, cv2.THRESH_BINARY)
+    def binary_detect(input_img, apply_erosion_dilation):
+      _, img_binary = cv2.threshold(input_img, 130, 255, cv2.THRESH_BINARY)
       kernel = np.array([
           [0, 1, 1, 1, 0],
           [1, 1, 1, 1, 1],
@@ -178,49 +176,54 @@ class Detect:
         img_dilation = ~img_binary
         
       contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-      star_count_binary = 0
+      star_count = 0
       for cnt in contours:
         area = cv2.contourArea(cnt)
         perimeter = cv2.arcLength(cnt,True)
         (x,y), radius = cv2.minEnclosingCircle(cnt)
         center = (int(x),int(y))
         radius = int(radius)
-        if abs(perimeter-radius*2*3.14) < 10 and abs(area-50) < 30:
+        if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 35:
           # center must be in this region
           if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
             continue
-          star_count_binary += 1
-      return star_count_binary
-
-    star_count_binary = binary_detect(img_gray, True)
+          star_count += 1
+      return star_count
 
     # edge detection
-    img_edge = cv2.Canny(image=img_gray, threshold1=300, threshold2=400)
-    contours, _ = cv2.findContours(img_edge, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    star_count_edge = 0
-    centers = []
-    for cnt in contours:
-      area = cv2.contourArea(cnt)
-      perimeter = cv2.arcLength(cnt,True)
-      (x,y),radius = cv2.minEnclosingCircle(cnt)
-      center = (int(x),int(y))
-      radius = int(radius)
-      if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 15:
-        # center must be in this region
-        if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
-          continue
-        # find if is overlap
-        overlap = False
-        for c in centers:
-          dist = abs(c[0]-center[0])**2 + abs(c[1]-center[1])**2
-          if dist <= 30:
-            overlap = True
-            break
-        if not overlap:
-          star_count_edge += 1
-          centers.append(center)
+    def edge_detect(input_img):
+      img_edge = cv2.Canny(image=input_img, threshold1=330, threshold2=400)
+      contours, _ = cv2.findContours(img_edge, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+      star_count = 0
+      centers = []
+      for cnt in contours:
+        area = cv2.contourArea(cnt)
+        perimeter = cv2.arcLength(cnt,True)
+        (x,y),radius = cv2.minEnclosingCircle(cnt)
+        center = (int(x),int(y))
+        radius = int(radius)
+        if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 15:
+          # center must be in this region
+          if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
+            continue
+          # find if is overlap
+          overlap = False
+          for c in centers:
+            dist = abs(c[0]-center[0])**2 + abs(c[1]-center[1])**2
+            if dist <= 30:
+              overlap = True
+              break
+          if not overlap:
+            star_count += 1
+            centers.append(center)
+      return star_count
 
-    print(star_count_binary, star_count_edge)
+    img_resize = cv2.resize(img, self.resize_size)
+    img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
+
+    star_count_binary = binary_detect(img_gray, True)
+    star_count_edge = edge_detect(img_gray)
+    
     max_star_value = max(star_count_binary, star_count_edge)
 
     # star 7 detection (distinguish between star 1 or star 7)
@@ -442,6 +445,14 @@ class Detect:
 
     # draw spell
     cv2.circle(img, self.variable.getSpellXY(), 5, green, -1)
+
+    # draw party list (1v1)
+    for i in range(self.variable.getPartyDiceSize()):
+      leftCorner = tupleAdd(self.variable.getPartyList1v1LeftXY(), (self.variable.getPartyList1v1OffsetX()*i, 0))
+      leftCorner = tupleAdd(leftCorner, 
+        (-self.variable.getExtractPartyList1v1SizeWH()[0]//2, -self.variable.getExtractPartyList1v1SizeWH()[1]//2))
+      cv2.rectangle(img, leftCorner, 
+        tupleAdd(leftCorner, self.variable.getExtractPartyList1v1SizeWH()), green, 2)
 
     return img
 
