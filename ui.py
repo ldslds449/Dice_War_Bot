@@ -10,6 +10,7 @@ from matplotlib.backends.backend_tkagg import (
   FigureCanvasTkAgg,
   NavigationToolbar2Tk
 )
+from scipy.ndimage.filters import uniform_filter1d
 
 from tkinter import ttk
 from tkinter import *
@@ -24,7 +25,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.4.0'
+  Version = '1.5.0'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -48,12 +49,15 @@ class UI:
     self.tabControl.add(self.tab_setting, text='Setting')
     self.tab_statistic = ttk.Frame(self.tabControl)
     self.tabControl.add(self.tab_statistic, text='Statistic')
+    self.tab_trophy = ttk.Frame(self.tabControl)
+    self.tabControl.add(self.tab_trophy, text='Trophy')
     self.tab_test = ttk.Frame(self.tabControl)
     self.tabControl.add(self.tab_test, text='Test')
 
     self.tabControl.pack(expand=1, fill="both")
-    self.tabControl.bind('<<NotebookTabChanged>>', self.updateStatistic)
+    self.tabControl.bind('<<NotebookTabChanged>>', self.updateDraw)
 
+    # frame
     self.frame_board = tk.Frame(self.tab_detect, width=200, height=400, pady=10, padx=10)
     self.frame_board.grid(column=0, row=0, columnspan=2)
     self.frame_screenshot = tk.Frame(self.tab_detect, width=200, height=400)
@@ -63,9 +67,7 @@ class UI:
     self.frame_log = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_log.grid(column=0, row=2, columnspan=4)
     self.frame_detect_btn = tk.Frame(self.tab_detect, pady=10, padx=10)
-    self.frame_detect_btn.grid(column=5, row=0, rowspan=3, sticky=N)
-    self.frame_btn = tk.Frame(self.window)
-    self.frame_btn.pack(expand=1, fill="x")
+    self.frame_detect_btn.grid(column=5, row=0, rowspan=3, sticky='ns')
     self.frame_setting = tk.Frame(self.tab_setting, pady=10, height=500)
     self.frame_setting.grid(column=0, row=0, sticky='nswe')
     self.frame_setting_page_btn = tk.Frame(self.tab_setting, pady=5)
@@ -77,11 +79,18 @@ class UI:
     self.tab_setting.columnconfigure(0, weight=1)
     self.tab_setting.columnconfigure(1, weight=2)
     self.frame_statistic_chart = tk.Frame(self.tab_statistic)
-    self.frame_statistic_chart.pack(fill="both")
+    self.frame_statistic_chart.pack(side=LEFT, fill="both")
+    self.frame_statistic_info = tk.Frame(self.tab_statistic, padx=20)
+    self.frame_statistic_info.pack(side=LEFT, fill="both")
+    self.frame_line_chart = tk.Frame(self.tab_trophy)
+    self.frame_line_chart.pack(side=LEFT, fill="both")
+    self.frame_line_info = tk.Frame(self.tab_trophy, padx=20, pady=10)
+    self.frame_line_info.pack(side=LEFT, fill="both")
     self.frame_test_view = tk.Frame(self.tab_test, padx=20, pady=20)
     self.frame_test_view.grid(column=0, row=0)
     self.frame_test_btn = tk.Frame(self.tab_test, padx=20)
     self.frame_test_btn.grid(column=0, row=1)
+    
 
     self.setting_page_size = 3
     self.now_page_idx = 0
@@ -148,6 +157,8 @@ class UI:
       'Party List 1v1 Left XY': 1,
       'Party List 1v1 Offset X': 1,
       'Extract Party List 1v1 Size WH': 2,
+      'Trophy Left Top XY': 1,
+      'Extract Trophy Size WH': 2
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -236,7 +247,6 @@ class UI:
       "2v2"
     ]
     self.battle_stringVar = StringVar()
-    self.battle_stringVar.set(battle_mode[1]) # default value
     optionMenu_battle = OptionMenu(self.frame_detect_btn, self.battle_stringVar, *battle_mode)
     optionMenu_battle.pack(fill=BOTH, expand=True, side=TOP)
 
@@ -292,18 +302,18 @@ class UI:
     label_result.pack(fill=BOTH, expand=True, side=TOP)
 
     # button
-    self.btn_run = tk.Button(self.frame_btn, text='Start', width=15, height=3, font=('Arial', 12))
-    self.btn_run.pack(fill=BOTH, side=LEFT, expand=True)
+    self.btn_run = tk.Button(self.frame_detect_btn, text='Start', width=15, height=2, font=('Arial', 12))
+    self.btn_run.pack(fill=BOTH, side=BOTTOM, expand=True)
     self.btn_run.config(command=self.btn_run_event, state=DISABLED)
     self.isRunning = False
     self.thread_bg_task = None
-    self.btn_connect = tk.Button(self.frame_btn, text='Connect', width=15, height=2, font=('Arial', 12))
-    self.btn_connect.config(command=self.btn_ADB_connect_event)
-    self.btn_connect.pack(fill=BOTH, side=RIGHT, expand=True)
-    self.isConnected = False
-    self.btn_result = tk.Button(self.frame_btn, text='Reset Result', width=15, height=3, font=('Arial', 12))
+    self.btn_result = tk.Button(self.frame_detect_btn, text='Reset Result', width=15, height=2, font=('Arial', 12))
     self.btn_result.config(command=self.btn_reset_event, state=NORMAL)
-    self.btn_result.pack(fill=BOTH, side=RIGHT, expand=True)
+    self.btn_result.pack(fill=BOTH, side=BOTTOM, expand=True)
+    self.btn_connect = tk.Button(self.frame_detect_btn, text='Connect', width=15, height=2, font=('Arial', 12))
+    self.btn_connect.config(command=self.btn_ADB_connect_event)
+    self.btn_connect.pack(fill=BOTH, side=BOTTOM, expand=True)
+    self.isConnected = False
 
     # test button
     btn_select_dice = tk.Button(self.frame_test_btn, text='Load Dice Image', width=15, height=3, font=('Arial', 12))
@@ -327,10 +337,40 @@ class UI:
     self.statistic_figure_canvas = FigureCanvasTkAgg(self.statistic_figure, self.frame_statistic_chart)
     NavigationToolbar2Tk(self.statistic_figure_canvas, self.frame_statistic_chart)
     self.statistic_axes = self.statistic_figure.add_subplot()
-    self.statistic_axes.bar(self.bg_task.dice_statistic.keys(), self.bg_task.dice_statistic.values())
-    self.statistic_axes.set_title('Occurrence of dices in 1v1 mode')
-    self.statistic_axes.set_ylabel('Times')
     self.statistic_figure_canvas.get_tk_widget().pack()
+    ## add growth
+    self.statistic_add_growth_booleanVar = BooleanVar()
+    self.statistic_add_growth_booleanVar.set(False)
+    checkBtn_statistic_add_growth = tk.Checkbutton(self.frame_statistic_info, text='Add Growth', var=self.statistic_add_growth_booleanVar, pady=10, font=('Arial', 12), anchor=W, command=self.updateStatistic) 
+    checkBtn_statistic_add_growth.pack(fill=BOTH, side=TOP)
+    ## add joker
+    self.statistic_add_joker_booleanVar = BooleanVar()
+    self.statistic_add_joker_booleanVar.set(False)
+    checkBtn_statistic_add_joker = tk.Checkbutton(self.frame_statistic_info, text='Add Joker', var=self.statistic_add_joker_booleanVar, pady=10, font=('Arial', 12), anchor=W, command=self.updateStatistic) 
+    checkBtn_statistic_add_joker.pack(fill=BOTH, side=TOP)
+
+    # draw tropy line
+    self.line_figure = Figure(figsize=(7, 5), dpi=100)
+    self.line_figure_canvas = FigureCanvasTkAgg(self.line_figure, self.frame_line_chart)
+    NavigationToolbar2Tk(self.line_figure_canvas, self.frame_line_chart)
+    self.line_axes = self.line_figure.add_subplot()
+    self.line_figure_canvas.get_tk_widget().pack()
+    ## moving average
+    moving_average = ['No MA', '3 MA', '5 MA', '10 MA']
+    self.MA_stringVar = StringVar()
+    self.MA_stringVar.set(moving_average[0]) # default value
+    optionMenu_MA = OptionMenu(self.frame_line_info, self.MA_stringVar, *moving_average, command=self.updateTrophy)
+    optionMenu_MA.pack(fill=BOTH, side=TOP)
+    ## regression
+    self.line_regression_booleanVar = BooleanVar()
+    self.line_regression_booleanVar.set(False)
+    checkBtn_line_regression = tk.Checkbutton(self.frame_line_info, text='Regression', var=self.line_regression_booleanVar, pady=10, font=('Arial', 12), anchor=W, command=self.updateTrophy) 
+    checkBtn_line_regression.pack(fill=BOTH, side=TOP)
+    ## info
+    self.line_info_StringVar = StringVar()
+    label_line_info_average = tk.Label(self.frame_line_info, textvariable=self.line_info_StringVar, justify=LEFT, font=('Arial', 12), pady=10)
+    label_line_info_average.pack(fill=BOTH, side=TOP)
+    
 
     self.initAll()
 
@@ -388,6 +428,7 @@ class UI:
       self.topWindow_booleanVar.set(self.bg_task.variable.getTopWindow())
       self.watchAD_booleanVar.set(self.bg_task.variable.getWatchAD())
       self.restartApp_booleanVar.set(self.bg_task.variable.getRestartApp())
+      self.battle_stringVar.set(self.bg_task.variable.getBattleMode())
 
   def getCheckBoxFlag(self):
     if self.bg_task is None:
@@ -397,6 +438,7 @@ class UI:
       self.bg_task.variable.setTopWindow(self.topWindow_booleanVar.get())
       self.bg_task.variable.setWatchAD(self.watchAD_booleanVar.get())
       self.bg_task.variable.setRestartApp(self.restartApp_booleanVar.get())
+      self.bg_task.variable.setBattleMode(self.battle_stringVar.get())
 
   def setSettingInputField(self):
     if self.bg_task is None:
@@ -432,14 +474,16 @@ class UI:
       self.setting_stringVar['Damage List XY'].set(dealString(self.bg_task.variable.getDamageListXY()))
       self.setting_stringVar['Party List 1v1 Left XY'].set(dealString(self.bg_task.variable.getPartyList1v1LeftXY()))
       self.setting_stringVar['Party List 1v1 Offset X'].set(dealString(self.bg_task.variable.getPartyList1v1OffsetX()))
+      self.setting_stringVar['Trophy Left Top XY'].set(dealString(self.bg_task.variable.getTrophyLeftTopXY()))
       self.setting_stringVar['Extract Dice Size WH'].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
       self.setting_stringVar['Extract Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
       self.setting_stringVar['Extract SP Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
       self.setting_stringVar['Extract Summon Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
       self.setting_stringVar['Extract Level Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
       self.setting_stringVar['Extract Spell Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpellLuSizeWH()))
-      self.setting_stringVar['Extract Party List 1v1 Size WH'].set(dealString(self.bg_task.variable.getExtractPartyList1v1SizeWH()))
       self.setting_stringVar['Emoji Dialog WH'].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
+      self.setting_stringVar['Extract Party List 1v1 Size WH'].set(dealString(self.bg_task.variable.getExtractPartyList1v1SizeWH()))
+      self.setting_stringVar['Extract Trophy Size WH'].set(dealString(self.bg_task.variable.getExtractTrophySizeWH()))
       self.setting_stringVar['Zoom Ratio'].set(dealString(self.bg_task.variable.getZoomRatio()))
       self.setting_stringVar['Detect Delay'].set(dealString(self.bg_task.variable.getDetectDelay()))
       self.setting_stringVar['Restart Delay'].set(dealString(self.bg_task.variable.getRestartDelay()))
@@ -477,14 +521,16 @@ class UI:
       self.bg_task.variable.setDamageListXY(dealString(self.setting_stringVar['Damage List XY'].get()))
       self.bg_task.variable.setPartyList1v1LeftXY(dealString(self.setting_stringVar['Party List 1v1 Left XY'].get()))
       self.bg_task.variable.setPartyList1v1OffsetX(dealString(self.setting_stringVar['Party List 1v1 Offset X'].get()))
+      self.bg_task.variable.setTrophyLeftTopXY(dealString(self.setting_stringVar['Trophy Left Top XY'].get()))
       self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar['Extract Dice Size WH'].get()))
       self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar['Extract Dice Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar['Extract SP Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar['Extract Summon Luminance Size WH'].get()))
       self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar['Extract Level Dice Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSpellLuSizeWH(dealString(self.setting_stringVar['Extract Spell Luminance Size WH'].get()))
-      self.bg_task.variable.setExtractPartyList1v1SizeWH(dealString(self.setting_stringVar['Extract Party List 1v1 Size WH'].get()))
       self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar['Emoji Dialog WH'].get()))
+      self.bg_task.variable.setExtractPartyList1v1SizeWH(dealString(self.setting_stringVar['Extract Party List 1v1 Size WH'].get()))
+      self.bg_task.variable.setExtractTrophySizeWH(dealString(self.setting_stringVar['Extract Trophy Size WH'].get()))
       self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar['Zoom Ratio'].get(), float))
       self.bg_task.variable.setDetectDelay(dealString(self.setting_stringVar['Detect Delay'].get(), float))
       self.bg_task.variable.setRestartDelay(dealString(self.setting_stringVar['Restart Delay'].get(), float))
@@ -858,19 +904,74 @@ class UI:
     self.text_log.insert(tk.END, text)
     self.text_log.see(tk.END)  
 
-  def updateStatistic(self, _):
+  def updateDraw(self, _):
     if hasattr(self, 'statistic_figure_canvas') and self.tabControl.index(self.tabControl.select()) == 2:
-      data = sorted(self.bg_task.dice_statistic.items(), key=lambda x: x[1], reverse=True)
-      data = dict(data)
-      data_x = data.keys()
-      data_y = data.values()
-      self.statistic_axes.clear()
-      self.statistic_axes.bar(data_x, data_y)
-      self.statistic_axes.set_title('Number of occurrences of dices in 1v1 mode')
-      self.statistic_axes.set_ylabel('Number of occurrences')
-      self.statistic_axes.tick_params(labelrotation=90)
-      self.statistic_figure.tight_layout(rect=[0.05,0.10,0.95,0.95])
-      self.statistic_figure_canvas.draw()
+      self.updateStatistic()
+    elif hasattr(self, 'line_figure_canvas') and self.tabControl.index(self.tabControl.select()) == 3:
+      self.updateTrophy()
+
+  def updateStatistic(self, *_):
+    data = self.bg_task.dice_statistic.copy()
+    # check joker and growth
+    if self.statistic_add_joker_booleanVar.get() == False:
+      data.pop('Joker', None)
+    if self.statistic_add_growth_booleanVar.get() == False:
+      data.pop('Growth', None)
+
+    data = sorted(data.items(), key=lambda x: x[1], reverse=True)
+    data = dict(data)
+    data_x = data.keys()
+    data_y = data.values()
+    self.statistic_axes.clear()
+    self.statistic_axes.bar(data_x, data_y)
+    self.statistic_axes.set_title('Number of occurrences of dices in 1v1 mode')
+    self.statistic_axes.set_ylabel('Number of occurrences')
+    self.statistic_axes.tick_params(labelrotation=90)
+    self.statistic_axes.yaxis.get_major_locator().set_params(integer=True)
+    self.statistic_figure.tight_layout(rect=[0.05,0.10,0.95,0.95])
+    self.statistic_figure_canvas.draw()
+
+  def updateTrophy(self, *_):
+    self.line_axes.clear()
+    data = self.bg_task.trophy_statistic.copy()
+    x = np.arange(len(data))
+    self.line_axes.plot(x, data)
+    # regression
+    if self.line_regression_booleanVar.get() == True:
+      coef = np.polyfit(x, data, 1)
+      fn = np.poly1d(coef)
+      self.line_axes.plot(x, fn(x), color='orange', linestyle='dashed')
+    # moving average
+    if 'No' not in self.MA_stringVar.get():
+      window_size = int(self.MA_stringVar.get().split(' ')[0])
+      self.line_axes.plot(x, uniform_filter1d(data, size=window_size, mode='nearest'), color='green', linestyle='dashed')
+    self.line_axes.set_title('Line Chart of Trophy')
+    self.line_axes.set_ylabel('Trophy')
+    self.line_axes.xaxis.get_major_locator().set_params(integer=True)
+    self.line_axes.yaxis.get_major_locator().set_params(integer=True)
+    self.line_figure_canvas.draw()
+
+    mean = np.mean(data) if len(data) > 0 else float('nan')
+    sd = np.std(data) if len(data) > 0 else float('nan')
+    offset = [data[i]-data[i-1] for i in range(1, len(data))]
+    offset = np.mean(offset) if len(data) > 0 else float('nan')
+    total_offset = data[-1] - data[0] if len(data) > 0 else float('nan')
+    start = int(data[0]) if len(data) > 0 else float('nan')
+    current = int(data[-1]) if len(data) > 0 else float('nan')
+    size = len(data)
+    max = np.max(data) if len(data) > 0 else float('nan')
+    min = np.min(data) if len(data) > 0 else float('nan')
+
+    self.line_info_StringVar.set(
+f"""Start: {start}\n
+Current: {current}\n
+Times: {size}\n
+Average: {mean:.2f}\n
+SD: {sd:.2f}\n
+Max: {max}\n
+Min: {min}\n
+Total Gain: {total_offset:+d}\n
+Average Gain: {offset:+.2f}""")
 
   def run_bg_task(self):
     def stopDetect():

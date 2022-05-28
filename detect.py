@@ -3,6 +3,8 @@ import glob
 import os
 import numpy as np
 import dhash
+import joblib
+from sklearn import svm
 from sewar import *
 from typing import Tuple
 from PIL import Image, ImageTk
@@ -50,6 +52,9 @@ class Detect:
       self.dice_image_dhash_resize.append(dhash.dhash_int(self.dice_image_PIL_resize[-1], size=self.dhash_size))
       self.dice_name.append(name)
       self.dice_name_idx_dict[name] = i
+
+    # number model
+    self.numberModel = joblib.load("./models/number.model")
 
   def detectDice(self, img, candidate = None, mode: DetectDiceMode = DetectDiceMode.COMBINE):
 
@@ -202,7 +207,7 @@ class Detect:
         (x,y),radius = cv2.minEnclosingCircle(cnt)
         center = (int(x),int(y))
         radius = int(radius)
-        if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 15:
+        if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 10:
           # center must be in this region
           if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
             continue
@@ -311,6 +316,33 @@ class Detect:
 
     return ratio > 0.80
 
+  def detectNumber(self, img):
+    img = self.OpenCV2Image(img)
+    img = img.convert('1')
+    img = img.resize((47, 73))
+    img = np.array(img, np.float32)
+    img = img.reshape(1, -1)
+    result = self.numberModel.predict(img)
+    return result[0]
+
+  def detectTrophyNumber(self, img):
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, img_binary = cv2.threshold(img_gray, 130, 255, cv2.THRESH_BINARY)
+    _, _, stats, _ = cv2.connectedComponentsWithStats(img_binary, connectivity=4, ltype=None)
+    stats = stats[1:,:-1] # remove background component
+
+    # sort
+    contours = sorted(stats, key=lambda x : x[0])
+
+    number = 0
+    for cnt in contours:
+      x,y,w,h = cnt
+      img_digit = img_binary[y:y+h,x:x+w]
+      digit = self.detectNumber(img_digit)
+      number *= 10
+      number += digit
+    return number
+
   def canSummon(self, luminance: float):
     if luminance >= 180:
       return True
@@ -405,6 +437,7 @@ class Detect:
     # color
     red = (0, 0, 255) # red
     green = (0, 255, 0) # green
+    orange = (0, 165, 255) # orange
 
     # draw board dice
     for i in range(self.variable.getBoardSize()):
@@ -453,6 +486,11 @@ class Detect:
         (-self.variable.getExtractPartyList1v1SizeWH()[0]//2, -self.variable.getExtractPartyList1v1SizeWH()[1]//2))
       cv2.rectangle(img, leftCorner, 
         tupleAdd(leftCorner, self.variable.getExtractPartyList1v1SizeWH()), green, 2)
+
+    # draw trophy
+    leftCorner = self.variable.getTrophyLeftTopXY()
+    cv2.rectangle(img, leftCorner, 
+      tupleAdd(leftCorner, self.variable.getExtractTrophySizeWH()), orange, 2)
 
     return img
 

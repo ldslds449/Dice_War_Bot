@@ -30,6 +30,7 @@ class Task:
     self.detect = Detect("./image/dice", self.variable)
 
     self.dice_statistic = {}
+    self.trophy_statistic = []
 
     # same screenshot counter
     self.same_screenshot_cnt = 0
@@ -67,7 +68,10 @@ class Task:
     if self.variable.getControlMode() == ControlMode.WIN32API:
       self.diceControl.dragPressDice(srcidx)
       time.sleep(0.2)
-      _, canMergeImage = self.screen.getScreenShot(self.variable.getZoomRatio())
+      success, canMergeImage = self.screen.getScreenShot(self.variable.getZoomRatio())
+      if not success:
+        print("ScreenShot Failed")
+        return
       time.sleep(0.2)
       canMergeImage = self.detect.Image2OpenCV(canMergeImage)
       self.diceControl.dragUpDice()
@@ -125,15 +129,33 @@ class Task:
       print(dice_detect, end=" ")
     print("")
 
+  def detectTrophyNumber(self, img):
+    trophy_img = self.detect.extractImage(img, (
+      self.variable.getTrophyLeftTopXY()[0], 
+      self.variable.getTrophyLeftTopXY()[1], 
+      self.variable.getExtractTrophySizeWH()[0],
+      self.variable.getExtractTrophySizeWH()[1]), ExtractMode.LEFTTOP)
+    number = self.detect.detectTrophyNumber(trophy_img)
+    if len(self.trophy_statistic) == 0 or number != self.trophy_statistic[-1]: # trophy cannot be the same as previous record after a game
+      self.trophy_statistic.append(number)
+
+    return number
+
   def task(self, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode):
 
     screenshot_start = time.time()
     
-    _, im = self.screen.getScreenShot(self.variable.getZoomRatio())
+    success, im = self.screen.getScreenShot(self.variable.getZoomRatio())
+    if not success:
+      log(f'Screenshot Error')
+      return
     im = self.detect.Image2OpenCV(im)
 
     # use for detecting joker star
-    _, im2 = self.screen.getScreenShot(self.variable.getZoomRatio())
+    success, im2 = self.screen.getScreenShot(self.variable.getZoomRatio())
+    if not success:
+      log(f'Screenshot Error')
+      return
     im2 = self.detect.Image2OpenCV(im2)
 
     print(f'Screenshot Time: {time.time() - screenshot_start}')
@@ -211,7 +233,10 @@ class Task:
 
 
     def detectLobbyAgain():
-      _, img = self.screen.getScreenShot(self.variable.getZoomRatio())
+      success, img = self.screen.getScreenShot(self.variable.getZoomRatio())
+      if not success:
+        log(f'detectLobbyAgain::Screenshot Error')
+        return False
       img = self.detect.Image2OpenCV(img)
       return self.detect.detectStatus(im)['Lobby']
 
@@ -221,6 +246,7 @@ class Task:
       if self.status == Status.WAIT:
         if inLobby:
           self.status = Status.LOBBY
+        time.sleep(0.5)
       elif self.status == Status.GAME:
         if inLobby:
           self.status = Status.LOBBY
@@ -264,6 +290,9 @@ class Task:
         if inWaiting:
           self.status = Status.WAIT
         elif inLobby:
+          # get trophy
+          if battleMode == BattleMode.BATTLE_1V1:
+            log(f'Trophy: {self.detectTrophyNumber(im)}\n')
           if autoPlay:
             self.diceControl.battle(battleMode) # start battle
       elif self.status == Status.TROPHY:

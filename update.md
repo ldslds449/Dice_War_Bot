@@ -166,3 +166,17 @@
 3. Speed up the screenshot
 4. Add dice statistic in 1v1 mode
 5. Fix screenshot width in setting tab
+
+## Version 1.5.0
+
+1. Add Cleanse dice image
+2. Optimal Berserk, SolorX, and Squad dice image
+3. Add detect number model
+4. Fix screenshot bug
+5. Add detect trophy chart
+6. Fix detect dice star bug
+7. Show error when screenshot failed
+8. Modify window arrangement (Move buttons to detect tab)
+9. Add checkBox to choose whether to add dice to chart
+10. Modify default value of freeze threshold to 50
+11. Record battle mode to file

@@ -7,3 +7,5 @@ numpy
 tk
 requests2
 matplotlib
+scipy
+scikit-learn

@@ -21,6 +21,7 @@ class Variable:
     self.damage_list_xy = None
     self.party_list_1v1_left_xy = None
     self.party_list_1v1_offset_x = None
+    self.trophy_left_top_xy = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
@@ -30,6 +31,7 @@ class Variable:
     self.extract_spell_lu_size_wh = None
     self.emoji_dialog_wh = None
     self.extract_party_list_1v1_size_wh = None
+    self.extract_trophy_size_wh = None
 
     self.zoom_ratio = 1.0
     self.random_offset = 0
@@ -54,6 +56,7 @@ class Variable:
     self.adb_ip = None
     self.adb_id = None
 
+    self.battle_mode = None
     self.auto_play = None
     self.top_window = None
     self.watch_ad = None
@@ -92,14 +95,16 @@ class Variable:
     self.damage_list_xy = str2Type(config.get('Coordinate', 'DamageListXY', fallback='0 0'))
     self.party_list_1v1_left_xy = str2Type(config.get('Coordinate', 'PartyList1v1LeftXY', fallback='0 0'))
     self.party_list_1v1_offset_x = str2Type(config.get('Coordinate', 'PartyList1v1OffsetX', fallback='0'))
+    self.trophy_left_top_xy = str2Type(config.get('Coordinate', 'TrophyLeftTopXY', fallback='0 0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
     self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
     self.extract_summon_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
     self.extract_level_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
     self.extract_spell_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpellLuSizeWH', fallback='5 5'))
-    self.extract_party_list_1v1_size_wh = str2Type(config.get('Coordinate', 'ExtractPartyList1v1SizeWH', fallback='20 20'))
     self.emoji_dialog_wh = str2Type(config.get('Coordinate', 'EmojiDialogWH', fallback='30 25'))
+    self.extract_party_list_1v1_size_wh = str2Type(config.get('Coordinate', 'ExtractPartyList1v1SizeWH', fallback='20 20'))
+    self.extract_trophy_size_wh = str2Type(config.get('Coordinate', 'ExtractTrophySizeWH', fallback='0 0'))
     self.random_offset = str2Type(config.get('Coordinate', 'RandomOffset', fallback='0'))
     self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
     self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
@@ -112,7 +117,8 @@ class Variable:
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
     self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
     self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
-    self.freeze_threshold = str2Type(config.get('Detect', 'FreezeThreshold', fallback='20'))
+    self.freeze_threshold = str2Type(config.get('Detect', 'FreezeThreshold', fallback='50'))
+    self.battle_mode = config.get('Flag', 'BattleMode', fallback='2v2') 
     # eval('True') = True, eval('False') = False
     self.auto_play = str2Type(config.get('Flag', 'AutoPlay', fallback='False'), eval) 
     self.top_window = str2Type(config.get('Flag', 'TopWindow', fallback='False'), eval)
@@ -148,14 +154,16 @@ class Variable:
     config.set('Coordinate', 'DamageListXY', type2Str(self.damage_list_xy))
     config.set('Coordinate', 'PartyList1v1LeftXY', type2Str(self.party_list_1v1_left_xy))
     config.set('Coordinate', 'PartyList1v1OffsetX', type2Str(self.party_list_1v1_offset_x))
+    config.set('Coordinate', 'TrophyLeftTopXY', type2Str(self.trophy_left_top_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
     config.set('Coordinate', 'ExtractSummonLuSizeWH', type2Str(self.extract_summon_lu_size_wh))
     config.set('Coordinate', 'ExtractLevelDiceLuSizeWH', type2Str(self.extract_level_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpellLuSizeWH', type2Str(self.extract_spell_lu_size_wh))
-    config.set('Coordinate', 'ExtractPartyList1v1SizeWH', type2Str(self.extract_party_list_1v1_size_wh))
     config.set('Coordinate', 'EmojiDialogWH', type2Str(self.emoji_dialog_wh))
+    config.set('Coordinate', 'ExtractPartyList1v1SizeWH', type2Str(self.extract_party_list_1v1_size_wh))
+    config.set('Coordinate', 'ExtractTrophySizeWH', type2Str(self.extract_trophy_size_wh))
     config.set('Coordinate', 'RandomOffset', type2Str(self.random_offset))
     config.add_section('Window')
     config.set('Window', 'ZoomRatio', type2Str(self.zoom_ratio))
@@ -175,6 +183,7 @@ class Variable:
     config.set('Detect', 'RestartDelay', type2Str(self.restart_delay))
     config.set('Detect', 'FreezeThreshold', type2Str(self.freeze_threshold))
     config.add_section('Flag')
+    config.set('Flag', 'BattleMode', self.battle_mode)
     config.set('Flag', 'AutoPlay', type2Str(self.auto_play))
     config.set('Flag', 'TopWindow', type2Str(self.top_window))
     config.set('Flag', 'WatchAD', type2Str(self.watch_ad))
@@ -236,6 +245,9 @@ class Variable:
   def setPartyList1v1OffsetX(self, _value: Tuple[int,int]):
     self.party_list_1v1_offset_x = _value
 
+  def setTrophyLeftTopXY(self, _value: Tuple[int,int]):
+    self.trophy_left_top_xy = _value
+
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
 
@@ -254,11 +266,14 @@ class Variable:
   def setExtractSpellLuSizeWH(self, _value: Tuple[int,int]):
     self.extract_spell_lu_size_wh = _value
 
+  def setEmojiDialogWH(self, _value: Tuple[int,int]):
+    self.emoji_dialog_wh = _value
+
   def setExtractPartyList1v1SizeWH(self, _value: Tuple[int,int]):
     self.extract_party_list_1v1_size_wh = _value
 
-  def setEmojiDialogWH(self, _value: Tuple[int,int]):
-    self.emoji_dialog_wh = _value
+  def setExtractTrophySizeWH(self, _value: Tuple[int,int]):
+    self.extract_trophy_size_wh = _value
 
   def setZoomRatio(self, _value: float):
     self.zoom_ratio = _value
@@ -298,6 +313,9 @@ class Variable:
 
   def setFreezeThreshold(self, _value: int):
     self.freeze_threshold = _value
+
+  def setBattleMode(self, _value: str):
+    self.battle_mode = _value
 
   def setAutoPlay(self, _value: bool):
     self.auto_play = _value
@@ -367,6 +385,9 @@ class Variable:
   def getPartyList1v1OffsetX(self):
     return self.party_list_1v1_offset_x
 
+  def getTrophyLeftTopXY(self):
+    return self.trophy_left_top_xy
+
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh
 
@@ -385,11 +406,14 @@ class Variable:
   def getExtractSpellLuSizeWH(self):
     return self.extract_spell_lu_size_wh
 
+  def getEmojiDialogWH(self):
+    return self.emoji_dialog_wh
+  
   def getExtractPartyList1v1SizeWH(self):
     return self.extract_party_list_1v1_size_wh
 
-  def getEmojiDialogWH(self):
-    return self.emoji_dialog_wh
+  def getExtractTrophySizeWH(self):
+    return self.extract_trophy_size_wh
 
   def getZoomRatio(self):
     return self.zoom_ratio
@@ -450,6 +474,9 @@ class Variable:
 
   def getFreezeThreshold(self):
     return self.freeze_threshold
+
+  def getBattleMode(self):
+    return self.battle_mode
 
   def getAutoPlay(self):
     return self.auto_play
