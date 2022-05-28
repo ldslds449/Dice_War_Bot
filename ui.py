@@ -25,7 +25,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.5.1'
+  Version = '1.5.2'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -953,9 +953,8 @@ class UI:
 
     mean = np.mean(data) if len(data) > 0 else float('nan')
     sd = np.std(data) if len(data) > 0 else float('nan')
-    offset = [data[i]-data[i-1] for i in range(1, len(data))]
-    offset = np.mean(offset) if len(data) > 0 else float('nan')
     total_offset = data[-1] - data[0] if len(data) > 0 else float('nan')
+    offset = total_offset/len(data) if len(data) > 0 else float('nan')
     start = int(data[0]) if len(data) > 0 else float('nan')
     current = int(data[-1]) if len(data) > 0 else float('nan')
     size = len(data)
@@ -989,20 +988,37 @@ Average Gain: {offset:+.2f}""")
 
     while self.isRunning:
       # detect dice war app
-      if self.bg_task.variable.getControlMode() == ControlMode.ADB:
-        if self.bg_task.variable.getADBMode() == ADBMode.IP:
-          inDiceWar = ADB.detectDiceWar(f"{self.bg_task.variable.getADBIP()}:{self.bg_task.variable.getADBPort()}")
-        elif self.bg_task.variable.getADBMode() == ADBMode.ID:
-          inDiceWar = ADB.detectDiceWar(self.bg_task.variable.getADBID())
-        if not inDiceWar:
-          self.log("Error: Focus app is not Dice War App\n")
-          if self.restartApp_booleanVar.get() == True:
-            self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
-            restartApp()
-            time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
+      notInDiceWarCount = 0
+      stopRunning = False
+      while True:
+        if self.bg_task.variable.getControlMode() == ControlMode.ADB:
+          if self.bg_task.variable.getADBMode() == ADBMode.IP:
+            inDiceWar,message = ADB.detectDiceWar(f"{self.bg_task.variable.getADBIP()}:{self.bg_task.variable.getADBPort()}")
+          elif self.bg_task.variable.getADBMode() == ADBMode.ID:
+            inDiceWar,message = ADB.detectDiceWar(self.bg_task.variable.getADBID())
+          if not inDiceWar:
+            notInDiceWarCount += 1
+            self.log(f"Not In Dice War App Count: {notInDiceWarCount}\n")
+            if notInDiceWarCount >= 10: # 10: threshold
+              self.log(message)
+              self.log("Error: Focus app is not Dice War App\n")
+              if self.restartApp_booleanVar.get() == True:
+                self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
+                restartApp()
+                time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
+              else:
+                stopDetect()
+                stopRunning = True
+              break
+            else:
+              time.sleep(2)
+              continue
           else:
-            stopDetect()
             break
+        else:
+          break
+      if stopRunning:
+        break
       
       # record previous state
       previous_status = self.bg_task.status

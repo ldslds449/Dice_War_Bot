@@ -1,5 +1,5 @@
 pywin32
-opencv-python
+opencv-python<=4.5.1.48
 dhash
 sewar
 Pillow

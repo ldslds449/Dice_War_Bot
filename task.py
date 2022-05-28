@@ -139,6 +139,12 @@ class Task:
     if len(self.trophy_statistic) == 0 or number != self.trophy_statistic[-1]: # trophy cannot be the same as previous record after a game
       self.trophy_statistic.append(number)
 
+    # [DEBUG]
+    if number < 1000 or number > 9999:
+      if not os.path.exists('error'):
+        os.makedirs('error')
+        self.detect.save(trophy_img, os.path.join('error', f'{time.strftime("%Y%m%d-%H%M%S")}.png'))
+
     return number
 
   def task(self, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode):

@@ -23,7 +23,7 @@ class ADB:
   @staticmethod
   def detectDiceWar(adb_device_code:str):
     r = ADB.sh(f'adb -s {adb_device_code} shell "dumpsys activity activities | grep mResumedActivity"').decode('utf-8')
-    return ADB.packageName in r
+    return (ADB.packageName in r, r)
 
   @staticmethod
   def restart(adb_device_code:str):

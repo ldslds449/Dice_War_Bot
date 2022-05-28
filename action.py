@@ -310,9 +310,8 @@ class MyAction(Action):
                 continue
               elif name == 'Joker':
                 if MyAction.midLateGame:
-                  order = ['Growth', 'Joker']
-                  other = [dice for dice in team if dice not in order]
-                  order = order + other
+                  other = [dice for dice in team if dice not in ['Growth', 'Joker']]
+                  order = ['Growth'] + other + ['Joker']
                   MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice, boardDiceStar, name, 4, [], order)
                 else:
                   order = ['Growth', 'Joker']

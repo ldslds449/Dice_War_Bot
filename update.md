@@ -184,3 +184,11 @@
 ## Version 1.5.1
 
 1. Fix the bug of trophy's information
+
+## Version 1.5.2
+
+1. Add a threshold to detect the focus app
+2. Add the version limitation to opencv
+3. Fix the information data in the trophy chart
+4. Store the detected failed image
+5. Modify the merge order
