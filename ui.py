@@ -25,7 +25,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.5.0'
+  Version = '1.5.1'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -970,7 +970,7 @@ Average: {mean:.2f}\n
 SD: {sd:.2f}\n
 Max: {max}\n
 Min: {min}\n
-Total Gain: {total_offset:+d}\n
+Total Gain: {total_offset:+}\n
 Average Gain: {offset:+.2f}""")
 
   def run_bg_task(self):

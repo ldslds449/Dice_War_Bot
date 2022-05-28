@@ -180,3 +180,7 @@
 9. Add checkBox to choose whether to add dice to chart
 10. Modify default value of freeze threshold to 50
 11. Record battle mode to file
+
+## Version 1.5.1
+
+1. Fix the bug of trophy's information
