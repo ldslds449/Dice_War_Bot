@@ -72,7 +72,7 @@ class MyAction(Action):
     src_star = MyAction.get_star(srcidx_, boardDiceStar)
     srcidx = srcidx_ + 1
     
-    if src_star > dice_level:
+    if src_star > dice_level and 'Growth' in order:
       order.remove('Growth')
       exceptDice += ['Growth']
 
