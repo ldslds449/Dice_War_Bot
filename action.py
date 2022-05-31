@@ -72,12 +72,9 @@ class MyAction(Action):
     src_star = MyAction.get_star(srcidx_, boardDiceStar)
     srcidx = srcidx_ + 1
     
-    if len(exceptDice) == 0:
-      pass
-    elif src_star > dice_level:
-      temp = order
-      order = exceptDice
-      exceptDice = temp
+    if src_star > dice_level:
+      order.remove('Growth')
+      exceptDice += ['Growth']
 
     merge_dice_location = findMergeDice(srcidx, exceptDice)
     
@@ -216,7 +213,8 @@ class MyAction(Action):
             MyAction.SpLevelTimes += 1
           for name in team:
             if count[name] > 2:
-              MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar, name, ['Growth'])
+              MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar,
+                                          name, ['Growth'])
 
           if MyAction.lateGame:
               for d,_ in count_sorted:
@@ -242,9 +240,17 @@ class MyAction(Action):
       # Stage 2 ~ 5
       else:
         # joker copy
-        order = ['Growth']
-        excepted = [dice for dice in team if dice not in order]
-        hasJokerCopy = MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice, boardDiceStar, 'Joker', 4, excepted, order)
+        if count['Growth'] > 4:
+          other = other = [dice for dice in team if dice not in ['Growth', 'Joker']]
+          order = other + ['Joker']
+          excepted = ['Growth']
+        else:
+          other = other = [dice for dice in team if dice not in ['Growth', 'Joker']]
+          order = ['Growth'] + other + ['Joker']
+          excepted = []
+
+        hasJokerCopy = MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice,
+                                                  boardDiceStar, 'Joker', 4, excepted, order)
 
         # if joker has copied
         if hasJokerCopy:
@@ -289,15 +295,6 @@ class MyAction(Action):
 
           # Stage 4 ~ 5
           elif countBlank < 2 and MyAction.SpLevelTimes >= 3:
-            # if not MyAction.lateGame:
-              # lateGameCounter = 0
-              # for name in team:
-                # lateGameCounter += len(findStarCount(name, 5))
-                # lateGameCounter += len(findStarCount(name, 6))
-                # lateGameCounter += len(findStarCount(name, 7))
-              # if lateGameCounter > 2:
-                # MyAction.lateGame = True
-
             if not MyAction.midLateGame:
               print('Stage 4')
             else:
@@ -309,16 +306,10 @@ class MyAction(Action):
               if name == 'Growth':
                 continue
               elif name == 'Joker':
-                if MyAction.midLateGame:
-                  other = [dice for dice in team if dice not in ['Growth', 'Joker']]
-                  order = ['Growth'] + other + ['Joker']
-                  MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice, boardDiceStar, name, 4, [], order)
-                else:
-                  order = ['Growth', 'Joker']
-                  excepted = [dice for dice in team if dice not in order]
-                  MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice, boardDiceStar, name, 4, excepted, order)
+                continue
               elif count[name] > 2:
-                MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar, name, ['Growth', 'Joker'])
+                MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar,
+                                            name, ['Growth', 'Joker'])
                 
             if MyAction.midLateGame:
               for d,_ in count_sorted:
