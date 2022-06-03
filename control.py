@@ -180,6 +180,8 @@ class DiceControl(Control):
       self.tap(self.getBoardDiceXY(5))
     elif battleMode == BattleMode.BATTLE_2V2:
       self.tap(self.getBoardDiceXY(9))
+    elif battleMode == BattleMode.BATTLE_ARCADE:
+      self.tap(self.getBoardDiceXY(7))
     time.sleep(1)
     self.tap(self.randomOffset(self.modifyZoom(self.variable.getBattleXY())))
 

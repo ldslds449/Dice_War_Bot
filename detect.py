@@ -241,8 +241,8 @@ class Detect:
     img = cv2.resize(img, self.resize_size)
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    hsv_color1 = np.asarray(lower)
-    hsv_color2 = np.asarray(upper)
+    hsv_color1 = np.array(lower)
+    hsv_color2 = np.array(upper)
 
     mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
     extract_pixel_count = np.sum(mask)//255
@@ -304,6 +304,15 @@ class Detect:
     print(f'Trophy {ratio}')
 
     return ratio > 0.90
+
+  def detectArcade(self, img):
+    lower = [20, 100, 100]
+    upper = [30, 255, 255]
+    ratio = self.colorDetect(img, lower, upper)
+
+    print(f'Arcade {ratio}')
+
+    return ratio > 0.55
 
   # True: Win
   # False: Lose
@@ -533,6 +542,7 @@ class Detect:
     inTrophy = False
     hasAD = False
     result = False
+    inArcade = False
 
     if self.detectLobby(self.getDiceImage(img, 8)):
       inLobby = True
@@ -553,6 +563,8 @@ class Detect:
     if self.detectResult(self.extractImage(img, 
       (img.shape[1]//2, 20, 5, 5), ExtractMode.CENTER)):
       result = True
+    if self.detectArcade(self.getDiceImage(img, 8)):
+      inArcade = True
 
     return {
       'Lobby': inLobby, 
@@ -562,4 +574,5 @@ class Detect:
       'Trophy': inTrophy,
       'AD': hasAD,
       'Result': result,
+      'Arcade': inArcade
     }

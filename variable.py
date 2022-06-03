@@ -38,6 +38,7 @@ class Variable:
     self.detect_delay = None
     self.restart_delay = None
     self.freeze_threshold = None
+    self.focus_threshold = None
 
     self.col = 5 # constant
     self.row = 3 # constant
@@ -118,6 +119,7 @@ class Variable:
     self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
     self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
     self.freeze_threshold = str2Type(config.get('Detect', 'FreezeThreshold', fallback='50'))
+    self.focus_threshold = config.get('Detect', 'FocusThreshold', fallback='5') 
     self.battle_mode = config.get('Flag', 'BattleMode', fallback='2v2') 
     # eval('True') = True, eval('False') = False
     self.auto_play = str2Type(config.get('Flag', 'AutoPlay', fallback='False'), eval) 
@@ -182,6 +184,7 @@ class Variable:
     config.set('Detect', 'DetectDelay', type2Str(self.detect_delay))
     config.set('Detect', 'RestartDelay', type2Str(self.restart_delay))
     config.set('Detect', 'FreezeThreshold', type2Str(self.freeze_threshold))
+    config.set('Detect', 'FocusThreshold', type2Str(self.focus_threshold))
     config.add_section('Flag')
     config.set('Flag', 'BattleMode', self.battle_mode)
     config.set('Flag', 'AutoPlay', type2Str(self.auto_play))
@@ -313,6 +316,9 @@ class Variable:
 
   def setFreezeThreshold(self, _value: int):
     self.freeze_threshold = _value
+
+  def setFocusThreshold(self, _value: int):
+    self.focus_threshold = _value
 
   def setBattleMode(self, _value: str):
     self.battle_mode = _value
@@ -474,6 +480,9 @@ class Variable:
 
   def getFreezeThreshold(self):
     return self.freeze_threshold
+
+  def getFocusThreshold(self):
+    return self.focus_threshold
 
   def getBattleMode(self):
     return self.battle_mode

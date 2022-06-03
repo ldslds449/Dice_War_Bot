@@ -143,7 +143,7 @@ class Task:
     if number < 1000 or number > 9999:
       if not os.path.exists('error'):
         os.makedirs('error')
-        self.detect.save(trophy_img, os.path.join('error', f'{time.strftime("%Y%m%d-%H%M%S")}.png'))
+      self.detect.save(trophy_img, os.path.join('error', f'{time.strftime("%Y%m%d-%H%M%S")}.png'))
 
     return number
 
@@ -235,6 +235,7 @@ class Task:
     inTrophy = status_result['Trophy']
     hasAD = status_result['AD']
     result = status_result['Result']
+    inArcade = status_result['Arcade']
     self.result = None
 
 
@@ -252,15 +253,21 @@ class Task:
       if self.status == Status.WAIT:
         if inLobby:
           self.status = Status.LOBBY
+        elif inArcade:
+          self.status = Status.ARCADE
         time.sleep(0.5)
       elif self.status == Status.GAME:
         if inLobby:
           self.status = Status.LOBBY
+        elif inArcade:
+          self.status = Status.ARCADE
         else:
           self.status = Status.FINISH_ANIMATION
       elif self.status == Status.FINISH:
         if inLobby:
           self.status = Status.LOBBY
+        elif inArcade:
+          self.status = Status.ARCADE
         elif inTrophy:
           self.status = Status.TROPHY
         elif inFinish:
@@ -291,11 +298,11 @@ class Task:
             time.sleep(0.5)
             self.diceControl.skip() # click again
             time.sleep(5)
-      elif self.status == Status.LOBBY:
+      elif self.status == Status.LOBBY or self.status == Status.ARCADE:
         MyAction.init()
         if inWaiting:
           self.status = Status.WAIT
-        elif inLobby:
+        elif inLobby or inArcade:
           # get trophy
           if battleMode == BattleMode.BATTLE_1V1:
             log(f'Trophy: {self.detectTrophyNumber(im)}\n')
@@ -304,6 +311,8 @@ class Task:
       elif self.status == Status.TROPHY:
         if inLobby:
           self.status = Status.LOBBY
+        elif inArcade:
+          self.status = Status.ARCADE
         elif inTrophy:
           self.diceControl.skip()
       elif self.status == Status.FINISH_ANIMATION:
@@ -312,6 +321,9 @@ class Task:
           time.sleep(5)
         elif inLobby:
           self.status = Status.LOBBY
+        elif inArcade:
+          self.status = Status.ARCADE
+
 
     if self.status != Status.GAME:
       return

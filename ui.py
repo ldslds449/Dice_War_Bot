@@ -154,6 +154,7 @@ class UI:
       'Detect Delay': 0,
       'Restart Delay': 0,
       'Freeze Threshold': 0,
+      'Focus Threshold': 0,
       'Party List 1v1 Left XY': 1,
       'Party List 1v1 Offset X': 1,
       'Extract Party List 1v1 Size WH': 2,
@@ -244,7 +245,8 @@ class UI:
     # 1v1 2v2
     battle_mode = [
       "1v1",
-      "2v2"
+      "2v2",
+      "Arcade"
     ]
     self.battle_stringVar = StringVar()
     optionMenu_battle = OptionMenu(self.frame_detect_btn, self.battle_stringVar, *battle_mode)
@@ -488,6 +490,7 @@ class UI:
       self.setting_stringVar['Detect Delay'].set(dealString(self.bg_task.variable.getDetectDelay()))
       self.setting_stringVar['Restart Delay'].set(dealString(self.bg_task.variable.getRestartDelay()))
       self.setting_stringVar['Freeze Threshold'].set(dealString(self.bg_task.variable.getFreezeThreshold()))
+      self.setting_stringVar['Focus Threshold'].set(dealString(self.bg_task.variable.getFocusThreshold()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -535,6 +538,7 @@ class UI:
       self.bg_task.variable.setDetectDelay(dealString(self.setting_stringVar['Detect Delay'].get(), float))
       self.bg_task.variable.setRestartDelay(dealString(self.setting_stringVar['Restart Delay'].get(), float))
       self.bg_task.variable.setFreezeThreshold(dealString(self.setting_stringVar['Freeze Threshold'].get()))
+      self.bg_task.variable.setFocusThreshold(dealString(self.setting_stringVar['Focus Threshold'].get()))
     
   def btn_run_event(self):
     if self.isRunning == False: # enable
@@ -999,7 +1003,7 @@ Average Gain: {offset:+.2f}""")
           if not inDiceWar:
             notInDiceWarCount += 1
             self.log(f"Not In Dice War App Count: {notInDiceWarCount}\n")
-            if notInDiceWarCount >= 10: # 10: threshold
+            if notInDiceWarCount >= self.bg_task.variable.getFocusThreshold():
               self.log(message)
               self.log("Error: Focus app is not Dice War App\n")
               if self.restartApp_booleanVar.get() == True:
@@ -1011,7 +1015,7 @@ Average Gain: {offset:+.2f}""")
                 stopRunning = True
               break
             else:
-              time.sleep(2)
+              time.sleep(0.5)
               continue
           else:
             break
@@ -1024,8 +1028,14 @@ Average Gain: {offset:+.2f}""")
       previous_status = self.bg_task.status
 
       # run
+      battleMode = BattleMode.BATTLE_2V2 # default
+      if self.battle_stringVar.get() == '1v1':
+        battleMode = BattleMode.BATTLE_1V1
+      elif self.battle_stringVar.get() == '2v2':
+        battleMode = BattleMode.BATTLE_2V2
+      elif self.battle_stringVar.get() == 'Arcade':
+        battleMode = BattleMode.BATTLE_ARCADE
       try:
-        battleMode = BattleMode.BATTLE_1V1 if self.battle_stringVar.get() == '1v1' else BattleMode.BATTLE_2V2
         self.bg_task.task(self.log, 
           self.autoPlay_booleanVar.get(), 
           self.watchAD_booleanVar.get(),
@@ -1037,7 +1047,7 @@ Average Gain: {offset:+.2f}""")
       
       # status changed
       if previous_status != self.bg_task.status:
-        status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy', 'Finish Animation']
+        status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy', 'Finish Animation', 'Arcade']
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)].replace(" ","\n"))
 
