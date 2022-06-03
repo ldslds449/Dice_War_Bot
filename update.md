@@ -194,8 +194,15 @@
 5. Modify the merge order
 
 ## Version 1.5.3
+
 1. Move all Joker Copy to same place
 2. Change the merge rule of Joker
 3. Add max growth restriction when doing joker copy
 4. Remove Growth from list instead of swap when src_star>dice_level (strictOrderMerge)
 5. Add error/* into gitignore
+
+## Version 1.6.0
+
+1. Add Arcade mode
+2. Add focusThreshold
+3. Update number detect model
