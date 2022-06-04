@@ -25,7 +25,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.6.0'
+  Version = '1.6.1'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -58,9 +58,9 @@ class UI:
     self.tabControl.bind('<<NotebookTabChanged>>', self.updateDraw)
 
     # frame
-    self.frame_board = tk.Frame(self.tab_detect, width=200, height=400, pady=10, padx=10)
+    self.frame_board = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_board.grid(column=0, row=0, columnspan=2)
-    self.frame_screenshot = tk.Frame(self.tab_detect, width=200, height=400)
+    self.frame_screenshot = tk.Frame(self.tab_detect)
     self.frame_screenshot.grid(column=2, row=0, columnspan=2)
     self.frame_select_dice = tk.Frame(self.tab_detect, padx=20)
     self.frame_select_dice.grid(column=0, row=1, columnspan=4)
@@ -68,7 +68,7 @@ class UI:
     self.frame_log.grid(column=0, row=2, columnspan=4)
     self.frame_detect_btn = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_detect_btn.grid(column=5, row=0, rowspan=3, sticky='ns')
-    self.frame_setting = tk.Frame(self.tab_setting, pady=10, height=500)
+    self.frame_setting = tk.Frame(self.tab_setting, pady=10)
     self.frame_setting.grid(column=0, row=0, sticky='nswe')
     self.frame_setting_page_btn = tk.Frame(self.tab_setting, pady=5)
     self.frame_setting_page_btn.grid(column=0, row=1)
@@ -159,7 +159,8 @@ class UI:
       'Party List 1v1 Offset X': 1,
       'Extract Party List 1v1 Size WH': 2,
       'Trophy Left Top XY': 1,
-      'Extract Trophy Size WH': 2
+      'Extract Trophy Size WH': 2,
+      'Line Notify Token': 0,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -262,6 +263,9 @@ class UI:
     self.btn_share_party = tk.Button(self.frame_detect_btn, text='Share Party', width=15, height=2, font=('Arial', 10))
     self.btn_share_party.config(command=self.btn_share_party_event, state=NORMAL)
     self.btn_share_party.pack(fill=BOTH, expand=True, side=TOP)
+    self.btn_share_board = tk.Button(self.frame_detect_btn, text='Share Board', width=15, height=2, font=('Arial', 10))
+    self.btn_share_board.config(command=self.btn_share_board_event, state=DISABLED)
+    self.btn_share_board.pack(fill=BOTH, expand=True, side=TOP)
 
     # auto play
     self.autoPlay_booleanVar = tk.BooleanVar() 
@@ -288,6 +292,13 @@ class UI:
     self.checkBtn_restartApp = tk.Checkbutton(self.frame_detect_btn, text='Restart App', var=self.restartApp_booleanVar, pady=5) 
     self.checkBtn_restartApp.pack(fill=BOTH, expand=True, side=TOP)
     self.checkBtn_restartApp.config(state=(NORMAL if self.bg_task.variable.getControlMode() == ControlMode.ADB else DISABLED))
+
+    # notify result
+    self.notifyResult_booleanVar = tk.BooleanVar() 
+    self.notifyResult_booleanVar.set(False)
+    self.checkBtn_notifyResult = tk.Checkbutton(self.frame_detect_btn, text='Notify Result', var=self.notifyResult_booleanVar, pady=5) 
+    self.checkBtn_notifyResult.pack(fill=BOTH, expand=True, side=TOP)
+    self.checkBtn_notifyResult.config(state=NORMAL)
     
     # Status Label
     self.status_StringVar = StringVar()
@@ -420,7 +431,7 @@ class UI:
     print(p_w, p_h)
     print(c_w, c_h)
 
-    window.geometry(f"+{x+offset_x}+{y+offset_y}")
+    window.geometry(f"{c_w}x{c_h}+{x+offset_x}+{y+offset_y}")
 
   def setCheckBoxFlag(self):
     if self.bg_task is None:
@@ -431,6 +442,7 @@ class UI:
       self.watchAD_booleanVar.set(self.bg_task.variable.getWatchAD())
       self.restartApp_booleanVar.set(self.bg_task.variable.getRestartApp())
       self.battle_stringVar.set(self.bg_task.variable.getBattleMode())
+      self.notifyResult_booleanVar.set(self.bg_task.variable.getNotifyResult())
 
   def getCheckBoxFlag(self):
     if self.bg_task is None:
@@ -441,6 +453,7 @@ class UI:
       self.bg_task.variable.setWatchAD(self.watchAD_booleanVar.get())
       self.bg_task.variable.setRestartApp(self.restartApp_booleanVar.get())
       self.bg_task.variable.setBattleMode(self.battle_stringVar.get())
+      self.bg_task.variable.setNotifyResult(self.notifyResult_booleanVar.get())
 
   def setSettingInputField(self):
     if self.bg_task is None:
@@ -491,6 +504,7 @@ class UI:
       self.setting_stringVar['Restart Delay'].set(dealString(self.bg_task.variable.getRestartDelay()))
       self.setting_stringVar['Freeze Threshold'].set(dealString(self.bg_task.variable.getFreezeThreshold()))
       self.setting_stringVar['Focus Threshold'].set(dealString(self.bg_task.variable.getFocusThreshold()))
+      self.setting_stringVar['Line Notify Token'].set(self.bg_task.variable.getLineNotifyToken())
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -539,6 +553,7 @@ class UI:
       self.bg_task.variable.setRestartDelay(dealString(self.setting_stringVar['Restart Delay'].get(), float))
       self.bg_task.variable.setFreezeThreshold(dealString(self.setting_stringVar['Freeze Threshold'].get()))
       self.bg_task.variable.setFocusThreshold(dealString(self.setting_stringVar['Focus Threshold'].get()))
+      self.bg_task.variable.setLineNotifyToken(self.setting_stringVar['Line Notify Token'].get())
     
   def btn_run_event(self):
     if self.isRunning == False: # enable
@@ -581,6 +596,19 @@ class UI:
     t = threading.Thread(target = bm_function)
     t.start()
 
+  def copy_to_clipboard_and_close(self, image, window):
+    output = BytesIO()
+    image.convert('RGB').save(output, 'BMP')
+    data = output.getvalue()[14:]
+    output.close()
+
+    win32clipboard.OpenClipboard()
+    win32clipboard.EmptyClipboard()
+    win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+    win32clipboard.CloseClipboard()
+
+    window.destroy()
+
   def btn_share_party_event(self):
     # pop window
     share_window = Toplevel(self.window)
@@ -602,27 +630,57 @@ class UI:
     total = self.result_win + self.result_lose
     win_rate = (self.result_win/total)*100 if total > 0 else 0.0
     lose_rate = (self.result_lose/total)*100 if total > 0 else 0.0
-    img = Draw.addText(img, (-1, 70),
+    img = Draw.addText(img, (None, 70), (160, None),
       f"Win: {self.result_win} ({win_rate:.1f} %)    Lose: {self.result_lose} ({lose_rate:.1f} %)",
       16)
     self.changeImage(label_img, self.bg_task.detect.Image2TK(img))
 
-    def copy_to_clipboard_and_close(image, window):
-      output = BytesIO()
-      image.convert('RGB').save(output, 'BMP')
-      data = output.getvalue()[14:]
-      output.close()
+    btn_copy = tk.Button(share_window, text='Copy Image', width=15, height=2, font=('Arial', 10))
+    btn_copy.pack(fill=BOTH, expand=True, side=TOP)
+    btn_copy.config(command=partial(self.copy_to_clipboard_and_close, img, share_window), state=NORMAL)
 
-      win32clipboard.OpenClipboard()
-      win32clipboard.EmptyClipboard()
-      win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
-      win32clipboard.CloseClipboard()
+    share_window.attributes('-alpha', 0.0)
+    share_window.update_idletasks()
+    share_window.deiconify()
+    self.centerWindowRelativeToParent(self.window, share_window)
+    share_window.attributes('-alpha', 1.0)
 
-      window.destroy()
+  def btn_share_board_event(self):
+    # pop window
+    share_window = Toplevel(self.window)
+    share_window.withdraw()
+    share_window.title("Share Board")
+
+    label_img = tk.Label(share_window)
+    label_img.pack(fill=BOTH, expand=True, side=TOP)
+
+    dashboard = Draw.getBlankImage((700,200))
+    # add detect dice
+    for i, (dice, star) in enumerate(zip(self.bg_task.board_dice, self.bg_task.board_dice_star)):
+      # dice
+      idx = self.bg_task.detect.dice_name_idx_dict[dice]
+      dice_img = self.bg_task.detect.dice_image_PIL_resize[idx]
+      row = i // self.bg_task.variable.col
+      col = i % self.bg_task.variable.col
+      x = col * (self.bg_task.detect.resize_size[0] + 20) + 25
+      y = 10 + (row * (self.bg_task.detect.resize_size[1] + 10))
+      dashboard = Draw.addImage(dashboard, dice_img, (x, y))
+      # text
+      dashboard = Draw.addText(dashboard, (None, None), (x+self.bg_task.detect.resize_size[0]+10, y+(self.bg_task.detect.resize_size[1]//2)), str(star), 14)
+    # add screenshot dice
+    for i, img in enumerate(self.bg_task.detect_board_dice_img):
+      img = self.bg_task.detect.OpenCV2Image(img).convert('RGBA')
+      row = i // self.bg_task.variable.col
+      col = i % self.bg_task.variable.col
+      x = col * (self.bg_task.detect.resize_size[0] + 5) + 405
+      y = 10 + (row * (self.bg_task.detect.resize_size[1] + 10))
+      dashboard = Draw.addImage(dashboard, img, (x, y))
+
+    self.changeImage(label_img, self.bg_task.detect.Image2TK(dashboard))
 
     btn_copy = tk.Button(share_window, text='Copy Image', width=15, height=2, font=('Arial', 10))
     btn_copy.pack(fill=BOTH, expand=True, side=TOP)
-    btn_copy.config(command=partial(copy_to_clipboard_and_close, img, share_window), state=NORMAL)
+    btn_copy.config(command=partial(self.copy_to_clipboard_and_close, dashboard, share_window), state=NORMAL)
 
     share_window.attributes('-alpha', 0.0)
     share_window.update_idletasks()
@@ -761,7 +819,6 @@ class UI:
   def changeImage(self, label: tk.Label, img):
     label.configure(image=img)
     label.image = img
-    label.update()
 
   def press_select_dice_event(self, idx, _):
     # pop window
@@ -902,6 +959,7 @@ class UI:
     self.btn_load_screenshot.config(state=NORMAL)
     self.btn_detect.config(state=NORMAL)
     self.btn_save_extract_images.config(state=NORMAL)
+    self.btn_share_board.config(state=NORMAL)
 
   def log(self, text):
     print(text)
@@ -1027,7 +1085,7 @@ Average Gain: {offset:+.2f}""")
       # record previous state
       previous_status = self.bg_task.status
 
-      # run
+      # flag
       battleMode = BattleMode.BATTLE_2V2 # default
       if self.battle_stringVar.get() == '1v1':
         battleMode = BattleMode.BATTLE_1V1
@@ -1035,6 +1093,8 @@ Average Gain: {offset:+.2f}""")
         battleMode = BattleMode.BATTLE_2V2
       elif self.battle_stringVar.get() == 'Arcade':
         battleMode = BattleMode.BATTLE_ARCADE
+
+      # run
       try:
         self.bg_task.task(self.log, 
           self.autoPlay_booleanVar.get(), 
@@ -1052,13 +1112,28 @@ Average Gain: {offset:+.2f}""")
         self.status_StringVar.set(status_str[int(self.bg_task.status)].replace(" ","\n"))
 
       # record result
-      if self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
-        if self.bg_task.result == True:
-          self.result_win += 1
-        else:
-          self.result_lose += 1
-        self.result_StringVar.set(f"{self.result_win} / {self.result_lose}")
-        self.getResult()
+      if battleMode != BattleMode.BATTLE_ARCADE:
+        if self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
+          if self.bg_task.result == True:
+            self.result_win += 1
+          else:
+            self.result_lose += 1
+          self.result_StringVar.set(f"{self.result_win} / {self.result_lose}")
+          self.getResult()
+
+      # send notify
+      if self.bg_task.status == Status.FINISH and self.bg_task.result_screenshot is not None:
+        if self.notifyResult_booleanVar.get() == True:
+          self.log('=== Send Notify ===\n')
+          if battleMode == BattleMode.BATTLE_ARCADE:
+            text = 'Finish Arcade'
+          else:
+            text = f'{"Win" if self.bg_task.result else "Lose"} ({self.result_win} / {self.result_lose})'
+
+          success, response = Line.notify(self.bg_task.variable.getLineNotifyToken(), 
+            text, self.bg_task.result_screenshot)
+          if not success:
+            self.log(f'{response}\n')
 
       # update ui
       for i, name in enumerate(self.bg_task.board_dice):
@@ -1070,7 +1145,6 @@ Average Gain: {offset:+.2f}""")
       for i, img in enumerate(self.bg_task.detect_board_dice_img):
         img = self.bg_task.detect.OpenCV2TK(img)
         self.changeImage(self.label_detect_board_dice[i], img)
-      self.window.update()
 
       # check freeze
       if self.bg_task.same_screenshot_cnt >= self.bg_task.variable.getFreezeThreshold():
@@ -1083,13 +1157,13 @@ Average Gain: {offset:+.2f}""")
           stopDetect()
           break
 
-      if self.bg_task.status == Status.LOBBY:
+      if self.bg_task.status == Status.LOBBY or self.bg_task.status == Status.ARCADE:
         # initial
-        if previous_status == Status.LOBBY:
+        if previous_status == Status.LOBBY or previous_status == Status.ARCADE:
           self.bg_task.diceControl.battle(battleMode)
         else:
           if not self.autoPlay_booleanVar.get():
-            self.log('Detect lobby, stop detecting\n')
+            self.log('Detect Lobby / Arcade, stop detecting\n')
             stopDetect()
             break
 

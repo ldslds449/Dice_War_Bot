@@ -38,7 +38,7 @@ class Detect:
       name = os.path.basename(f).split(".")[0]
       image_rgb = cv2.imread(f)
       image_gray = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
-      image_pil = Image.open(f)
+      image_pil = Image.open(f).convert("RGBA")
       self.dice_image_rgb.append(image_rgb)
       self.dice_image_rgb_resize.append(cv2.resize(image_rgb, self.resize_size))
       self.dice_image_gray.append(image_gray)

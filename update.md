@@ -206,3 +206,11 @@
 1. Add Arcade mode
 2. Add focusThreshold
 3. Update number detect model
+
+## Version 1.6.1
+
+1. Change weighted random function
+2. Add change tab step to Arcade mode
+3. Add share board button
+4. Modify freeze function parameter
+5. Add notify result function

@@ -62,11 +62,14 @@ class Variable:
     self.top_window = None
     self.watch_ad = None
     self.restart_app = None
+    self.notify_result = None
 
     self.win = None
     self.lose = None
 
     self.dice_party = None
+
+    self.line_notify_token = None
 
   ### read from config file ###
   def loadFromConfigFile(self):
@@ -126,8 +129,10 @@ class Variable:
     self.top_window = str2Type(config.get('Flag', 'TopWindow', fallback='False'), eval)
     self.watch_ad = str2Type(config.get('Flag', 'WatchAD', fallback='False'), eval)
     self.restart_app = str2Type(config.get('Flag', 'RestartApp', fallback='False'), eval)
+    self.notify_result = str2Type(config.get('Flag', 'NotifyResult', fallback='False'), eval)
     self.win = str2Type(config.get('Record', 'Win', fallback='0'))
     self.lose = str2Type(config.get('Record', 'Lose', fallback='0'))
+    self.line_notify_token = config.get('Notify', 'LineNotifyToken', fallback='')
 
   ### write to config file ###
   def saveToConfigFile(self):
@@ -191,9 +196,12 @@ class Variable:
     config.set('Flag', 'TopWindow', type2Str(self.top_window))
     config.set('Flag', 'WatchAD', type2Str(self.watch_ad))
     config.set('Flag', 'RestartApp', type2Str(self.restart_app))
+    config.set('Flag', 'NotifyResult', type2Str(self.notify_result))
     config.add_section('Record')
     config.set('Record', 'Win', type2Str(self.win))
     config.set('Record', 'Lose', type2Str(self.lose))
+    config.add_section('Notify')
+    config.set('Notify', 'LineNotifyToken', self.line_notify_token)
 
     with open(self.config_file_name, 'w') as f:
       config.write(f)
@@ -335,11 +343,17 @@ class Variable:
   def setRestartApp(self, _value: bool):
     self.restart_app = _value
 
+  def setNotifyResult(self, _value: bool):
+    self.notify_result = _value
+
   def setWin(self, _value: int):
     self.win = _value
 
   def setLose(self, _value: int):
     self.lose = _value
+
+  def setLineNotifyToken(self, _value: str):
+    self.line_notify_token = _value
 
   ### get ###
 
@@ -499,8 +513,14 @@ class Variable:
   def getRestartApp(self):
     return self.restart_app
 
+  def getNotifyResult(self):
+    return self.notify_result
+
   def getWin(self):
     return self.win
 
   def getLose(self):
     return self.lose
+
+  def getLineNotifyToken(self):
+    return self.line_notify_token

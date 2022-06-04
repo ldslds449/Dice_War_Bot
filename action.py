@@ -2,6 +2,7 @@ from typing import Callable, Dict, List
 import abc
 import time
 import random as rd
+import numpy as np
 
 from control import *
 
@@ -23,7 +24,6 @@ class MyAction(Action):
   @staticmethod
   def isMerge(star, dice):
     star_prob = star / 10
-    merge_prob = rd.uniform(0, 1)
     if dice == "Meteor":
       if star >= 4:
         return False
@@ -39,7 +39,7 @@ class MyAction(Action):
       else:
         star_prob = star_prob
 
-    return merge_prob > star_prob
+    return np.random.choice([True, False], p=[1.0-star_prob, star_prob])
 
   @staticmethod
   def probabilisticMerge(diceControl: DiceControl, findMergeDice: Callable,

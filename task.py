@@ -12,6 +12,7 @@ from detect import *
 from variable import *
 from mode import *
 from action import *
+from notify import *
 
 class Task:
   def __init__(self):
@@ -168,7 +169,7 @@ class Task:
     
     # calculate hash value of screenshot
     same_screenshot_start = time.time()
-    im_hash = dhash.dhash_int(self.detect.OpenCV2Image(im), size=8)
+    im_hash = dhash.dhash_int(self.detect.OpenCV2Image(im), size=7)
     bit_diff = dhash.get_num_bits_different(self.prev_screenshot_hash, im_hash)
     if bit_diff < 3:
       self.same_screenshot_cnt += 1
@@ -236,8 +237,9 @@ class Task:
     hasAD = status_result['AD']
     result = status_result['Result']
     inArcade = status_result['Arcade']
-    self.result = None
 
+    self.result = None
+    self.result_screenshot = None
 
     def detectLobbyAgain():
       success, img = self.screen.getScreenShot(self.variable.getZoomRatio())
@@ -294,6 +296,8 @@ class Task:
               self.detect1v1PartyList(im)
 
             self.result = result
+            self.result_screenshot = im.copy()
+
             self.diceControl.skip() # leave this stage
             time.sleep(0.5)
             self.diceControl.skip() # click again
