@@ -20,6 +20,10 @@ class DetectDiceMode(IntEnum):
   COMBINE = 4
   HIST_COMBINE = 5
 
+class DetectStarMode(IntEnum):
+  COMPUTER_VERSION = 0
+  ML_SVC = 1
+
 class BattleMode(IntEnum):
   BATTLE_1V1 = 0
   BATTLE_2V2 = 1

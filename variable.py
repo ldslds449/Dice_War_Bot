@@ -52,6 +52,7 @@ class Variable:
     self.control_mode = None
     self.adb_mode = None
     self.detect_dice_mode = None
+    self.detect_star_mode = None
 
     self.adb_port = None
     self.adb_ip = None
@@ -114,6 +115,7 @@ class Variable:
     self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
     self.control_mode = ControlMode(str2Type(config.get('Mode', 'ControlMode', fallback='0')))
     self.detect_dice_mode = DetectDiceMode(str2Type(config.get('Mode', 'DetectDiceMode', fallback='0')))
+    self.detect_star_mode = DetectStarMode(str2Type(config.get('Mode', 'DetectStarMode', fallback='0')))
     self.adb_mode = ADBMode(str2Type(config.get('Mode', 'ADBMode', fallback='0')))
     self.adb_ip = config.get('ADB', 'IP', fallback='127.0.0.1')
     self.adb_port = str2Type(config.get('ADB', 'Port', fallback='5555'), int)
@@ -178,6 +180,7 @@ class Variable:
     config.set('Mode', 'Emulator', type2Str(int(self.emulator_mode)))
     config.set('Mode', 'ControlMode', type2Str(int(self.control_mode)))
     config.set('Mode', 'DetectDiceMode', type2Str(int(self.detect_dice_mode)))
+    config.set('Mode', 'DetectStarMode', type2Str(int(self.detect_star_mode)))
     config.set('Mode', 'ADBMode', type2Str(int(self.adb_mode)))
     config.add_section('ADB')
     config.set('ADB', 'IP', self.adb_ip)
@@ -297,6 +300,9 @@ class Variable:
 
   def setDetectDiceMode(self, _value: DetectDiceMode):
     self.detect_dice_mode = _value
+  
+  def setDetectStarMode(self, _value: DetectStarMode):
+    self.detect_star_mode = _value
 
   def setADBMode(self, _value: ADBMode):
     self.adb_mode = _value
@@ -464,6 +470,9 @@ class Variable:
 
   def getDetectDiceMode(self):
     return self.detect_dice_mode
+
+  def getDetectStarMode(self):
+    return self.detect_star_mode
 
   def getADBMode(self):
     return self.adb_mode

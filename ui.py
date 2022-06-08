@@ -25,7 +25,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.6.1'
+  Version = '1.6.2'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -124,6 +124,7 @@ class UI:
       'Control Mode': 0,
       'Emulator': 0,
       'Detect Dice Mode': 0,
+      'Detect Star Mode': 0,
       'ADB Mode': 0,
       'ADB IP': 0,
       'ADB Port': 0,
@@ -468,6 +469,7 @@ class UI:
       self.setting_stringVar['Control Mode'].set(dealString(int(self.bg_task.variable.getControlMode())))
       self.setting_stringVar['Emulator'].set(dealString(int(self.bg_task.variable.getEmulatorMode())))
       self.setting_stringVar['Detect Dice Mode'].set(dealString(int(self.bg_task.variable.getDetectDiceMode())))
+      self.setting_stringVar['Detect Star Mode'].set(dealString(int(self.bg_task.variable.getDetectStarMode())))
       self.setting_stringVar['ADB Mode'].set(dealString(int(self.bg_task.variable.getADBMode())))
       self.setting_stringVar['ADB IP'].set(self.bg_task.variable.getADBIP())
       self.setting_stringVar['ADB Port'].set(dealString(self.bg_task.variable.getADBPort()))
@@ -517,6 +519,7 @@ class UI:
       self.bg_task.variable.setControlMode(ControlMode(dealString(self.setting_stringVar['Control Mode'].get())))
       self.bg_task.variable.setEmulatorMode(Emulator(dealString(self.setting_stringVar['Emulator'].get())))
       self.bg_task.variable.setDetectDiceMode(DetectDiceMode(dealString(self.setting_stringVar['Detect Dice Mode'].get())))
+      self.bg_task.variable.setDetectStarMode(DetectStarMode(dealString(self.setting_stringVar['Detect Star Mode'].get())))
       self.bg_task.variable.setADBMode(ADBMode(dealString(self.setting_stringVar['ADB Mode'].get())))
       self.bg_task.variable.setADBIP(self.setting_stringVar['ADB IP'].get())
       self.bg_task.variable.setADBPort(dealString(self.setting_stringVar['ADB Port'].get()))
@@ -1048,6 +1051,9 @@ Average Gain: {offset:+.2f}""")
       
     # ---------------------------------------- #
 
+    hasRecordResult = False
+    hasNotify = False
+
     while self.isRunning:
       # detect dice war app
       notInDiceWarCount = 0
@@ -1111,9 +1117,15 @@ Average Gain: {offset:+.2f}""")
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)].replace(" ","\n"))
 
+      # hasRecord
+      if self.bg_task.status == Status.LOBBY or self.bg_task.status == Status.ARCADE:
+        hasRecordResult = False
+        hasNotify = False
+
       # record result
       if battleMode != BattleMode.BATTLE_ARCADE:
-        if self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
+        if not hasRecordResult and self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
+          hasRecordResult = True
           if self.bg_task.result == True:
             self.result_win += 1
           else:
@@ -1122,7 +1134,8 @@ Average Gain: {offset:+.2f}""")
           self.getResult()
 
       # send notify
-      if self.bg_task.status == Status.FINISH and self.bg_task.result_screenshot is not None:
+      if not hasNotify and self.bg_task.status == Status.FINISH and self.bg_task.result_screenshot is not None:
+        hasNotify = True
         if self.notifyResult_booleanVar.get() == True:
           self.log('=== Send Notify ===\n')
           if battleMode == BattleMode.BATTLE_ARCADE:
@@ -1130,10 +1143,12 @@ Average Gain: {offset:+.2f}""")
           else:
             text = f'{"Win" if self.bg_task.result else "Lose"} ({self.result_win} / {self.result_lose})'
 
-          success, response = Line.notify(self.bg_task.variable.getLineNotifyToken(), 
+          success, response, remain = Line.notify(self.bg_task.variable.getLineNotifyToken(), 
             text, self.bg_task.result_screenshot)
           if not success:
             self.log(f'{response}\n')
+          else: 
+            self.log(f"API Remain: {remain['API']}, Image Remain: {remain['Image']}, Reset Time: {remain['Reset']}\n")
 
       # update ui
       for i, name in enumerate(self.bg_task.board_dice):

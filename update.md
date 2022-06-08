@@ -214,3 +214,10 @@
 3. Add share board button
 4. Modify freeze function parameter
 5. Add notify result function
+
+## Version 1.6.2
+
+1. Add try catch to line notify
+2. Add new dice - Gravity
+3. Add dice star detect mode
+4. Add dice detect model

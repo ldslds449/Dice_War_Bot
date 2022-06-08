@@ -55,6 +55,8 @@ class Detect:
 
     # number model
     self.numberModel = joblib.load("./models/number.model")
+    # star model
+    self.starModel = joblib.load("./models/star_svc.model")
 
   def detectDice(self, img, candidate = None, mode: DetectDiceMode = DetectDiceMode.COMBINE):
 
@@ -162,80 +164,88 @@ class Detect:
     return result[0]
 
   def detectStar(self, img):
+    if self.variable.getDetectStarMode() == DetectStarMode.COMPUTER_VERSION:
+      # binary
+      def binary_detect(input_img, apply_erosion_dilation):
+        _, img_binary = cv2.threshold(input_img, 130, 255, cv2.THRESH_BINARY)
+        kernel = np.array([
+            [0, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 0]
+        ], np.uint8)
 
-    # binary
-    def binary_detect(input_img, apply_erosion_dilation):
-      _, img_binary = cv2.threshold(input_img, 130, 255, cv2.THRESH_BINARY)
-      kernel = np.array([
-          [0, 1, 1, 1, 0],
-          [1, 1, 1, 1, 1],
-          [1, 1, 1, 1, 1],
-          [1, 1, 1, 1, 1],
-          [0, 1, 1, 1, 0]
-      ], np.uint8)
-
-      if apply_erosion_dilation:
-        img_erosion = cv2.erode(~img_binary, kernel, iterations = 1)
-        img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
-      else:
-        img_dilation = ~img_binary
-        
-      contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-      star_count = 0
-      for cnt in contours:
-        area = cv2.contourArea(cnt)
-        perimeter = cv2.arcLength(cnt,True)
-        (x,y), radius = cv2.minEnclosingCircle(cnt)
-        center = (int(x),int(y))
-        radius = int(radius)
-        if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 35:
-          # center must be in this region
-          if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
-            continue
-          star_count += 1
-      return star_count
-
-    # edge detection
-    def edge_detect(input_img):
-      img_edge = cv2.Canny(image=input_img, threshold1=330, threshold2=400)
-      contours, _ = cv2.findContours(img_edge, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-      star_count = 0
-      centers = []
-      for cnt in contours:
-        area = cv2.contourArea(cnt)
-        perimeter = cv2.arcLength(cnt,True)
-        (x,y),radius = cv2.minEnclosingCircle(cnt)
-        center = (int(x),int(y))
-        radius = int(radius)
-        if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 10:
-          # center must be in this region
-          if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
-            continue
-          # find if is overlap
-          overlap = False
-          for c in centers:
-            dist = abs(c[0]-center[0])**2 + abs(c[1]-center[1])**2
-            if dist <= 30:
-              overlap = True
-              break
-          if not overlap:
+        if apply_erosion_dilation:
+          img_erosion = cv2.erode(~img_binary, kernel, iterations = 1)
+          img_dilation = cv2.dilate(img_erosion, kernel, iterations = 1)
+        else:
+          img_dilation = ~img_binary
+          
+        contours, _ = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        star_count = 0
+        for cnt in contours:
+          area = cv2.contourArea(cnt)
+          perimeter = cv2.arcLength(cnt,True)
+          (x,y), radius = cv2.minEnclosingCircle(cnt)
+          center = (int(x),int(y))
+          radius = int(radius)
+          if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 35:
+            # center must be in this region
+            if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
+              continue
             star_count += 1
-            centers.append(center)
-      return star_count
+        return star_count
 
-    img_resize = cv2.resize(img, self.resize_size)
-    img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
+      # edge detection
+      def edge_detect(input_img):
+        img_edge = cv2.Canny(image=input_img, threshold1=330, threshold2=400)
+        contours, _ = cv2.findContours(img_edge, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        star_count = 0
+        centers = []
+        for cnt in contours:
+          area = cv2.contourArea(cnt)
+          perimeter = cv2.arcLength(cnt,True)
+          (x,y),radius = cv2.minEnclosingCircle(cnt)
+          center = (int(x),int(y))
+          radius = int(radius)
+          if abs(perimeter-radius*2*3.14) < 10 and abs(perimeter - 25) < 10 and abs(area-50) < 10:
+            # center must be in this region
+            if center[0] <= 10 or center[1] <= 10 or self.resize_size[0]-center[0] <= 10 or self.resize_size[1]-center[1] <= 10:
+              continue
+            # find if is overlap
+            overlap = False
+            for c in centers:
+              dist = abs(c[0]-center[0])**2 + abs(c[1]-center[1])**2
+              if dist <= 30:
+                overlap = True
+                break
+            if not overlap:
+              star_count += 1
+              centers.append(center)
+        return star_count
 
-    star_count_binary = binary_detect(img_gray, True)
-    star_count_edge = edge_detect(img_gray)
+      img_resize = cv2.resize(img, self.resize_size)
+      img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
+
+      star_count_binary = binary_detect(img_gray, True)
+      star_count_edge = edge_detect(img_gray)
+      
+      max_star_value = max(star_count_binary, star_count_edge)
+
+      # star 7 detection (distinguish between star 1 or star 7)
+      if star_count_binary == 1 and star_count_edge == 0:
+        max_star_value = binary_detect(img_gray, False)
+      
+      return 7 if max_star_value == 0 else max_star_value
+
+    elif self.variable.getDetectStarMode() == DetectStarMode.ML_SVC:
+      img = self.OpenCV2Image(img)
+      img = img.resize((50,50))
+      data = [np.asarray(img)]
     
-    max_star_value = max(star_count_binary, star_count_edge)
-
-    # star 7 detection (distinguish between star 1 or star 7)
-    if star_count_binary == 1 and star_count_edge == 0:
-      max_star_value = binary_detect(img_gray, False)
-    
-    return 7 if max_star_value == 0 else max_star_value
+      x = np.array(data).reshape((1, -1))
+      return self.starModel.predict(x)[0]
 
   def colorDetect(self, img, lower, upper):
     img = cv2.resize(img, self.resize_size)
