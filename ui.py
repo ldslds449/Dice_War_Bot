@@ -25,7 +25,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.6.2'
+  Version = '1.6.3'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -237,12 +237,15 @@ class UI:
       self.select_dice_label.append(label)
 
     # log
-    scrollbar_log = tk.Scrollbar(self.frame_log)
+    scrollbar_log_y = tk.Scrollbar(self.frame_log)
+    scrollbar_log_x = tk.Scrollbar(self.frame_log, orient='horizontal')
     self.text_log = tk.Text(self.frame_log, font=('Arial', 12), height=18)
-    scrollbar_log.pack(side=tk.RIGHT, fill=tk.Y)
+    scrollbar_log_y.pack(side=tk.RIGHT, fill=tk.Y)
+    scrollbar_log_x.pack(side=tk.BOTTOM, fill=tk.X)
     self.text_log.pack(side=tk.LEFT, fill=tk.Y)
-    scrollbar_log.config(command=self.text_log.yview)
-    self.text_log.config(yscrollcommand=scrollbar_log.set)
+    scrollbar_log_y.config(command=self.text_log.yview)
+    scrollbar_log_x.config(command=self.text_log.xview)
+    self.text_log.config(yscrollcommand=scrollbar_log_y.set, xscrollcommand=scrollbar_log_x.set)
 
     # 1v1 2v2
     battle_mode = [
@@ -258,15 +261,22 @@ class UI:
     self.btn_save_extract_images = tk.Button(self.frame_detect_btn, text='Save Extract Images', width=15, height=2, font=('Arial', 10))
     self.btn_save_extract_images.config(command=self.btn_save_extract_images_event, state=DISABLED)
     self.btn_save_extract_images.pack(fill=BOTH, expand=True)
-    self.btn_BM = tk.Button(self.frame_detect_btn, text='BM', width=15, height=2, font=('Arial', 10))
+    frame_function = tk.Frame(self.frame_detect_btn)
+    frame_function.pack(fill=BOTH, expand=True, side=TOP)
+    frame_function.columnconfigure(0, weight=1)
+    frame_function.columnconfigure(1, weight=1)
+    self.btn_BM = tk.Button(frame_function, text='BM', height=2, font=('Arial', 10))
     self.btn_BM.config(command=self.btn_bm_event, state=DISABLED)
-    self.btn_BM.pack(fill=BOTH, expand=True, side=TOP)
-    self.btn_share_party = tk.Button(self.frame_detect_btn, text='Share Party', width=15, height=2, font=('Arial', 10))
+    self.btn_BM.grid(row=0, column=0, sticky='ewns')
+    self.btn_result = tk.Button(frame_function, text='Reset\nResult', height=2, font=('Arial', 10))
+    self.btn_result.config(command=self.btn_reset_event, state=NORMAL)
+    self.btn_result.grid(row=0, column=1, sticky='ewns')
+    self.btn_share_party = tk.Button(frame_function, text='Share\nParty', height=2, font=('Arial', 10))
     self.btn_share_party.config(command=self.btn_share_party_event, state=NORMAL)
-    self.btn_share_party.pack(fill=BOTH, expand=True, side=TOP)
-    self.btn_share_board = tk.Button(self.frame_detect_btn, text='Share Board', width=15, height=2, font=('Arial', 10))
+    self.btn_share_party.grid(row=1, column=0, sticky='ewns')
+    self.btn_share_board = tk.Button(frame_function, text='Share\nBoard', height=2, font=('Arial', 10))
     self.btn_share_board.config(command=self.btn_share_board_event, state=DISABLED)
-    self.btn_share_board.pack(fill=BOTH, expand=True, side=TOP)
+    self.btn_share_board.grid(row=1, column=1, sticky='ewns')
 
     # auto play
     self.autoPlay_booleanVar = tk.BooleanVar() 
@@ -300,6 +310,13 @@ class UI:
     self.checkBtn_notifyResult = tk.Checkbutton(self.frame_detect_btn, text='Notify Result', var=self.notifyResult_booleanVar, pady=5) 
     self.checkBtn_notifyResult.pack(fill=BOTH, expand=True, side=TOP)
     self.checkBtn_notifyResult.config(state=NORMAL)
+
+    # dev mode
+    self.devMode_booleanVar = tk.BooleanVar() 
+    self.devMode_booleanVar.set(False)
+    self.checkBtn_devMode = tk.Checkbutton(self.frame_detect_btn, text='Dev Mode', var=self.devMode_booleanVar, pady=5) 
+    self.checkBtn_devMode.pack(fill=BOTH, expand=True, side=TOP)
+    self.checkBtn_devMode.config(state=NORMAL)
     
     # Status Label
     self.status_StringVar = StringVar()
@@ -321,9 +338,6 @@ class UI:
     self.btn_run.config(command=self.btn_run_event, state=DISABLED)
     self.isRunning = False
     self.thread_bg_task = None
-    self.btn_result = tk.Button(self.frame_detect_btn, text='Reset Result', width=15, height=2, font=('Arial', 12))
-    self.btn_result.config(command=self.btn_reset_event, state=NORMAL)
-    self.btn_result.pack(fill=BOTH, side=BOTTOM, expand=True)
     self.btn_connect = tk.Button(self.frame_detect_btn, text='Connect', width=15, height=2, font=('Arial', 12))
     self.btn_connect.config(command=self.btn_ADB_connect_event)
     self.btn_connect.pack(fill=BOTH, side=BOTTOM, expand=True)
@@ -444,6 +458,7 @@ class UI:
       self.restartApp_booleanVar.set(self.bg_task.variable.getRestartApp())
       self.battle_stringVar.set(self.bg_task.variable.getBattleMode())
       self.notifyResult_booleanVar.set(self.bg_task.variable.getNotifyResult())
+      self.devMode_booleanVar.set(self.bg_task.variable.getDevMode())
 
   def getCheckBoxFlag(self):
     if self.bg_task is None:
@@ -455,6 +470,7 @@ class UI:
       self.bg_task.variable.setRestartApp(self.restartApp_booleanVar.get())
       self.bg_task.variable.setBattleMode(self.battle_stringVar.get())
       self.bg_task.variable.setNotifyResult(self.notifyResult_booleanVar.get())
+      self.bg_task.variable.setDevMode(self.devMode_booleanVar.get())
 
   def setSettingInputField(self):
     if self.bg_task is None:
@@ -750,11 +766,15 @@ class UI:
   def btn_save_extract_images_event(self):
     self.log('=== Save Extract Images ===\n')
     def event():
-      self.btn_save_extract_images.config(state=DISABLED, text='saving...')
-      if not os.path.exists('extract'):
-        os.mkdir('extract')
-      for i, img in enumerate(self.bg_task.detect_board_dice_img):
-        self.bg_task.detect.save(img, os.path.join('extract', f'{i}.png'))
+      try:
+        self.btn_save_extract_images.config(state=DISABLED, text='saving...')
+        if not os.path.exists('extract'):
+          os.mkdir('extract')
+        if self.bg_task.detect_board_dice_img is not None:
+          for i, (name,star,img) in enumerate(zip(self.bg_task.board_dice, self.bg_task.board_dice_star, self.bg_task.detect_board_dice_img)):
+              self.bg_task.detect.save(img, os.path.join('extract', f'{name}_{star}_{getTimeStamp()}{i:02d}.png'))
+      except:
+        self.log(f'Save Extract Images Error\n{traceback.format_exc()}')
       self.btn_save_extract_images.config(state=NORMAL, text='Save Extract Images')
     threading.Thread(target = event).start()
 
@@ -1105,7 +1125,8 @@ Average Gain: {offset:+.2f}""")
         self.bg_task.task(self.log, 
           self.autoPlay_booleanVar.get(), 
           self.watchAD_booleanVar.get(),
-          battleMode)
+          battleMode,
+          self.devMode_booleanVar.get())
       except Exception:
         self.log(f'{traceback.format_exc()}\n')
         stopDetect()
@@ -1198,6 +1219,13 @@ Average Gain: {offset:+.2f}""")
     if self.bg_task.variable.getControlMode() == ControlMode.ADB:
       ADB.disconnect()
     self.btn_save_config_event()
+
+    # wait thread finish
+    while True:
+      with self.bg_task.saveImageThreads_lock.gen_rlock():
+        if len(self.bg_task.saveImageThreads) == 0:
+          break
+      time.sleep(0.1)
 
   def RUN(self):
     self.log('=== Finish Initial ===\n')

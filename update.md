@@ -221,3 +221,9 @@
 2. Add new dice - Gravity
 3. Add dice star detect mode
 4. Add dice detect model
+
+## Version 1.6.3
+
+1. Add dev mode to save each extract image
+2. Remove time delay during non-Waiting status
+3. Arrange buttons

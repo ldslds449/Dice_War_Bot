@@ -64,6 +64,7 @@ class Variable:
     self.watch_ad = None
     self.restart_app = None
     self.notify_result = None
+    self.dev_mode = None
 
     self.win = None
     self.lose = None
@@ -132,6 +133,7 @@ class Variable:
     self.watch_ad = str2Type(config.get('Flag', 'WatchAD', fallback='False'), eval)
     self.restart_app = str2Type(config.get('Flag', 'RestartApp', fallback='False'), eval)
     self.notify_result = str2Type(config.get('Flag', 'NotifyResult', fallback='False'), eval)
+    self.dev_mode = str2Type(config.get('Flag', 'DevMode', fallback='False'), eval)
     self.win = str2Type(config.get('Record', 'Win', fallback='0'))
     self.lose = str2Type(config.get('Record', 'Lose', fallback='0'))
     self.line_notify_token = config.get('Notify', 'LineNotifyToken', fallback='')
@@ -200,6 +202,7 @@ class Variable:
     config.set('Flag', 'WatchAD', type2Str(self.watch_ad))
     config.set('Flag', 'RestartApp', type2Str(self.restart_app))
     config.set('Flag', 'NotifyResult', type2Str(self.notify_result))
+    config.set('Flag', 'DevMode', type2Str(self.dev_mode))
     config.add_section('Record')
     config.set('Record', 'Win', type2Str(self.win))
     config.set('Record', 'Lose', type2Str(self.lose))
@@ -351,6 +354,9 @@ class Variable:
 
   def setNotifyResult(self, _value: bool):
     self.notify_result = _value
+
+  def setDevMode(self, _value: bool):
+    self.dev_mode = _value
 
   def setWin(self, _value: int):
     self.win = _value
@@ -524,6 +530,9 @@ class Variable:
 
   def getNotifyResult(self):
     return self.notify_result
+
+  def getDevMode(self):
+    return self.dev_mode
 
   def getWin(self):
     return self.win

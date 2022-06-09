@@ -3,6 +3,8 @@ import win32gui
 import win32con
 import time
 import dhash
+import threading
+from readerwriterlock import rwlock
 from typing import Callable
 from tkinter import Variable
 
@@ -13,6 +15,7 @@ from variable import *
 from mode import *
 from action import *
 from notify import *
+from utils import *
 
 class Task:
   def __init__(self):
@@ -37,6 +40,10 @@ class Task:
     self.same_screenshot_cnt = 0
     # previous screenshot hash value
     self.prev_screenshot_hash = 0
+
+    # save image threads
+    self.saveImageThreads = []
+    self.saveImageThreads_lock = rwlock.RWLockFair()
 
   def init(self):
     if self.variable.getADBMode() == ADBMode.IP:
@@ -144,11 +151,11 @@ class Task:
     if number < 1000 or number > 9999:
       if not os.path.exists('error'):
         os.makedirs('error')
-      self.detect.save(trophy_img, os.path.join('error', f'{time.strftime("%Y%m%d-%H%M%S")}.png'))
+      self.detect.save(trophy_img, os.path.join('error', f'{getTimeStamp()}.png'))
 
     return number
 
-  def task(self, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode):
+  def task(self, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode, devMode: bool):
 
     screenshot_start = time.time()
     
@@ -257,7 +264,8 @@ class Task:
           self.status = Status.LOBBY
         elif inArcade:
           self.status = Status.ARCADE
-        time.sleep(0.5)
+        elif inWaiting:
+          time.sleep(0.5)
       elif self.status == Status.GAME:
         if inLobby:
           self.status = Status.LOBBY
@@ -369,6 +377,30 @@ class Task:
       boardDiceStar=self.board_dice_star,
       team=self.variable.getDiceParty().copy()
     )
+
+    # save extract images
+    def saveExtractImages():
+      try:
+        # save images
+        if self.detect_board_dice_img is not None:
+          for i, (name,star,img) in enumerate(zip(self.board_dice, self.board_dice_star, self.detect_board_dice_img)):
+            self.detect.save(img, os.path.join('extract', f'{name}_{star}_{getTimeStamp()}{i:02d}.png'))
+      except:
+        log(f'Dev Mode: Save Extract Images Error\n{traceback.format_exc()}')
+      try:
+        # remove myself from list
+        with self.saveImageThreads_lock.gen_wlock():
+          self.saveImageThreads.remove(threading.current_thread())
+      except:
+        log(f'Dev Mode: Remove Thread Error\n{traceback.format_exc()}')
+
+    if devMode == True:
+      t = threading.Thread(target = saveExtractImages)
+      t.start()
+      # add thread to list
+      with self.saveImageThreads_lock.gen_wlock():
+        self.saveImageThreads.append(t)
+    
 
 
     
