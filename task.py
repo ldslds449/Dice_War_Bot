@@ -345,6 +345,7 @@ class Task:
     canSP = enable_result['Sp']
     canSpell = enable_result['Spell']
     canLevel = enable_result['Level']
+    passCheckPoint = enable_result['PassCheckPoint']
 
     count = {}
     for dice in self.variable.getDiceParty() + ['Blank']:
@@ -374,6 +375,7 @@ class Task:
       canLevelDice=canLevel,
       canSpell=canSpell,
       countTotal=countTotal, 
+      passCheckPoint=passCheckPoint,
       boardDiceStar=self.board_dice_star,
       team=self.variable.getDiceParty().copy()
     )

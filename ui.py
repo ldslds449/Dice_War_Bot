@@ -25,7 +25,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.6.4'
+  Version = '1.6.5'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -162,6 +162,7 @@ class UI:
       'Trophy Left Top XY': 1,
       'Extract Trophy Size WH': 2,
       'Line Notify Token': 0,
+      'Check Point XY': 1
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -508,6 +509,7 @@ class UI:
       self.setting_stringVar['Party List 1v1 Left XY'].set(dealString(self.bg_task.variable.getPartyList1v1LeftXY()))
       self.setting_stringVar['Party List 1v1 Offset X'].set(dealString(self.bg_task.variable.getPartyList1v1OffsetX()))
       self.setting_stringVar['Trophy Left Top XY'].set(dealString(self.bg_task.variable.getTrophyLeftTopXY()))
+      self.setting_stringVar['Check Point XY'].set(dealString(self.bg_task.variable.getCheckPointXY()))
       self.setting_stringVar['Extract Dice Size WH'].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
       self.setting_stringVar['Extract Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
       self.setting_stringVar['Extract SP Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
@@ -558,6 +560,7 @@ class UI:
       self.bg_task.variable.setPartyList1v1LeftXY(dealString(self.setting_stringVar['Party List 1v1 Left XY'].get()))
       self.bg_task.variable.setPartyList1v1OffsetX(dealString(self.setting_stringVar['Party List 1v1 Offset X'].get()))
       self.bg_task.variable.setTrophyLeftTopXY(dealString(self.setting_stringVar['Trophy Left Top XY'].get()))
+      self.bg_task.variable.setCheckPointXY(dealString(self.setting_stringVar['Check Point XY'].get()))
       self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar['Extract Dice Size WH'].get()))
       self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar['Extract Dice Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar['Extract SP Luminance Size WH'].get()))

@@ -22,6 +22,7 @@ class Variable:
     self.party_list_1v1_left_xy = None
     self.party_list_1v1_offset_x = None
     self.trophy_left_top_xy = None
+    self.checkpoint_xy = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
@@ -102,6 +103,7 @@ class Variable:
     self.party_list_1v1_left_xy = str2Type(config.get('Coordinate', 'PartyList1v1LeftXY', fallback='0 0'))
     self.party_list_1v1_offset_x = str2Type(config.get('Coordinate', 'PartyList1v1OffsetX', fallback='0'))
     self.trophy_left_top_xy = str2Type(config.get('Coordinate', 'TrophyLeftTopXY', fallback='0 0'))
+    self.checkpoint_xy = str2Type(config.get('Coordinate', 'CheckPointXY', fallback='0 0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
     self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
@@ -166,6 +168,7 @@ class Variable:
     config.set('Coordinate', 'PartyList1v1LeftXY', type2Str(self.party_list_1v1_left_xy))
     config.set('Coordinate', 'PartyList1v1OffsetX', type2Str(self.party_list_1v1_offset_x))
     config.set('Coordinate', 'TrophyLeftTopXY', type2Str(self.trophy_left_top_xy))
+    config.set('Coordinate', 'CheckPointXY', type2Str(self.checkpoint_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
@@ -264,6 +267,9 @@ class Variable:
 
   def setTrophyLeftTopXY(self, _value: Tuple[int,int]):
     self.trophy_left_top_xy = _value
+
+  def setCheckPointXY(self, _value: Tuple[int,int]):
+    self.checkpoint_xy = _value
 
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
@@ -419,6 +425,9 @@ class Variable:
 
   def getTrophyLeftTopXY(self):
     return self.trophy_left_top_xy
+
+  def getCheckPointXY(self):
+    return self.checkpoint_xy
 
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh

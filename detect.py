@@ -204,7 +204,7 @@ class Detect:
 
       # edge detection
       def edge_detect(input_img):
-        img_edge = cv2.Canny(image=input_img, threshold1=330, threshold2=400)
+        img_edge = cv2.Canny(image=input_img, threshold1=330, threshold2=280)
         contours, _ = cv2.findContours(img_edge, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         star_count = 0
         centers = []
@@ -399,6 +399,14 @@ class Detect:
     else:
       return False
 
+  def passCheckPoint(self, pixel):
+    lower = [120, 100, 100]
+    upper = [130, 255, 255]
+    ratio = self.colorDetect(pixel, lower, upper)
+
+    print(f'CheckPoint: {ratio}')
+    return ratio > 0
+
   # x, y, w, h
   def extractImage(self, img, region: Tuple[int, int, int, int], mode):
     if mode == ExtractMode.LEFTTOP:
@@ -518,6 +526,9 @@ class Detect:
     cv2.rectangle(img, leftCorner, 
       tupleAdd(leftCorner, self.variable.getExtractTrophySizeWH()), orange, 2)
 
+    # draw check point
+    cv2.circle(img, self.variable.getCheckPointXY(), 5, orange, -1)
+
     return img
 
   def detectEnable(self, img):
@@ -544,11 +555,14 @@ class Detect:
     for i in range(len(level_lu)):
       print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.canLevelDice(level_lu[i])}')
 
+    pass_ckpt = self.passCheckPoint(self.extractImage(img, (self.variable.getCheckPointXY()[0], self.variable.getCheckPointXY()[1], 1, 1), ExtractMode.LEFTTOP))
+
     return {
       'Summon': self.canSummon(summon_lu), 
       'Sp': self.canLevelSP(sp_lu), 
       'Spell': self.canSpell(spell_lu),
-      'Level': [self.canLevelDice(level_lu[i]) for i in range(len(level_lu))]
+      'Level': [self.canLevelDice(level_lu[i]) for i in range(len(level_lu))],
+      'PassCheckPoint': pass_ckpt
     }
 
   def detectStatus(self, img):

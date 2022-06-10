@@ -232,3 +232,8 @@
 
 1. Add new dice - Typhoon
 2. Fix Squad and Electric dice star detect
+
+## Version 1.6.5
+
+1. Fix Gun dice star detect bug
+2. Add checkpoint to check the stage progress
