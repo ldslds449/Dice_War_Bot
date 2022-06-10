@@ -166,8 +166,13 @@ class Detect:
   def detectStar(self, img):
     if self.variable.getDetectStarMode() == DetectStarMode.COMPUTER_VERSION:
       # binary
-      def binary_detect(input_img, apply_erosion_dilation):
-        _, img_binary = cv2.threshold(input_img, 130, 255, cv2.THRESH_BINARY)
+      def binary_detect(input_img, apply_erosion_dilation, threshold_use_adaptive):
+        if threshold_use_adaptive:
+          # use adaptive mean threshold
+          img_binary = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 40)
+        else:
+          # use global threshold
+          _, img_binary = cv2.threshold(input_img, 130, 255, cv2.THRESH_BINARY)
         kernel = np.array([
             [0, 1, 1, 1, 0],
             [1, 1, 1, 1, 1],
@@ -228,14 +233,16 @@ class Detect:
       img_resize = cv2.resize(img, self.resize_size)
       img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
 
-      star_count_binary = binary_detect(img_gray, True)
+      star_count_binary_global = binary_detect(img_gray, True, False)
+      star_count_binary_adaptive = binary_detect(img_gray, True, True)
       star_count_edge = edge_detect(img_gray)
       
-      max_star_value = max(star_count_binary, star_count_edge)
+      binary_max = max(star_count_binary_global, star_count_binary_adaptive)
+      max_star_value = max(binary_max, star_count_edge)
 
       # star 7 detection (distinguish between star 1 or star 7)
-      if star_count_binary == 1 and star_count_edge == 0:
-        max_star_value = binary_detect(img_gray, False)
+      if star_count_binary_global == 1 and star_count_edge == 0:
+        max_star_value = binary_detect(img_gray, False, False)
       
       return 7 if max_star_value == 0 else max_star_value
 

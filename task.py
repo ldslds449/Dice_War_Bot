@@ -395,6 +395,8 @@ class Task:
         log(f'Dev Mode: Remove Thread Error\n{traceback.format_exc()}')
 
     if devMode == True:
+      if not os.path.exists('extract'):
+        os.mkdir('extract')
       t = threading.Thread(target = saveExtractImages)
       t.start()
       # add thread to list

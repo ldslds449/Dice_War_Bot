@@ -227,3 +227,8 @@
 1. Add dev mode to save each extract image
 2. Remove time delay during non-Waiting status
 3. Arrange buttons
+
+## Version 1.6.4
+
+1. Add new dice - Typhoon
+2. Fix Squad and Electric dice star detect
