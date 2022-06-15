@@ -237,3 +237,10 @@
 
 1. Fix Gun dice star detect bug
 2. Add checkpoint to check the stage progress
+
+## Version 1.7.0
+
+1. Replacing the ADB low-level implementation
+2. Fix lobby detect bug
+3. Change screenshot function
+4. Add screenshot image to UI

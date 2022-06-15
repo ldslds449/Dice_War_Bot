@@ -1,8 +1,8 @@
 import cv2
 import win32gui
 import win32ui
-import win32con
-import numpy as np
+import traceback
+from ctypes import windll
 from PIL import Image
 from typing import Tuple
 
@@ -40,13 +40,10 @@ class Screen:
         if self.mode == ControlMode.WIN32API:
             left, top, w, h = self.getWindowSizeInfo()
             # windows zoom setting
-            left = int(left * zoom_ratio)
-            top = int(top * zoom_ratio)
             w = int(w * zoom_ratio)
             h = int(h * zoom_ratio)
 
-            hdesktop = win32gui.GetDesktopWindow()
-            hwndDC = win32gui.GetWindowDC(hdesktop)
+            hwndDC = win32gui.GetWindowDC(self.hwnd)
             mfcDC  = win32ui.CreateDCFromHandle(hwndDC)
             saveDC = mfcDC.CreateCompatibleDC()
 
@@ -55,7 +52,10 @@ class Screen:
 
             saveDC.SelectObject(saveBitMap)
 
-            result = saveDC.BitBlt((0, 0), (w, h), mfcDC, (left, top), win32con.SRCCOPY)
+            result = windll.user32.PrintWindow(self.hwnd, saveDC.GetSafeHdc(), 3)
+            print(result)
+
+            # result = saveDC.BitBlt((0, 0), (w, h), mfcDC, (left, top), win32con.SRCCOPY)
 
             bmpinfo = saveBitMap.GetInfo()
             bmpstr = saveBitMap.GetBitmapBits(True)
@@ -71,17 +71,15 @@ class Screen:
             win32gui.DeleteObject(saveBitMap.GetHandle())
             saveDC.DeleteDC()
             mfcDC.DeleteDC()
-            win32gui.ReleaseDC(hdesktop, hwndDC)
+            win32gui.ReleaseDC(self.hwnd, hwndDC)
 
             return ((im is not None), im)
         elif self.mode == ControlMode.ADB:
-            command = f'adb -s {self.adb_device_code} shell screencap -p'
             try:
-                result = ADB.sh(command)
-                image_bytes = result.replace(b'\r\n', b'\n')
-                img = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
-                img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-                img = img.resize((int(img.width*zoom_ratio), int(img.height*zoom_ratio)))
+                img = ADB.screenshot()
+                height, width = img.shape[:2]
+                img = cv2.resize(img, (int(width*zoom_ratio), int(height*zoom_ratio)))
             except:
+                print(traceback.format_exc())
                 return (False, None)
             return (True, img)

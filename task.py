@@ -161,16 +161,14 @@ class Task:
     
     success, im = self.screen.getScreenShot(self.variable.getZoomRatio())
     if not success:
-      log(f'Screenshot Error')
+      log(f'Screenshot Error {traceback.format_exc()}')
       return
-    im = self.detect.Image2OpenCV(im)
 
     # use for detecting joker star
     success, im2 = self.screen.getScreenShot(self.variable.getZoomRatio())
     if not success:
-      log(f'Screenshot Error')
+      log(f'Screenshot Error {traceback.format_exc()}')
       return
-    im2 = self.detect.Image2OpenCV(im2)
 
     print(f'Screenshot Time: {time.time() - screenshot_start}')
     

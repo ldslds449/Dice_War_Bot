@@ -21,27 +21,19 @@ class Control:
       if self.adb_device_code is None:
         raise Exception('Need adb device code parameter in ADB mode')
 
-  def sh(self, *commands):
-    if self.mode == ControlMode.WIN32API:
-      result = win32api.PostMessage(commands[0], commands[1], commands[2], commands[3])
-    elif self.mode == ControlMode.ADB:
-      result = ADB.sh(commands[0])
-    return result
-
   # pos: x, y
   def tap(self, pos: Tuple[int, int]):
     if self.mode == ControlMode.WIN32API:
       clickPos = win32api.MAKELONG(pos[0], pos[1])
-      self.sh(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, clickPos)
-      self.sh(self.hwnd, win32con.WM_LBUTTONUP, None, clickPos)
+      win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, clickPos)
+      win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, None, clickPos)
     elif self.mode == ControlMode.ADB:
-      command = f'adb -s {self.adb_device_code} shell input tap {pos[0]} {pos[1]}'
-      self.sh(command)
+      ADB.click(pos)
 
   def drag_press(self, src: Tuple[int, int], dst: Tuple[int, int]):
     if self.mode == ControlMode.WIN32API:
       clickPos = win32api.MAKELONG(src[0], src[1])
-      self.sh(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, clickPos)
+      win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, clickPos)
 
       offset = (dst[0] - src[0], dst[1] - src[1])
       max_value = max(abs(offset[0]), abs(offset[1]))
@@ -49,7 +41,7 @@ class Control:
       step = (offset[0]/max_value, offset[1]/max_value)
       for i in range(max_value):
         clickPos = win32api.MAKELONG(src[0]+int(step[0]*i), src[1]+int(step[1]*i))
-        self.sh(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, clickPos)
+        win32api.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, clickPos)
         time.sleep(0.001)
     elif self.mode == ControlMode.ADB:
       pass
@@ -57,7 +49,7 @@ class Control:
   def drag_up(self, dst: Tuple[int, int]):
     if self.mode == ControlMode.WIN32API:
       clickPos = win32api.MAKELONG(dst[0], dst[1])
-      self.sh(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, clickPos)
+      win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, clickPos)
     elif self.mode == ControlMode.ADB:
       pass
 
@@ -68,17 +60,15 @@ class Control:
     elif self.mode == ControlMode.ADB:
       offset_x = src[0] - dst[0]
       offset_y = src[1] - dst[1]
-      dist = int(math.sqrt(abs(offset_x)**2 + abs(offset_y)**2))
-      duration = int((dist // 3) * 5)
-      command = f'adb -s {self.adb_device_code} shell input swipe {src[0]} {src[1]} {dst[0]} {dst[1]} {duration}'
-      self.sh(command)
+      dist = math.sqrt(abs(offset_x)**2 + abs(offset_y)**2)
+      duration = (dist / 3) * 5 / 1000
+      ADB.swipe(src, dst, duration)
 
   def back(self):
     if self.mode == ControlMode.WIN32API:
       pass # not supported
     elif self.mode == ControlMode.ADB:
-      command = f'adb -s {self.adb_device_code} shell input keyevent KEYCODE_BACK'
-      self.sh(command)
+      ADB.back()
 
 class DiceControl(Control):
   def __init__(self, _mode: ControlMode, _hwnd = None, _adb_device_code = None):
@@ -89,7 +79,7 @@ class DiceControl(Control):
     self.col = 5
 
   def modifyZoom(self, value):
-    scalar = self.variable.getZoomRatio();
+    scalar = self.variable.getZoomRatio()
     if type(value) is tuple:
       list_value = list(value)
       return tuple(int(x/scalar) for x in list_value)

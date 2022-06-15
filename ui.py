@@ -25,7 +25,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.6.5'
+  Version = '1.7.0'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -63,11 +63,13 @@ class UI:
     self.frame_screenshot = tk.Frame(self.tab_detect)
     self.frame_screenshot.grid(column=2, row=0, columnspan=2)
     self.frame_select_dice = tk.Frame(self.tab_detect, padx=20)
-    self.frame_select_dice.grid(column=0, row=1, columnspan=4)
+    self.frame_select_dice.grid(column=0, row=1, columnspan=2)
     self.frame_log = tk.Frame(self.tab_detect, pady=10, padx=10)
-    self.frame_log.grid(column=0, row=2, columnspan=4)
+    self.frame_log.grid(column=0, row=2, columnspan=2)
+    self.frame_screen = tk.Frame(self.tab_detect, pady=10, padx=10)
+    self.frame_screen.grid(column=2, row=1, columnspan=2, rowspan=2)
     self.frame_detect_btn = tk.Frame(self.tab_detect, pady=10, padx=10)
-    self.frame_detect_btn.grid(column=5, row=0, rowspan=3, sticky='ns')
+    self.frame_detect_btn.grid(column=4, row=0, rowspan=3, sticky='ns')
     self.frame_setting = tk.Frame(self.tab_setting, pady=10)
     self.frame_setting.grid(column=0, row=0, sticky='nswe')
     self.frame_setting_page_btn = tk.Frame(self.tab_setting, pady=5)
@@ -240,13 +242,18 @@ class UI:
     # log
     scrollbar_log_y = tk.Scrollbar(self.frame_log)
     scrollbar_log_x = tk.Scrollbar(self.frame_log, orient='horizontal')
-    self.text_log = tk.Text(self.frame_log, font=('Arial', 12), height=18)
+    self.text_log = tk.Text(self.frame_log, font=('Arial', 12), height=18, width=48)
     scrollbar_log_y.pack(side=tk.RIGHT, fill=tk.Y)
     scrollbar_log_x.pack(side=tk.BOTTOM, fill=tk.X)
     self.text_log.pack(side=tk.LEFT, fill=tk.Y)
     scrollbar_log_y.config(command=self.text_log.yview)
     scrollbar_log_x.config(command=self.text_log.xview)
     self.text_log.config(yscrollcommand=scrollbar_log_y.set, xscrollcommand=scrollbar_log_x.set)
+
+    # screen
+    self.label_screen = tk.Label(self.frame_screen, image=zero_img)
+    self.label_screen.config(width=245, height=420)
+    self.label_screen.pack(fill=BOTH)
 
     # 1v1 2v2
     battle_mode = [
@@ -726,9 +733,8 @@ class UI:
       self.btn_previous_page.config(state=DISABLED)
     self.btn_next_page.config(state=NORMAL)
 
-  def limitImageSize(self, img):
+  def limitImageSize(self, img, height_limit):
     h,w,_ = img.shape
-    height_limit = 600
     if h > height_limit:
       return cv2.resize(img, (int((height_limit/h)*w), height_limit))
     else:
@@ -738,16 +744,16 @@ class UI:
     self.log('=== ScreenShot ===\n')
     success, im = self.bg_task.screen.getScreenShot(self.bg_task.variable.getZoomRatio())
     if success:
-      self.screenshot_image = self.bg_task.detect.Image2OpenCV(im)
+      self.screenshot_image = im.copy()
       # limit
-      self.screenshot_image_limit = self.limitImageSize(self.screenshot_image)
+      self.screenshot_image_limit = self.limitImageSize(self.screenshot_image, 600)
       self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image_limit))
   
   def btn_draw_event(self):
     self.getSettingInputField()
     labeled_screenshot = self.bg_task.detect.drawTestImage(self.screenshot_image.copy())
     # limit
-    labeled_screenshot_limit = self.limitImageSize(labeled_screenshot)
+    labeled_screenshot_limit = self.limitImageSize(labeled_screenshot, 600)
     self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(labeled_screenshot_limit))
 
   def btn_save_config_event(self):
@@ -822,7 +828,7 @@ class UI:
       # read image
       self.screenshot_image = self.bg_task.detect.load(filename)
       # limit
-      self.screenshot_image_limit = self.limitImageSize(self.screenshot_image)
+      self.screenshot_image_limit = self.limitImageSize(self.screenshot_image, 600)
       self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image_limit))
     except Exception as e:
       messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
@@ -939,15 +945,18 @@ class UI:
         # connect to device
         def adb_connect():
           self.btn_connect.config(state=DISABLED, text='Connecting...')
+
+          def updateScreen(frame):
+            frame = self.limitImageSize(frame, 420)
+            frame = self.bg_task.detect.OpenCV2TK(frame)
+            self.changeImage(self.label_screen, frame)
           
           # initial value
           r = True
-          if self.bg_task.variable.getADBMode() == ADBMode.IP:
-            s, r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort())
-            self.log(s)
-          elif self.bg_task.variable.getADBMode() == ADBMode.ID:
-            self.log('Use device ID, skip connection\n')
+          s, r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort(), self.bg_task.variable.getADBID())
+          self.log(s + '\n')
           if r: # success
+            ADB.createClient(updateScreen)
             self.bg_task.init()
             self.enableButton()
             self.btn_connect.config(state=NORMAL, text='Disconnect')
@@ -1067,10 +1076,7 @@ Average Gain: {offset:+.2f}""")
       self.log('=== Stop Detecting ===\n')
 
     def restartApp():
-      if self.bg_task.variable.getADBMode() == ADBMode.IP:
-        ADB.restart(f"{self.bg_task.variable.getADBIP()}:{self.bg_task.variable.getADBPort()}")
-      elif self.bg_task.variable.getADBMode() == ADBMode.ID:
-        ADB.restart(self.bg_task.variable.getADBID())
+      ADB.restart()
       
     # ---------------------------------------- #
 
@@ -1083,10 +1089,7 @@ Average Gain: {offset:+.2f}""")
       stopRunning = False
       while True:
         if self.bg_task.variable.getControlMode() == ControlMode.ADB:
-          if self.bg_task.variable.getADBMode() == ADBMode.IP:
-            inDiceWar,message = ADB.detectDiceWar(f"{self.bg_task.variable.getADBIP()}:{self.bg_task.variable.getADBPort()}")
-          elif self.bg_task.variable.getADBMode() == ADBMode.ID:
-            inDiceWar,message = ADB.detectDiceWar(self.bg_task.variable.getADBID())
+          inDiceWar,message = ADB.detectDiceWar()
           if not inDiceWar:
             notInDiceWarCount += 1
             self.log(f"Not In Dice War App Count: {notInDiceWarCount}\n")
@@ -1131,7 +1134,7 @@ Average Gain: {offset:+.2f}""")
           battleMode,
           self.devMode_booleanVar.get())
       except Exception:
-        self.log(f'{traceback.format_exc()}\n')
+        self.log(f'Run Task Error: {traceback.format_exc()}\n')
         stopDetect()
         break
       
@@ -1148,7 +1151,7 @@ Average Gain: {offset:+.2f}""")
 
       # record result
       if battleMode != BattleMode.BATTLE_ARCADE:
-        if not hasRecordResult and self.bg_task.status == Status.FINISH and self.bg_task.result is not None:
+        if not hasRecordResult and self.bg_task.status == Status.FINISH and hasattr(self.bg_task, 'result') and self.bg_task.result is not None:
           hasRecordResult = True
           if self.bg_task.result == True:
             self.result_win += 1
@@ -1158,7 +1161,7 @@ Average Gain: {offset:+.2f}""")
           self.getResult()
 
       # send notify
-      if not hasNotify and self.bg_task.status == Status.FINISH and self.bg_task.result_screenshot is not None:
+      if not hasNotify and self.bg_task.status == Status.FINISH and hasattr(self.bg_task, 'result_screenshot') and self.bg_task.result_screenshot is not None:
         hasNotify = True
         if self.notifyResult_booleanVar.get() == True:
           self.log('=== Send Notify ===\n')
@@ -1175,15 +1178,19 @@ Average Gain: {offset:+.2f}""")
             self.log(f"API Remain: {remain['API']}, Image Remain: {remain['Image']}, Reset Time: {remain['Reset']}\n")
 
       # update ui
-      for i, name in enumerate(self.bg_task.board_dice):
+      time_start = time.time()
+      for i, zipped in enumerate(zip(self.bg_task.board_dice, self.bg_task.board_dice_star, self.bg_task.detect_board_dice_img)):
+        name, star, img = zipped
+        # left: predicted dice
         idx = self.bg_task.detect.dice_name_idx_dict[name]
-        img = self.bg_task.detect.dice_image_tk_resize[idx]
-        self.changeImage(self.label_board_dice[i], img)
-      for i, star in enumerate(self.bg_task.board_dice_star):
+        dice_img = self.bg_task.detect.dice_image_tk_resize[idx]
+        self.changeImage(self.label_board_dice[i], dice_img)
+        # left: predicted star
         self.label_board_star[i].config(text=str(star))
-      for i, img in enumerate(self.bg_task.detect_board_dice_img):
+        # right: screenshot image
         img = self.bg_task.detect.OpenCV2TK(img)
         self.changeImage(self.label_detect_board_dice[i], img)
+      print(f'Update Image Time: {time.time() - time_start} s')
 
       # check freeze
       if self.bg_task.same_screenshot_cnt >= self.bg_task.variable.getFreezeThreshold():

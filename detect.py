@@ -267,8 +267,8 @@ class Detect:
     return ratio
 
   def detectLobby(self, img):
-    lower = [100, 216, 252]
-    upper = [105, 226, 255]
+    lower = [100, 100, 100]
+    upper = [105, 255, 255]
     ratio = self.colorDetect(img, lower, upper)
 
     print(f'Lobby {ratio}')
@@ -340,7 +340,7 @@ class Detect:
 
     print(f'Result {ratio}')
 
-    return ratio > 0.80
+    return ratio > 0.70
 
   def detectNumber(self, img):
     img = self.OpenCV2Image(img)
