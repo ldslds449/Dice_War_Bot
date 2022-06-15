@@ -244,3 +244,8 @@
 2. Fix lobby detect bug
 3. Change screenshot function
 4. Add screenshot image to UI
+
+## Version 1.7.1
+
+1. Fix Squad dice star bug
+2. Add garbage collector
