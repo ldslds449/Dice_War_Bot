@@ -3,6 +3,7 @@ import threading
 import traceback
 import win32clipboard
 import matplotlib
+import gc
 from io import BytesIO
 from functools import partial
 from matplotlib.figure import Figure
@@ -1215,6 +1216,9 @@ Average Gain: {offset:+.2f}""")
 
       # detect delay
       time.sleep(self.bg_task.variable.getDetectDelay())
+      # call gc
+      collected = gc.collect()
+      print(f'Collect: {collected}')
 
     # recover the text and state
     self.btn_run.config(state=NORMAL, text='Start')

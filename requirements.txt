@@ -10,5 +10,4 @@ matplotlib
 scipy
 scikit-learn
 readerwriterlock
-adbutils
-scrcpy
+scrcpy-client

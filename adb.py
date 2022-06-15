@@ -19,7 +19,7 @@ class ADB:
 
   @staticmethod
   def screenshot():
-    return ADB.frame.copy()
+    return ADB.frame
 
   @staticmethod
   def connect(ip:str, port:int, id:str):
@@ -48,13 +48,15 @@ class ADB:
         updateScreen(ADB.frame)
 
     max_fps = 15
-    bitrate = 4000000
+    bitrate = 8000000
     ADB.client = scrcpy.Client(device=ADB.d, max_fps=max_fps, bitrate=bitrate, flip=True)
     ADB.client.add_listener(scrcpy.EVENT_FRAME, on_frame)
     ADB.client.start(threaded=True)
 
   @staticmethod
   def disconnect():
+    if hasattr(ADB, 'client'):
+      ADB.client.stop()
     if hasattr(ADB, 'adb_device_code'):
       adb.disconnect(ADB.adb_device_code)
 
