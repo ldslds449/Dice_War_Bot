@@ -10,16 +10,14 @@ from adb import *
 from mode import ControlMode
 
 class Control:
-  def __init__(self, _mode: ControlMode, _hwnd = None, _adb_device_code = None):
+  def __init__(self, _mode: ControlMode, _hwnd = None):
     self.mode = _mode
     if self.mode == ControlMode.WIN32API:
       self.hwnd = _hwnd
       if self.hwnd is None:
         raise Exception('Need hwnd parameter in WIN32API mode')
     elif self.mode == ControlMode.ADB:
-      self.adb_device_code = _adb_device_code
-      if self.adb_device_code is None:
-        raise Exception('Need adb device code parameter in ADB mode')
+      pass
 
   # pos: x, y
   def tap(self, pos: Tuple[int, int]):
@@ -71,8 +69,8 @@ class Control:
       ADB.back()
 
 class DiceControl(Control):
-  def __init__(self, _mode: ControlMode, _hwnd = None, _adb_device_code = None):
-    super(DiceControl, self).__init__(_mode, _hwnd, _adb_device_code)
+  def __init__(self, _mode: ControlMode, _hwnd = None):
+    super(DiceControl, self).__init__(_mode, _hwnd)
 
   def setVariable(self, _variable: Variable):
     self.variable = _variable

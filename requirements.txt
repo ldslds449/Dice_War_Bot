@@ -8,6 +8,6 @@ tk
 requests2
 matplotlib
 scipy
-scikit-learn
+scikit-learn==0.24.0
 readerwriterlock
 scrcpy-client

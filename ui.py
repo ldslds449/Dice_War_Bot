@@ -26,7 +26,7 @@ from draw import *
 
 class UI:
 
-  Version = '1.7.1'
+  Version = '1.7.2'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -252,9 +252,15 @@ class UI:
     self.text_log.config(yscrollcommand=scrollbar_log_y.set, xscrollcommand=scrollbar_log_x.set)
 
     # screen
-    self.label_screen = tk.Label(self.frame_screen, image=zero_img)
-    self.label_screen.config(width=245, height=420)
+    self.label_screen = tk.Label(self.frame_screen, image=zero_img, anchor="e", justify=LEFT)
+    self.label_screen.config(height=420)
     self.label_screen.pack(fill=BOTH)
+    self.label_screen.bind('<Button-1>', self.label_screen_click_event)
+    self.label_screen.bind('<B1-Motion>', self.label_screen_move_event)
+    self.label_screen.bind('<ButtonRelease-1>', self.label_screen_release_event)
+    self.label_screen.bind('<Button-2>', self.label_screen_click_event)
+    self.label_screen.bind('<Button-3>', self.label_screen_click_event)
+    self.label_screen.bind('<Leave>', self.label_screen_leave_event)
 
     # 1v1 2v2
     battle_mode = [
@@ -852,6 +858,7 @@ class UI:
   def changeImage(self, label: tk.Label, img):
     label.configure(image=img)
     label.image = img
+    label.update()
 
   def press_select_dice_event(self, idx, _):
     # pop window
@@ -896,6 +903,27 @@ class UI:
   def checkBtn_topWindow(self):
     self.window.call('wm', 'attributes', '.', '-topmost', self.topWindow_booleanVar.get())
 
+  def label_screen_click_event(self, event):
+    if event.num == 1:
+      self.label_screen.isDown = True
+      ADB.touch((event.x*self.label_screen.ratio, event.y*self.label_screen.ratio), 0) # down
+    elif event.num == 2:
+      ADB.home()
+    elif event.num == 3:
+      ADB.back()
+
+  def label_screen_move_event(self, event):
+    ADB.touch((event.x*self.label_screen.ratio, event.y*self.label_screen.ratio), 2) # move
+
+  def label_screen_release_event(self, event):
+    self.label_screen.isDown = False
+    ADB.touch((event.x*self.label_screen.ratio, event.y*self.label_screen.ratio), 1) # up
+
+  def label_screen_leave_event(self, event):
+    if hasattr(self.label_screen, 'isDown') and self.label_screen.isDown == True:
+      self.label_screen.isDown = False
+      ADB.touch((event.x*self.label_screen.ratio, event.y*self.label_screen.ratio), 1) # up
+
   def btn_test_dice_event(self):
     self.log('=== Load Dice Image ===\n')
     filetypes = (
@@ -921,7 +949,7 @@ class UI:
       # detect star
       star_detect = self.bg_task.detect.detectStar(dice_img)
       self.test_detect_star_StringVar.set(str(star_detect))
-    except Exception as e:
+    except:
       messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
 
   def btn_ADB_connect_event(self):
@@ -947,17 +975,23 @@ class UI:
         def adb_connect():
           self.btn_connect.config(state=DISABLED, text='Connecting...')
 
-          def updateScreen(frame):
-            frame = self.limitImageSize(frame, 420)
+          def updateScreen():
+            frame = ADB.screenshot()
+            frame = self.limitImageSize(frame, self.label_screen.winfo_height())
             frame = self.bg_task.detect.OpenCV2TK(frame)
             self.changeImage(self.label_screen, frame)
+            if not hasattr(self.label_screen, 'ratio'):
+              orig = ADB.getResolution()
+              self.label_screen.ratio = orig[1] / self.label_screen.image.height()
+            self.window.after(16, updateScreen)
           
           # initial value
           r = True
-          s, r = ADB.connect(self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort(), self.bg_task.variable.getADBID())
+          s, r = ADB.connect(self.bg_task.variable.getADBMode(), self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort(), self.bg_task.variable.getADBID())
           self.log(s + '\n')
           if r: # success
-            ADB.createClient(updateScreen)
+            ADB.createClient(self.bg_task.variable.getADBMode())
+            updateScreen()
             self.bg_task.init()
             self.enableButton()
             self.btn_connect.config(state=NORMAL, text='Disconnect')
@@ -1179,19 +1213,21 @@ Average Gain: {offset:+.2f}""")
             self.log(f"API Remain: {remain['API']}, Image Remain: {remain['Image']}, Reset Time: {remain['Reset']}\n")
 
       # update ui
-      time_start = time.time()
-      for i, zipped in enumerate(zip(self.bg_task.board_dice, self.bg_task.board_dice_star, self.bg_task.detect_board_dice_img)):
-        name, star, img = zipped
-        # left: predicted dice
-        idx = self.bg_task.detect.dice_name_idx_dict[name]
-        dice_img = self.bg_task.detect.dice_image_tk_resize[idx]
-        self.changeImage(self.label_board_dice[i], dice_img)
-        # left: predicted star
-        self.label_board_star[i].config(text=str(star))
-        # right: screenshot image
-        img = self.bg_task.detect.OpenCV2TK(img)
-        self.changeImage(self.label_detect_board_dice[i], img)
-      print(f'Update Image Time: {time.time() - time_start} s')
+      def update_ui():
+        time_start = time.time()
+        for i, zipped in enumerate(zip(self.bg_task.board_dice, self.bg_task.board_dice_star, self.bg_task.detect_board_dice_img)):
+          name, star, img = zipped
+          # left: predicted dice
+          idx = self.bg_task.detect.dice_name_idx_dict[name]
+          dice_img = self.bg_task.detect.dice_image_tk_resize[idx]
+          self.changeImage(self.label_board_dice[i], dice_img)
+          # left: predicted star
+          self.label_board_star[i].config(text=str(star))
+          # right: screenshot image
+          img = self.bg_task.detect.OpenCV2TK(img)
+          self.changeImage(self.label_detect_board_dice[i], img)
+        print(f'Update Image Time: {time.time() - time_start} s')
+      self.window.after(0, update_ui)
 
       # check freeze
       if self.bg_task.same_screenshot_cnt >= self.bg_task.variable.getFreezeThreshold():

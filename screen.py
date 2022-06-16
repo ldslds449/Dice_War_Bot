@@ -9,16 +9,14 @@ from typing import Tuple
 from control import *
 
 class Screen:
-    def __init__(self, _mode: ControlMode, _hwnd: int = None, _adb_device_code: str = None):
+    def __init__(self, _mode: ControlMode, _hwnd: int = None):
         self.mode = _mode
         self.hwnd = _hwnd
-        self.adb_device_code = _adb_device_code
         if self.mode == ControlMode.WIN32API:
-            if self.mode is None:
+            if self.hwnd is None:
                 raise Exception('Need hwnd in WIN32API mode')
         elif self.mode == ControlMode.ADB:
-            if self.adb_device_code is None:
-                raise Exception('Need adb device code in ADB mode')
+            pass
 
     def getWindowSizeInfo(self):
         left, top, right, bot = win32gui.GetWindowRect(self.hwnd)

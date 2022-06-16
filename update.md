@@ -249,3 +249,10 @@
 
 1. Fix Squad dice star bug
 2. Add garbage collector
+
+## Version 1.7.2
+
+1. Add control to mirror screen
+2. Change update function of mirror screen
+3. Fix ADB ID bugs
+4. Specify the version of sklearn

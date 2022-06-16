@@ -46,14 +46,8 @@ class Task:
     self.saveImageThreads_lock = rwlock.RWLockFair()
 
   def init(self):
-    if self.variable.getADBMode() == ADBMode.IP:
-      adb_device_code = f"{self.variable.getADBIP()}:{self.variable.getADBPort()}"
-    elif self.variable.getADBMode() == ADBMode.ID:
-      adb_device_code = self.variable.getADBID()
-    self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID, 
-      _adb_device_code = adb_device_code)
-    self.diceControl = DiceControl(self.variable.getControlMode(), _hwnd=self.windowID, 
-      _adb_device_code = adb_device_code)
+    self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID)
+    self.diceControl = DiceControl(self.variable.getControlMode(), _hwnd=self.windowID)
     self.diceControl.setVariable(self.variable)
 
   def getWindowID(self):
@@ -181,7 +175,7 @@ class Task:
     else:
       self.same_screenshot_cnt = 0
       self.prev_screenshot_hash = im_hash
-    print(f"Hash bit differenct count: {bit_diff}")
+    print(f"Hash bit difference count: {bit_diff}")
     print(f"Same screenshot count: {self.same_screenshot_cnt}")
     print(f'Same Screenshot Time: {time.time() - same_screenshot_start}')
 
