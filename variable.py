@@ -1,7 +1,6 @@
 from typing import Tuple
 from mode import *
 from configparser import ConfigParser
-import os
 
 class Variable:
   def __init__(self):
@@ -22,7 +21,9 @@ class Variable:
     self.party_list_1v1_left_xy = None
     self.party_list_1v1_offset_x = None
     self.trophy_left_top_xy = None
-    self.checkpoint_xy = None
+    self.checkpoint_start_xy = None
+    self.checkpoint_end_xy = None
+    self.wave_left_top_xy = None
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
@@ -33,11 +34,13 @@ class Variable:
     self.emoji_dialog_wh = None
     self.extract_party_list_1v1_size_wh = None
     self.extract_trophy_size_wh = None
+    self.extract_wave_size_wh = None
 
     self.zoom_ratio = 1.0
     self.random_offset = 0
     self.detect_delay = None
     self.restart_delay = None
+    self.screenshot_delay = None
     self.freeze_threshold = None
     self.focus_threshold = None
 
@@ -103,7 +106,9 @@ class Variable:
     self.party_list_1v1_left_xy = str2Type(config.get('Coordinate', 'PartyList1v1LeftXY', fallback='0 0'))
     self.party_list_1v1_offset_x = str2Type(config.get('Coordinate', 'PartyList1v1OffsetX', fallback='0'))
     self.trophy_left_top_xy = str2Type(config.get('Coordinate', 'TrophyLeftTopXY', fallback='0 0'))
-    self.checkpoint_xy = str2Type(config.get('Coordinate', 'CheckPointXY', fallback='0 0'))
+    self.checkpoint_start_xy = str2Type(config.get('Coordinate', 'CheckPointStartXY', fallback='0 0'))
+    self.checkpoint_end_xy = str2Type(config.get('Coordinate', 'CheckPointEndXY', fallback='0 0'))
+    self.wave_left_top_xy = str2Type(config.get('Coordinate', 'WaveLeftTopXY', fallback='0 0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
     self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
@@ -113,6 +118,7 @@ class Variable:
     self.emoji_dialog_wh = str2Type(config.get('Coordinate', 'EmojiDialogWH', fallback='30 25'))
     self.extract_party_list_1v1_size_wh = str2Type(config.get('Coordinate', 'ExtractPartyList1v1SizeWH', fallback='20 20'))
     self.extract_trophy_size_wh = str2Type(config.get('Coordinate', 'ExtractTrophySizeWH', fallback='0 0'))
+    self.extract_wave_size_wh = str2Type(config.get('Coordinate', 'ExtractWaveSizeWH', fallback='0 0'))
     self.random_offset = str2Type(config.get('Coordinate', 'RandomOffset', fallback='0'))
     self.zoom_ratio = str2Type(config.get('Window', 'ZoomRatio', fallback='1'), float)
     self.emulator_mode = Emulator(str2Type(config.get('Mode', 'Emulator', fallback='0')))
@@ -126,6 +132,7 @@ class Variable:
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
     self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
     self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
+    self.screenshot_delay = str2Type(config.get('Detect', 'ScreenshotDelay', fallback='0.0'), float)
     self.freeze_threshold = str2Type(config.get('Detect', 'FreezeThreshold', fallback='50'))
     self.focus_threshold = config.get('Detect', 'FocusThreshold', fallback='5') 
     self.battle_mode = config.get('Flag', 'BattleMode', fallback='2v2') 
@@ -168,7 +175,9 @@ class Variable:
     config.set('Coordinate', 'PartyList1v1LeftXY', type2Str(self.party_list_1v1_left_xy))
     config.set('Coordinate', 'PartyList1v1OffsetX', type2Str(self.party_list_1v1_offset_x))
     config.set('Coordinate', 'TrophyLeftTopXY', type2Str(self.trophy_left_top_xy))
-    config.set('Coordinate', 'CheckPointXY', type2Str(self.checkpoint_xy))
+    config.set('Coordinate', 'CheckPointStartXY', type2Str(self.checkpoint_start_xy))
+    config.set('Coordinate', 'CheckPointEndXY', type2Str(self.checkpoint_end_xy))
+    config.set('Coordinate', 'WaveLeftTopXY', type2Str(self.wave_left_top_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
@@ -178,6 +187,7 @@ class Variable:
     config.set('Coordinate', 'EmojiDialogWH', type2Str(self.emoji_dialog_wh))
     config.set('Coordinate', 'ExtractPartyList1v1SizeWH', type2Str(self.extract_party_list_1v1_size_wh))
     config.set('Coordinate', 'ExtractTrophySizeWH', type2Str(self.extract_trophy_size_wh))
+    config.set('Coordinate', 'ExtractWaveSizeWH', type2Str(self.extract_wave_size_wh))
     config.set('Coordinate', 'RandomOffset', type2Str(self.random_offset))
     config.add_section('Window')
     config.set('Window', 'ZoomRatio', type2Str(self.zoom_ratio))
@@ -196,6 +206,7 @@ class Variable:
     config.add_section('Detect')
     config.set('Detect', 'DetectDelay', type2Str(self.detect_delay))
     config.set('Detect', 'RestartDelay', type2Str(self.restart_delay))
+    config.set('Detect', 'ScreenshotDelay', type2Str(self.screenshot_delay))
     config.set('Detect', 'FreezeThreshold', type2Str(self.freeze_threshold))
     config.set('Detect', 'FocusThreshold', type2Str(self.focus_threshold))
     config.add_section('Flag')
@@ -268,8 +279,14 @@ class Variable:
   def setTrophyLeftTopXY(self, _value: Tuple[int,int]):
     self.trophy_left_top_xy = _value
 
-  def setCheckPointXY(self, _value: Tuple[int,int]):
-    self.checkpoint_xy = _value
+  def setCheckPointStartXY(self, _value: Tuple[int,int]):
+    self.checkpoint_start_xy = _value
+
+  def setCheckPointEndXY(self, _value: Tuple[int,int]):
+    self.checkpoint_end_xy = _value
+
+  def setWaveLeftTopXY(self, _value: Tuple[int,int]):
+    self.wave_left_top_xy = _value
 
   def setExtractDiceSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_size_wh = _value
@@ -297,6 +314,9 @@ class Variable:
 
   def setExtractTrophySizeWH(self, _value: Tuple[int,int]):
     self.extract_trophy_size_wh = _value
+
+  def setExtractWaveSizeWH(self, _value: Tuple[int,int]):
+    self.extract_wave_size_wh = _value
 
   def setZoomRatio(self, _value: float):
     self.zoom_ratio = _value
@@ -336,6 +356,9 @@ class Variable:
   
   def setRestartDelay(self, _value: float):
     self.restart_delay = _value
+
+  def setScreenshotDelay(self, _value: float):
+    self.screenshot_delay = _value
 
   def setFreezeThreshold(self, _value: int):
     self.freeze_threshold = _value
@@ -426,8 +449,14 @@ class Variable:
   def getTrophyLeftTopXY(self):
     return self.trophy_left_top_xy
 
-  def getCheckPointXY(self):
-    return self.checkpoint_xy
+  def getCheckPointStartXY(self):
+    return self.checkpoint_start_xy
+
+  def getCheckPointEndXY(self):
+    return self.checkpoint_end_xy
+
+  def getWaveLeftTopXY(self):
+    return self.wave_left_top_xy
 
   def getExtractDiceSizeWH(self):
     return self.extract_dice_size_wh
@@ -455,6 +484,9 @@ class Variable:
 
   def getExtractTrophySizeWH(self):
     return self.extract_trophy_size_wh
+
+  def getExtractWaveSizeWH(self):
+    return self.extract_wave_size_wh
 
   def getZoomRatio(self):
     return self.zoom_ratio
@@ -515,6 +547,9 @@ class Variable:
   
   def getRestartDelay(self):
     return self.restart_delay
+
+  def getScreenshotDelay(self):
+    return self.screenshot_delay
 
   def getFreezeThreshold(self):
     return self.freeze_threshold

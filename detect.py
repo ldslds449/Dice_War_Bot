@@ -4,7 +4,6 @@ import os
 import numpy as np
 import dhash
 import joblib
-from sklearn import svm
 from sewar import *
 from typing import Tuple
 from PIL import Image, ImageTk
@@ -342,7 +341,7 @@ class Detect:
 
     return ratio > 0.70
 
-  def detectNumber(self, img):
+  def detectDigit(self, img):
     img = self.OpenCV2Image(img)
     img = img.convert('1')
     img = img.resize((47, 73))
@@ -351,23 +350,64 @@ class Detect:
     result = self.numberModel.predict(img)
     return result[0]
 
-  def detectTrophyNumber(self, img):
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, img_binary = cv2.threshold(img_gray, 130, 255, cv2.THRESH_BINARY)
-    _, _, stats, _ = cv2.connectedComponentsWithStats(img_binary, connectivity=4, ltype=None)
-    stats = stats[1:,:-1] # remove background component
+  def detectNumber(self, img, lower, upper, cc_area_limit = None, height = None, reverse = False):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    img_binary = cv2.inRange(img_hsv, lower, upper)
+    img_binary = ~img_binary if reverse else img_binary
+    _, labels, stats, _ = cv2.connectedComponentsWithStats(img_binary, connectivity=4, ltype=None)
 
-    # sort
-    contours = sorted(stats, key=lambda x : x[0])
+    # remove background component
+    stats = stats[1:,:]
+    
+    # add label number
+    stats = [(i+1,x) for i,x in enumerate(stats)]
+
+    # remove too small or too big connected component
+    if cc_area_limit is not None:
+      a_lower, a_upper = cc_area_limit
+      stats = [(idx,x) for idx,x in stats if x[4] >= a_lower and x[4] <= a_upper]
+
+    # check height of each connected component
+    if height is not None:
+      h_lower, h_upper = height
+      stats = [(idx,x) for idx,x in stats if x[3] >= h_lower and x[3] <= h_upper]
+
+    # check center
+    center = lambda x,y,w,h : (int(x+w/2), int(y+h/2))
+    stats = [(idx,x) for idx,x in stats if abs(center(x[0],x[1],x[2],x[3])[1]-10) <= 2]
+
+    # sort by x coord
+    components = sorted(stats, key=lambda x : x[1][0])
 
     number = 0
-    for cnt in contours:
-      x,y,w,h = cnt
-      img_digit = img_binary[y:y+h,x:x+w]
-      digit = self.detectNumber(img_digit)
+    for c in components:
+      idx,(x,y,w,h,_) = c
+      img_digit = labels[y:y+h,x:x+w]
+      img_digit = (img_digit == idx).astype(np.uint8) * 255
+      digit = self.detectDigit(img_digit)
       number *= 10
       number += digit
     return number
+
+  def detectTrophy(self, img):
+    h, w = img.shape[:2]
+    # resize
+    ratio = 19 / h
+    img = cv2.resize(img, (int(w*ratio), 19))
+    # hsv parameter
+    lower = np.array([20,150,150])
+    upper = np.array([25,255,255])
+    return self.detectNumber(img, lower, upper, (35, 75))
+
+  def detectWave(self, img):
+    h, w = img.shape[:2]
+    # resize
+    ratio = 20 / h
+    img = cv2.resize(img, (int(w*ratio), 20))
+    # hsv parameter
+    lower = np.array([0,0,0])
+    upper = np.array([180,255,200])
+    return self.detectNumber(img, lower, upper, (25, 90), (12, 14), reverse=True)
 
   def canSummon(self, luminance: float):
     if luminance >= 180:
@@ -527,7 +567,13 @@ class Detect:
       tupleAdd(leftCorner, self.variable.getExtractTrophySizeWH()), orange, 2)
 
     # draw check point
-    cv2.circle(img, self.variable.getCheckPointXY(), 5, orange, -1)
+    cv2.circle(img, self.variable.getCheckPointStartXY(), 5, orange, -1)
+    cv2.circle(img, self.variable.getCheckPointEndXY(), 5, orange, -1)
+
+    # draw wave
+    leftCorner = self.variable.getWaveLeftTopXY()
+    cv2.rectangle(img, leftCorner, 
+      tupleAdd(leftCorner, self.variable.getExtractWaveSizeWH()), green, 2)
 
     return img
 
@@ -555,14 +601,16 @@ class Detect:
     for i in range(len(level_lu)):
       print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.canLevelDice(level_lu[i])}')
 
-    pass_ckpt = self.passCheckPoint(self.extractImage(img, (self.variable.getCheckPointXY()[0], self.variable.getCheckPointXY()[1], 1, 1), ExtractMode.LEFTTOP))
+    pass_ckpt_start = self.passCheckPoint(self.extractImage(img, (self.variable.getCheckPointStartXY()[0], self.variable.getCheckPointStartXY()[1], 1, 1), ExtractMode.LEFTTOP))
+    pass_ckpt_end = self.passCheckPoint(self.extractImage(img, (self.variable.getCheckPointEndXY()[0], self.variable.getCheckPointEndXY()[1], 1, 1), ExtractMode.LEFTTOP))
 
     return {
       'Summon': self.canSummon(summon_lu), 
       'Sp': self.canLevelSP(sp_lu), 
       'Spell': self.canSpell(spell_lu),
       'Level': [self.canLevelDice(level_lu[i]) for i in range(len(level_lu))],
-      'PassCheckPoint': pass_ckpt
+      'PassCheckPointStart': pass_ckpt_start,
+      'PassCheckPointEnd': pass_ckpt_end
     }
 
   def detectStatus(self, img):

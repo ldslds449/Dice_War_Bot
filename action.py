@@ -148,9 +148,11 @@ class MyAction(Action):
     countTotal = kwargs['countTotal']
     boardDiceStar = kwargs['boardDiceStar']
     team = kwargs['team']
+    passCheckPointStart, passCheckPointEnd = kwargs['passCheckPoint']
+    wave = kwargs['wave']
 
     countBlank = count['Blank']
-    if canSpell:
+    if canSpell and (passCheckPointStart and not passCheckPointEnd):
       diceControl.castSpell()
     
     countTotal = sum([v for k, v in count.items() if k != 'Blank'])
@@ -240,7 +242,7 @@ class MyAction(Action):
       # Stage 2 ~ 5
       else:
         # joker copy
-        if count['Growth'] > 4:
+        if count['Growth'] >= 3:
           other = other = [dice for dice in team if dice not in ['Growth', 'Joker']]
           order = other + ['Joker']
           excepted = ['Growth']

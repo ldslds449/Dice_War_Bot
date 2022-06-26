@@ -23,10 +23,11 @@ from screen import *
 from mode import *
 from version import *
 from draw import *
+from resource import *
 
 class UI:
 
-  Version = '1.7.2'
+  Version = '1.7.3'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -64,7 +65,9 @@ class UI:
     self.frame_screenshot = tk.Frame(self.tab_detect)
     self.frame_screenshot.grid(column=2, row=0, columnspan=2)
     self.frame_select_dice = tk.Frame(self.tab_detect, padx=20)
-    self.frame_select_dice.grid(column=0, row=1, columnspan=2)
+    self.frame_select_dice.grid(column=0, row=1, columnspan=1)
+    self.frame_resource = tk.Frame(self.tab_detect)
+    self.frame_resource.grid(column=1, row=1, columnspan=1)
     self.frame_log = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_log.grid(column=0, row=2, columnspan=2)
     self.frame_screen = tk.Frame(self.tab_detect, pady=10, padx=10)
@@ -157,6 +160,7 @@ class UI:
       'Zoom Ratio': 0,
       'Detect Delay': 0,
       'Restart Delay': 0,
+      'Screenshot Delay': 0,
       'Freeze Threshold': 0,
       'Focus Threshold': 0,
       'Party List 1v1 Left XY': 1,
@@ -165,7 +169,10 @@ class UI:
       'Trophy Left Top XY': 1,
       'Extract Trophy Size WH': 2,
       'Line Notify Token': 0,
-      'Check Point XY': 1
+      'Check Point Start XY': 1,
+      'Check Point End XY': 1,
+      'Wave Left Top XY': 1,
+      'Extract Wave Size WH': 2,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -239,6 +246,16 @@ class UI:
       self.changeImage(label, self.bg_task.detect.dice_image_tk_resize[self.bg_task.detect.dice_name_idx_dict['Blank']])
       label.pack(side = LEFT)
       self.select_dice_label.append(label)
+
+    # resource
+    self.cpu_StringVar = StringVar()
+    self.cpu_StringVar.set('CPU: --')
+    label_cpu = tk.Label(self.frame_resource, textvariable=self.cpu_StringVar, anchor="w", justify=LEFT)
+    label_cpu.pack(fill=BOTH, expand=True, side=TOP)
+    self.mem_StringVar = StringVar()
+    self.mem_StringVar.set('MEM: --')
+    label_mem = tk.Label(self.frame_resource, textvariable=self.mem_StringVar, anchor="w", justify=LEFT)
+    label_mem.pack(fill=BOTH, expand=True, side=TOP)
 
     # log
     scrollbar_log_y = tk.Scrollbar(self.frame_log)
@@ -358,12 +375,12 @@ class UI:
     self.btn_connect.pack(fill=BOTH, side=BOTTOM, expand=True)
     self.isConnected = False
 
-    # test button
+    # test dice/star button
     btn_select_dice = tk.Button(self.frame_test_btn, text='Load Dice Image', width=15, height=3, font=('Arial', 12))
     btn_select_dice.config(command=self.btn_test_dice_event, state=NORMAL)
     btn_select_dice.grid(row=0, column=0)
 
-    # test view
+    # test dice/star view
     self.label_test_dice_img = tk.Label(self.frame_test_view, image=zero_img, padx=5, pady=5)
     self.label_test_dice_img.config(width=self.bg_task.detect.resize_size[0], height=self.bg_task.detect.resize_size[1])
     self.label_test_dice_img.grid(row=0, column=0)
@@ -373,6 +390,19 @@ class UI:
     self.test_detect_star_StringVar = StringVar()
     label_test_detect_star = tk.Label(self.frame_test_view, textvariable=self.test_detect_star_StringVar, padx=5, pady=5)
     label_test_detect_star.grid(row=0, column=2)
+
+    # test wave button
+    btn_select_wave = tk.Button(self.frame_test_btn, text='Load Wave Image', width=15, height=3, font=('Arial', 12))
+    btn_select_wave.config(command=self.btn_test_wave_event, state=NORMAL)
+    btn_select_wave.grid(row=0, column=1)
+
+    # test wave view
+    self.label_test_wave_img = tk.Label(self.frame_test_view, image=zero_img, padx=5, pady=5)
+    self.label_test_wave_img.config(width=self.bg_task.detect.resize_size[0], height=self.bg_task.detect.resize_size[1])
+    self.label_test_wave_img.grid(row=1, column=0)
+    self.test_detect_wave_StringVar = StringVar()
+    label_test_detect_wave = tk.Label(self.frame_test_view, textvariable=self.test_detect_wave_StringVar, padx=5, pady=5)
+    label_test_detect_wave.grid(row=1, column=1)
 
     # draw statistic
     matplotlib.use('TkAgg')
@@ -523,7 +553,9 @@ class UI:
       self.setting_stringVar['Party List 1v1 Left XY'].set(dealString(self.bg_task.variable.getPartyList1v1LeftXY()))
       self.setting_stringVar['Party List 1v1 Offset X'].set(dealString(self.bg_task.variable.getPartyList1v1OffsetX()))
       self.setting_stringVar['Trophy Left Top XY'].set(dealString(self.bg_task.variable.getTrophyLeftTopXY()))
-      self.setting_stringVar['Check Point XY'].set(dealString(self.bg_task.variable.getCheckPointXY()))
+      self.setting_stringVar['Check Point Start XY'].set(dealString(self.bg_task.variable.getCheckPointStartXY()))
+      self.setting_stringVar['Check Point End XY'].set(dealString(self.bg_task.variable.getCheckPointEndXY()))
+      self.setting_stringVar['Wave Left Top XY'].set(dealString(self.bg_task.variable.getWaveLeftTopXY()))
       self.setting_stringVar['Extract Dice Size WH'].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
       self.setting_stringVar['Extract Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
       self.setting_stringVar['Extract SP Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
@@ -533,9 +565,11 @@ class UI:
       self.setting_stringVar['Emoji Dialog WH'].set(dealString(self.bg_task.variable.getEmojiDialogWH()))
       self.setting_stringVar['Extract Party List 1v1 Size WH'].set(dealString(self.bg_task.variable.getExtractPartyList1v1SizeWH()))
       self.setting_stringVar['Extract Trophy Size WH'].set(dealString(self.bg_task.variable.getExtractTrophySizeWH()))
+      self.setting_stringVar['Extract Wave Size WH'].set(dealString(self.bg_task.variable.getExtractWaveSizeWH()))
       self.setting_stringVar['Zoom Ratio'].set(dealString(self.bg_task.variable.getZoomRatio()))
       self.setting_stringVar['Detect Delay'].set(dealString(self.bg_task.variable.getDetectDelay()))
       self.setting_stringVar['Restart Delay'].set(dealString(self.bg_task.variable.getRestartDelay()))
+      self.setting_stringVar['Screenshot Delay'].set(dealString(self.bg_task.variable.getScreenshotDelay()))
       self.setting_stringVar['Freeze Threshold'].set(dealString(self.bg_task.variable.getFreezeThreshold()))
       self.setting_stringVar['Focus Threshold'].set(dealString(self.bg_task.variable.getFocusThreshold()))
       self.setting_stringVar['Line Notify Token'].set(self.bg_task.variable.getLineNotifyToken())
@@ -574,7 +608,9 @@ class UI:
       self.bg_task.variable.setPartyList1v1LeftXY(dealString(self.setting_stringVar['Party List 1v1 Left XY'].get()))
       self.bg_task.variable.setPartyList1v1OffsetX(dealString(self.setting_stringVar['Party List 1v1 Offset X'].get()))
       self.bg_task.variable.setTrophyLeftTopXY(dealString(self.setting_stringVar['Trophy Left Top XY'].get()))
-      self.bg_task.variable.setCheckPointXY(dealString(self.setting_stringVar['Check Point XY'].get()))
+      self.bg_task.variable.setCheckPointStartXY(dealString(self.setting_stringVar['Check Point Start XY'].get()))
+      self.bg_task.variable.setCheckPointEndXY(dealString(self.setting_stringVar['Check Point End XY'].get()))
+      self.bg_task.variable.setWaveLeftTopXY(dealString(self.setting_stringVar['Wave Left Top XY'].get()))
       self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar['Extract Dice Size WH'].get()))
       self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar['Extract Dice Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar['Extract SP Luminance Size WH'].get()))
@@ -584,9 +620,11 @@ class UI:
       self.bg_task.variable.setEmojiDialogWH(dealString(self.setting_stringVar['Emoji Dialog WH'].get()))
       self.bg_task.variable.setExtractPartyList1v1SizeWH(dealString(self.setting_stringVar['Extract Party List 1v1 Size WH'].get()))
       self.bg_task.variable.setExtractTrophySizeWH(dealString(self.setting_stringVar['Extract Trophy Size WH'].get()))
+      self.bg_task.variable.setExtractWaveSizeWH(dealString(self.setting_stringVar['Extract Wave Size WH'].get()))
       self.bg_task.variable.setZoomRatio(dealString(self.setting_stringVar['Zoom Ratio'].get(), float))
       self.bg_task.variable.setDetectDelay(dealString(self.setting_stringVar['Detect Delay'].get(), float))
       self.bg_task.variable.setRestartDelay(dealString(self.setting_stringVar['Restart Delay'].get(), float))
+      self.bg_task.variable.setScreenshotDelay(dealString(self.setting_stringVar['Screenshot Delay'].get(), float))
       self.bg_task.variable.setFreezeThreshold(dealString(self.setting_stringVar['Freeze Threshold'].get()))
       self.bg_task.variable.setFocusThreshold(dealString(self.setting_stringVar['Focus Threshold'].get()))
       self.bg_task.variable.setLineNotifyToken(self.setting_stringVar['Line Notify Token'].get())
@@ -952,6 +990,32 @@ class UI:
     except:
       messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
 
+  def btn_test_wave_event(self):
+    self.log('=== Load Wave Image ===\n')
+    filetypes = (
+      ('Image files', '*.png'),
+      ('All files', '*.*')
+    )
+    initFolder = './extract'
+    if not os.path.exists('extract'):
+      initFolder = './'
+    filename = fd.askopenfilename(
+      title='Select a image file',
+      initialdir=initFolder,
+      filetypes=filetypes)
+    self.log(f'FilePath: {filename}\n')
+
+    try:
+      # read image
+      wave_img = self.bg_task.detect.load(filename)
+      self.changeImage(self.label_test_wave_img, self.bg_task.detect.OpenCV2TK(wave_img))
+      # detect wave
+      wave = self.bg_task.detect.detectWave(wave_img)
+      self.test_detect_wave_StringVar.set(str(wave))
+    except:
+      messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
+    
+
   def btn_ADB_connect_event(self):
     if self.isConnected == False:
       if self.bg_task.variable.getControlMode() == ControlMode.WIN32API:
@@ -975,23 +1039,20 @@ class UI:
         def adb_connect():
           self.btn_connect.config(state=DISABLED, text='Connecting...')
 
-          def updateScreen():
-            frame = ADB.screenshot()
+          def updateScreen(frame):
             frame = self.limitImageSize(frame, self.label_screen.winfo_height())
             frame = self.bg_task.detect.OpenCV2TK(frame)
             self.changeImage(self.label_screen, frame)
             if not hasattr(self.label_screen, 'ratio'):
               orig = ADB.getResolution()
               self.label_screen.ratio = orig[1] / self.label_screen.image.height()
-            self.window.after(16, updateScreen)
           
           # initial value
           r = True
           s, r = ADB.connect(self.bg_task.variable.getADBMode(), self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort(), self.bg_task.variable.getADBID())
           self.log(s + '\n')
           if r: # success
-            ADB.createClient(self.bg_task.variable.getADBMode())
-            updateScreen()
+            ADB.createClient(self.bg_task.variable.getADBMode(), updateScreen)
             self.bg_task.init()
             self.enableButton()
             self.btn_connect.config(state=NORMAL, text='Disconnect')
@@ -1213,21 +1274,28 @@ Average Gain: {offset:+.2f}""")
             self.log(f"API Remain: {remain['API']}, Image Remain: {remain['Image']}, Reset Time: {remain['Reset']}\n")
 
       # update ui
-      def update_ui():
-        time_start = time.time()
-        for i, zipped in enumerate(zip(self.bg_task.board_dice, self.bg_task.board_dice_star, self.bg_task.detect_board_dice_img)):
-          name, star, img = zipped
-          # left: predicted dice
-          idx = self.bg_task.detect.dice_name_idx_dict[name]
-          dice_img = self.bg_task.detect.dice_image_tk_resize[idx]
-          self.changeImage(self.label_board_dice[i], dice_img)
-          # left: predicted star
-          self.label_board_star[i].config(text=str(star))
-          # right: screenshot image
-          img = self.bg_task.detect.OpenCV2TK(img)
-          self.changeImage(self.label_detect_board_dice[i], img)
-        print(f'Update Image Time: {time.time() - time_start} s')
-      self.window.after(0, update_ui)
+      time_start = time.time()
+      for i, zipped in enumerate(zip(self.bg_task.board_dice, self.bg_task.board_dice_star, self.bg_task.detect_board_dice_img)):
+        name, star, img = zipped
+        # left: predicted dice
+        idx = self.bg_task.detect.dice_name_idx_dict[name]
+        dice_img = self.bg_task.detect.dice_image_tk_resize[idx]
+        self.changeImage(self.label_board_dice[i], dice_img)
+        # left: predicted star
+        self.label_board_star[i].config(text=str(star))
+        # right: screenshot image
+        img = self.bg_task.detect.OpenCV2TK(img)
+        self.changeImage(self.label_detect_board_dice[i], img)
+      print(f'Update Image Time: {time.time() - time_start} s')
+
+      # update resource
+      if not hasattr(self, 'resource_thread') or not self.resource_thread.is_alive():
+        def updateResource():
+          self.cpu_StringVar.set(f'CPU: {Resource.getCPU(self.bg_task.variable.getEmulatorMode()):.2f} %')
+          self.mem_StringVar.set(f'MEM: {Resource.getMEM(self.bg_task.variable.getEmulatorMode())/1024/1024:.2f} MB')
+        self.resource_thread = threading.Thread(target=updateResource)
+        self.resource_thread.setDaemon(True)
+        self.resource_thread.start()
 
       # check freeze
       if self.bg_task.same_screenshot_cnt >= self.bg_task.variable.getFreezeThreshold():

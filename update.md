@@ -256,3 +256,14 @@
 2. Change update function of mirror screen
 3. Fix ADB ID bugs
 4. Specify the version of sklearn
+
+## Version 1.7.3
+
+1. Add new dice: Infect and Lightning
+2. Add cpu and memory usage
+3. Update number detection model
+4. Add another check point
+5. Add wave detection
+6. Fix trophy detection bug
+7. Add screenshot delay
+8. Modify action

@@ -7,6 +7,7 @@ import threading
 from readerwriterlock import rwlock
 from typing import Callable
 from tkinter import Variable
+from collections import deque
 
 from screen import *
 from control import *
@@ -44,6 +45,9 @@ class Task:
     # save image threads
     self.saveImageThreads = []
     self.saveImageThreads_lock = rwlock.RWLockFair()
+
+    # wave image queue
+    self.wave_q = deque(maxlen = 2)
 
   def init(self):
     self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID)
@@ -137,15 +141,40 @@ class Task:
       self.variable.getTrophyLeftTopXY()[1], 
       self.variable.getExtractTrophySizeWH()[0],
       self.variable.getExtractTrophySizeWH()[1]), ExtractMode.LEFTTOP)
-    number = self.detect.detectTrophyNumber(trophy_img)
+    number = self.detect.detectTrophy(trophy_img)
     if len(self.trophy_statistic) == 0 or number != self.trophy_statistic[-1]: # trophy cannot be the same as previous record after a game
       self.trophy_statistic.append(number)
 
     # [DEBUG]
-    if number < 1000 or number > 9999:
+    if number < 1000 or number > 14999:
       if not os.path.exists('error'):
         os.makedirs('error')
-      self.detect.save(trophy_img, os.path.join('error', f'{getTimeStamp()}.png'))
+      self.detect.save(trophy_img, os.path.join('error', f'{getTimeStamp()}_{number}.png'))
+
+    return number
+
+  def detectWaveNumber(self, img):
+    wave_img = self.detect.extractImage(img, (
+      self.variable.getWaveLeftTopXY()[0], 
+      self.variable.getWaveLeftTopXY()[1], 
+      self.variable.getExtractWaveSizeWH()[0],
+      self.variable.getExtractWaveSizeWH()[1]), ExtractMode.LEFTTOP)
+    number = self.detect.detectWave(wave_img)
+
+    self.wave_q.append((wave_img, number))
+
+    # [DEBUG]
+    if number < 0 or number > 30:
+      if not os.path.exists('error'):
+        os.makedirs('error')
+      queue = self.wave_q.copy()
+      im, n = queue.pop()
+      self.detect.save(im, os.path.join('error', f'{getTimeStamp()}_{n}.png'))
+      if len(self.wave_q) > 1:
+        im, n = queue.pop()
+        self.detect.save(im, os.path.join('error', f'{getTimeStamp()}_{n}.png'))
+
+    self.wave = number
 
     return number
 
@@ -157,6 +186,9 @@ class Task:
     if not success:
       log(f'Screenshot Error {traceback.format_exc()}')
       return
+
+    # set delay for two screenshot
+    time.sleep(self.variable.getScreenshotDelay())
 
     # use for detecting joker star
     success, im2 = self.screen.getScreenShot(self.variable.getZoomRatio())
@@ -273,6 +305,9 @@ class Task:
         elif inTrophy:
           self.status = Status.TROPHY
         elif inFinish:
+          # get trophy
+          if battleMode == BattleMode.BATTLE_1V1:
+            log(f'Trophy: {self.detectTrophyNumber(im)}\n')
           if watchAD and hasAD:
             log('=== Detect AD ===\n')
             # deal with AD
@@ -304,12 +339,10 @@ class Task:
             time.sleep(5)
       elif self.status == Status.LOBBY or self.status == Status.ARCADE:
         MyAction.init()
+        self.wave = -1
         if inWaiting:
           self.status = Status.WAIT
         elif inLobby or inArcade:
-          # get trophy
-          if battleMode == BattleMode.BATTLE_1V1:
-            log(f'Trophy: {self.detectTrophyNumber(im)}\n')
           if autoPlay:
             self.diceControl.battle(battleMode) # start battle
       elif self.status == Status.TROPHY:
@@ -337,7 +370,8 @@ class Task:
     canSP = enable_result['Sp']
     canSpell = enable_result['Spell']
     canLevel = enable_result['Level']
-    passCheckPoint = enable_result['PassCheckPoint']
+    passCheckPointStart = enable_result['PassCheckPointStart']
+    passCheckPointEnd = enable_result['PassCheckPointEnd']
 
     count = {}
     for dice in self.variable.getDiceParty() + ['Blank']:
@@ -351,6 +385,17 @@ class Task:
       location[dice].append(idx)
     count_sorted = sorted(count.items(), key=lambda x : x[1], reverse=True)
     countTotal = sum([x[1] for x in count.items() if x[0] != 'Blank'])
+
+    # wave
+    detect_wave_start = time.time()
+    prev_wave = self.wave if hasattr(self, 'wave') else None
+    wave = self.detectWaveNumber(im)
+    print(f'Detect Wave Time: {time.time() - detect_wave_start}')
+    # modify wave (prevent from getting strange value)
+    if prev_wave is not None:
+      if wave < prev_wave:
+        wave = prev_wave
+    print(f'Wave: {wave}')
 
     sys.stdout.flush()
     print("\n================")
@@ -367,9 +412,10 @@ class Task:
       canLevelDice=canLevel,
       canSpell=canSpell,
       countTotal=countTotal, 
-      passCheckPoint=passCheckPoint,
+      passCheckPoint=(passCheckPointStart, passCheckPointEnd),
       boardDiceStar=self.board_dice_star,
-      team=self.variable.getDiceParty().copy()
+      team=self.variable.getDiceParty().copy(),
+      wave=wave
     )
 
     # save extract images

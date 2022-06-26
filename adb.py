@@ -1,6 +1,7 @@
 import scrcpy
 from typing import Tuple
 from adbutils import adb
+from adbutils import device
 
 from mode import *
 
@@ -54,13 +55,14 @@ class ADB:
     return r
 
   @staticmethod
-  def createClient(mode:ADBMode):
+  def createClient(mode:ADBMode, updateScreen):
     # add screenshot listener
     def on_frame(frame):
       # If you set non-blocking (default) in constructor, the frame event receiver 
       # may receive None to avoid blocking event.
       if frame is not None:
         ADB.frame = frame
+        updateScreen(frame)
 
     max_fps = 15
     bitrate = 8000000
