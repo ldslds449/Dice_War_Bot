@@ -168,159 +168,51 @@ class MyAction(Action):
               star_Loc.append(loc)
       return star_Loc
     
-    if not hasJoker:
-      if not MyAction.hasSummonFourDice:
-        print('Stage 1')
-        if canSummon:
-          diceControl.summonDice()
-          MyAction.hasSummonDiceTimes += 1
-          if MyAction.hasSummonDiceTimes >= 4:
-            MyAction.hasSummonFourDice = True
-      elif MyAction.SpLevelTimes == 0:
-        print('Stage 2')
-        if canLevelSp:
-          diceControl.levelUpSP()
-          MyAction.SpLevelTimes += 1 # Sp level reach lv2
+    if hasJoker:
+      # joker copy
+      if count['Growth'] > 3:
+        other = other = [dice for dice in team if dice not in ['Growth', 'Joker']]
+        order = other + ['Joker']
+        excepted = ['Growth']
       else:
+        other = other = [dice for dice in team if dice not in ['Growth', 'Joker']]
+        order = ['Growth'] + other + ['Joker']
+        excepted = []
+
+      hasJokerCopy = MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice,
+                                                boardDiceStar, 'Joker', 4, excepted, order)
+
+      # if joker has copied
+      if hasJokerCopy:
         if canSummon:
           diceControl.summonDice()
           MyAction.hasSummonDiceTimes += 1
-        if countBlank == 0 and MyAction.SpLevelTimes < 3: # 還沒生sp lv4以前只合一星
-          print('Stage 3')
-          for dice in team:
-            if dice == 'Growth':
-              continue
-            star_1_dice_Loc = findStarCount(dice, 1)
-            if len(star_1_dice_Loc) > 1:
-              diceControl.mergeDice(star_1_dice_Loc[0] + 1, star_1_dice_Loc[1] + 1)
-          if canLevelSp:
-            diceControl.levelUpSP()
-            MyAction.SpLevelTimes += 1
-        elif countBlank < 2 and MyAction.SpLevelTimes >= 3:
-          if not MyAction.lateGame:
-            lateGameCounter = 0
-            for name in team:
-              lateGameCounter += len(findStarCount(name, 5))
-              lateGameCounter += len(findStarCount(name, 6))
-              lateGameCounter += len(findStarCount(name, 7))
-            if lateGameCounter >= 2:
-              MyAction.lateGame = True
-              
-          if not MyAction.lateGame:
-            print('Stage 4')
-          else:
-            print('Stage 5')
-          if canLevelSp:
-            diceControl.levelUpSP()
-            MyAction.SpLevelTimes += 1
-          for name in team:
-            if count[name] > 2:
-              MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar,
-                                          name, ['Growth'])
+        # detect dices again
+        return
+      # summon a dice
+      if canSummon:
+        diceControl.summonDice()
+        MyAction.hasSummonDiceTimes += 1
+        if MyAction.hasSummonDiceTimes > midLateGameParam:
+          MyAction.midLateGame = True
 
-          if MyAction.lateGame:
-              for d,_ in count_sorted:
-                # skip Joker, Growth and Blank 
-                if d == 'Joker' or d == 'Growth' or d == 'Blank':
-                  continue
-                # get location of the dice in team list
-                level_location = team.index(d)
-                # check whether can level up
-                if canLevelDice[level_location]:
-                  diceControl.levelUpDice(level_location+1) # 1: offset
-                  break
-
-    elif hasJoker:
-      # Stage 1
-      if not MyAction.hasSummonFourDice:
-        print('Stage 1')
-        if canSummon:
-          diceControl.summonDice()
-          MyAction.hasSummonDiceTimes += 1
-          if MyAction.hasSummonDiceTimes >= 4:
-            MyAction.hasSummonFourDice = True
-      # Stage 2 ~ 5
-      else:
-        # joker copy
-        if count['Growth'] >= 3:
-          other = other = [dice for dice in team if dice not in ['Growth', 'Joker']]
-          order = other + ['Joker']
-          excepted = ['Growth']
-        else:
-          other = other = [dice for dice in team if dice not in ['Growth', 'Joker']]
-          order = ['Growth'] + other + ['Joker']
-          excepted = []
-
-        hasJokerCopy = MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice,
-                                                  boardDiceStar, 'Joker', 4, excepted, order)
-
-        # if joker has copied
-        if hasJokerCopy:
-          if canSummon:
-            diceControl.summonDice()
-            MyAction.hasSummonDiceTimes += 1
-          # detect dices again
-          return
-
-        # Stage 2
-        if MyAction.SpLevelTimes == 0:
-          print('Stage 2')
+      for name in team:
+        if name == 'Growth':
+          continue
+        elif name == 'Joker':
+          continue
+        elif count[name] > 2:
+          MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar,
+                                      name, ['Growth', 'Joker'])
           
-          if canLevelSp:
-            diceControl.levelUpSP()
-            MyAction.SpLevelTimes += 1 # Sp level reach lv2
-
-        # Stage 3 ~ 5
-        else:
-          # summon a dice
-          if canSummon:
-            diceControl.summonDice()
-            MyAction.hasSummonDiceTimes += 1
-            if MyAction.hasSummonDiceTimes > midLateGameParam:
-              MyAction.midLateGame = True
-
-          # Stage 3
-          if countBlank == 0 and MyAction.SpLevelTimes < 3: # 還沒生sp lv4以前只合一星
-            print('Stage 3')
-            for dice in team:
-              if dice == 'Growth':
-                # print('Growth pass.')
-                continue
-              elif dice == 'Joker':
-                continue
-              star_1_dice_Loc = findStarCount(dice, 1)
-              if len(star_1_dice_Loc) > 1:
-                diceControl.mergeDice(star_1_dice_Loc[0] + 1, star_1_dice_Loc[1] + 1)
-            if canLevelSp:
-              diceControl.levelUpSP()
-              MyAction.SpLevelTimes += 1
-
-          # Stage 4 ~ 5
-          elif countBlank < 2 and MyAction.SpLevelTimes >= 3:
-            if not MyAction.midLateGame:
-              print('Stage 4')
-            else:
-              print('Stage 5')
-            if canLevelSp:
-              diceControl.levelUpSP()
-              MyAction.SpLevelTimes += 1
-            for name in team:
-              if name == 'Growth':
-                continue
-              elif name == 'Joker':
-                continue
-              elif count[name] > 2:
-                MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar,
-                                            name, ['Growth', 'Joker'])
-                
-            if MyAction.midLateGame:
-              for d,_ in count_sorted:
-                # skip Joker, Growth and Blank 
-                if d == 'Joker' or d == 'Growth' or d == 'Blank':
-                  continue
-                # get location of the dice in team list
-                level_location = team.index(d)
-                # check whether can level up
-                if canLevelDice[level_location]:
-                  diceControl.levelUpDice(level_location+1) # 1: offset
-                  break
+      if MyAction.midLateGame:
+        for d,_ in count_sorted:
+          # skip Joker, Growth and Blank 
+          if d == 'Joker' or d == 'Growth' or d == 'Blank':
+            continue
+          # get location of the dice in team list
+          level_location = team.index(d)
+          # check whether can level up
+          if canLevelDice[level_location]:
+            diceControl.levelUpDice(level_location+1) # 1: offset
+            break
