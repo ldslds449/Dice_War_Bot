@@ -196,14 +196,15 @@ class MyAction(Action):
         if MyAction.hasSummonDiceTimes > midLateGameParam:
           MyAction.midLateGame = True
 
-      for name in team:
-        if name == 'Growth':
-          continue
-        elif name == 'Joker':
-          continue
-        elif count[name] > 2:
-          MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar,
-                                      name, ['Growth', 'Joker'])
+      if countBlank < 3:
+        for name in team:
+          if name == 'Growth':
+            continue
+          elif name == 'Joker':
+            continue
+          elif count[name] > 2:
+            MyAction.probabilisticMerge(diceControl, findMergeDice, count, location, boardDiceStar,
+                                        name, ['Growth', 'Joker'])
           
       if MyAction.midLateGame:
         for d,_ in count_sorted:
