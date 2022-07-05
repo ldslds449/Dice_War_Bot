@@ -267,3 +267,8 @@
 6. Fix trophy detection bug
 7. Add screenshot delay
 8. Modify action
+
+## Version 1.8.0
+
+1. Update action
+2. Remove Sp

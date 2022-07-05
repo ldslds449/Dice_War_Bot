@@ -532,9 +532,6 @@ class Detect:
     # draw summon
     cv2.circle(img, self.variable.getSummonDiceXY(), 5, red, -1)
 
-    # draw sp
-    cv2.circle(img, self.variable.getLevelSpXY(), 5, red, -1)
-
     # draw emoji
     leftCorner = tupleAdd(self.variable.getEmojiDialogXY(), 
       (-self.variable.getEmojiDialogWH()[0]//2, -self.variable.getEmojiDialogWH()[1]//2))
@@ -581,9 +578,6 @@ class Detect:
     summon_lu = self.getAverageLuminance(self.extractImage(img, 
       (self.variable.getSummonDiceXY()[0], self.variable.getSummonDiceXY()[1], 
       self.variable.getExtractSummonLuSizeWH()[0], self.variable.getExtractSummonLuSizeWH()[1]), ExtractMode.CENTER))
-    sp_lu = self.getAverageLuminance(self.extractImage(img, 
-      (self.variable.getLevelSpXY()[0], self.variable.getLevelSpXY()[1],
-      self.variable.getExtractSpLuSizeWH()[0], self.variable.getExtractSpLuSizeWH()[1]), ExtractMode.CENTER))
     spell_lu = self.getAverageLuminance(self.extractImage(img, 
       (self.variable.getSpellXY()[0], self.variable.getSpellXY()[1],
       self.variable.getExtractSpellLuSizeWH()[0], self.variable.getExtractSpellLuSizeWH()[1]), ExtractMode.CENTER))
@@ -596,7 +590,6 @@ class Detect:
         self.variable.getExtractLevelDiceLuSizeWH()[0], self.variable.getExtractLevelDiceLuSizeWH()[1]), ExtractMode.CENTER)))
 
     print(f'Summon: {summon_lu:3.1f} --- {self.canSummon(summon_lu)}')
-    print(f'SP: {sp_lu:3.1f} --- {self.canLevelSP(sp_lu)}')
     print(f'Spell: {spell_lu:3.1f} --- {self.canSpell(spell_lu)}')
     for i in range(len(level_lu)):
       print(f'Level_{i+1}: {level_lu[i]:3.1f} --- {self.canLevelDice(level_lu[i])}')
@@ -606,7 +599,6 @@ class Detect:
 
     return {
       'Summon': self.canSummon(summon_lu), 
-      'Sp': self.canLevelSP(sp_lu), 
       'Spell': self.canSpell(spell_lu),
       'Level': [self.canLevelDice(level_lu[i]) for i in range(len(level_lu))],
       'PassCheckPointStart': pass_ckpt_start,

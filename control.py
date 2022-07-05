@@ -140,9 +140,6 @@ class DiceControl(Control):
   def castSpell(self):
     self.tap(self.randomOffset(self.modifyZoom(self.variable.getSpellXY())))
 
-  def levelUpSP(self):
-    self.tap(self.randomOffset(self.modifyZoom(self.variable.getLevelSpXY())))
-
   def levelUpDice(self, idx: int):
     dice_xy = self.getLevelDiceXY(idx-1) # rescale [1~5] to [0~4]
     self.tap(dice_xy)

@@ -27,7 +27,7 @@ from resource import *
 
 class UI:
 
-  Version = '1.7.3'
+  Version = '1.8.0'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -144,7 +144,6 @@ class UI:
       'Emoji Left XY': 1,
       'Emoji Offset X': 1,
       'Summon Dice XY': 1,
-      'Level SP XY': 1,
       'Merge Float Location XY': 1,
       'Battle XY': 1,
       'AD Close XY': 1,
@@ -152,7 +151,6 @@ class UI:
       'Damage List XY': 1,
       'Extract Dice Size WH': 2,
       'Extract Dice Luminance Size WH': 2,
-      'Extract SP Luminance Size WH': 2,
       'Extract Summon Luminance Size WH': 2,
       'Extract Level Dice Luminance Size WH': 2,
       'Extract Spell Luminance Size WH': 2,
@@ -544,7 +542,6 @@ class UI:
       self.setting_stringVar['Emoji Left XY'].set(dealString(self.bg_task.variable.getEmojiLeftXY()))
       self.setting_stringVar['Emoji Offset X'].set(dealString(self.bg_task.variable.getEmojiOffsetX()))
       self.setting_stringVar['Summon Dice XY'].set(dealString(self.bg_task.variable.getSummonDiceXY()))
-      self.setting_stringVar['Level SP XY'].set(dealString(self.bg_task.variable.getLevelSpXY()))
       self.setting_stringVar['Merge Float Location XY'].set(dealString(self.bg_task.variable.getMergeFloatLocationXY()))
       self.setting_stringVar['Battle XY'].set(dealString(self.bg_task.variable.getBattleXY()))
       self.setting_stringVar['AD Close XY'].set(dealString(self.bg_task.variable.getADCloseXY()))
@@ -558,7 +555,6 @@ class UI:
       self.setting_stringVar['Wave Left Top XY'].set(dealString(self.bg_task.variable.getWaveLeftTopXY()))
       self.setting_stringVar['Extract Dice Size WH'].set(dealString(self.bg_task.variable.getExtractDiceSizeWH()))
       self.setting_stringVar['Extract Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractDiceLuSizeWH()))
-      self.setting_stringVar['Extract SP Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpLuSizeWH()))
       self.setting_stringVar['Extract Summon Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSummonLuSizeWH()))
       self.setting_stringVar['Extract Level Dice Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractLevelDiceLuSizeWH()))
       self.setting_stringVar['Extract Spell Luminance Size WH'].set(dealString(self.bg_task.variable.getExtractSpellLuSizeWH()))
@@ -599,7 +595,6 @@ class UI:
       self.bg_task.variable.setEmojiLeftXY(dealString(self.setting_stringVar['Emoji Left XY'].get()))
       self.bg_task.variable.setEmojiOffsetX(dealString(self.setting_stringVar['Emoji Offset X'].get()))
       self.bg_task.variable.setSummonDiceXY(dealString(self.setting_stringVar['Summon Dice XY'].get()))
-      self.bg_task.variable.setLevelSpXY(dealString(self.setting_stringVar['Level SP XY'].get()))
       self.bg_task.variable.setMergeFloatLocationXY(dealString(self.setting_stringVar['Merge Float Location XY'].get()))
       self.bg_task.variable.setBattleXY(dealString(self.setting_stringVar['Battle XY'].get()))
       self.bg_task.variable.setADCloseXY(dealString(self.setting_stringVar['AD Close XY'].get()))
@@ -613,7 +608,6 @@ class UI:
       self.bg_task.variable.setWaveLeftTopXY(dealString(self.setting_stringVar['Wave Left Top XY'].get()))
       self.bg_task.variable.setExtractDiceSizeWH(dealString(self.setting_stringVar['Extract Dice Size WH'].get()))
       self.bg_task.variable.setExtractDiceLuSizeWH(dealString(self.setting_stringVar['Extract Dice Luminance Size WH'].get()))
-      self.bg_task.variable.setExtractSpLuSizeWH(dealString(self.setting_stringVar['Extract SP Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSummonLuSizeWH(dealString(self.setting_stringVar['Extract Summon Luminance Size WH'].get()))
       self.bg_task.variable.setExtractLevelDiceLuSizeWH(dealString(self.setting_stringVar['Extract Level Dice Luminance Size WH'].get()))
       self.bg_task.variable.setExtractSpellLuSizeWH(dealString(self.setting_stringVar['Extract Spell Luminance Size WH'].get()))

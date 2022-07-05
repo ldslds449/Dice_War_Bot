@@ -367,7 +367,6 @@ class Task:
 
     enable_result = self.detect.detectEnable(im)
     canSummon = enable_result['Summon']
-    canSP = enable_result['Sp']
     canSpell = enable_result['Spell']
     canLevel = enable_result['Level']
     passCheckPointStart = enable_result['PassCheckPointStart']
@@ -408,7 +407,6 @@ class Task:
       location=location, 
       boardDice=self.board_dice, 
       canSummon=canSummon, 
-      canLevelSp=canSP,
       canLevelDice=canLevel,
       canSpell=canSpell,
       countTotal=countTotal, 

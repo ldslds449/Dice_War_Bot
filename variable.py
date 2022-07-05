@@ -12,7 +12,6 @@ class Variable:
     self.emoji_left_xy = None
     self.emoji_offset_x = None
     self.summon_dice_xy = None
-    self.level_sp_xy = None
     self.merge_float_location_xy = None
     self.battle_xy = None
     self.ad_close_xy = None
@@ -27,7 +26,6 @@ class Variable:
   
     self.extract_dice_size_wh = None
     self.extract_dice_lu_size_wh = None
-    self.extract_sp_lu_size_wh = None
     self.extract_summon_lu_size_wh = None
     self.extract_level_dice_lu_size_wh = None
     self.extract_spell_lu_size_wh = None
@@ -97,7 +95,6 @@ class Variable:
     self.emoji_left_xy = str2Type(config.get('Coordinate', 'EmojiLeftXY', fallback='0 0'))
     self.emoji_offset_x = str2Type(config.get('Coordinate', 'EmojiOffsetX', fallback='0'))
     self.summon_dice_xy = str2Type(config.get('Coordinate', 'SummonDiceXY', fallback='0 0'))
-    self.level_sp_xy = str2Type(config.get('Coordinate', 'LevelSpXY', fallback='0 0'))
     self.merge_float_location_xy = str2Type(config.get('Coordinate', 'MergeFloatLocationXY', fallback='0 0'))
     self.battle_xy = str2Type(config.get('Coordinate', 'BattleXY', fallback='0 0'))
     self.ad_close_xy = str2Type(config.get('Coordinate', 'ADCloseXY', fallback='0 0'))
@@ -111,7 +108,6 @@ class Variable:
     self.wave_left_top_xy = str2Type(config.get('Coordinate', 'WaveLeftTopXY', fallback='0 0'))
     self.extract_dice_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceSizeWH', fallback='50 50'))
     self.extract_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractDiceLuSizeWH', fallback='40 40'))
-    self.extract_sp_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpLuSizeWH', fallback='5 5'))
     self.extract_summon_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSummonLuSizeWH', fallback='3 3'))
     self.extract_level_dice_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractLevelDiceLuSizeWH', fallback='40 40'))
     self.extract_spell_lu_size_wh = str2Type(config.get('Coordinate', 'ExtractSpellLuSizeWH', fallback='5 5'))
@@ -166,7 +162,6 @@ class Variable:
     config.set('Coordinate', 'EmojiLeftXY', type2Str(self.emoji_left_xy))
     config.set('Coordinate', 'EmojiOffsetX', type2Str(self.emoji_offset_x))
     config.set('Coordinate', 'SummonDiceXY', type2Str(self.summon_dice_xy))
-    config.set('Coordinate', 'LevelSpXY', type2Str(self.level_sp_xy))
     config.set('Coordinate', 'MergeFloatLocationXY', type2Str(self.merge_float_location_xy))
     config.set('Coordinate', 'BattleXY', type2Str(self.battle_xy))
     config.set('Coordinate', 'ADCloseXY', type2Str(self.ad_close_xy))
@@ -180,7 +175,6 @@ class Variable:
     config.set('Coordinate', 'WaveLeftTopXY', type2Str(self.wave_left_top_xy))
     config.set('Coordinate', 'ExtractDiceSizeWH', type2Str(self.extract_dice_size_wh))
     config.set('Coordinate', 'ExtractDiceLuSizeWH', type2Str(self.extract_dice_lu_size_wh))
-    config.set('Coordinate', 'ExtractSpLuSizeWH', type2Str(self.extract_sp_lu_size_wh))
     config.set('Coordinate', 'ExtractSummonLuSizeWH', type2Str(self.extract_summon_lu_size_wh))
     config.set('Coordinate', 'ExtractLevelDiceLuSizeWH', type2Str(self.extract_level_dice_lu_size_wh))
     config.set('Coordinate', 'ExtractSpellLuSizeWH', type2Str(self.extract_spell_lu_size_wh))
@@ -252,9 +246,6 @@ class Variable:
   def setSummonDiceXY(self, _value: Tuple[int,int]):
     self.summon_dice_xy = _value
 
-  def setLevelSpXY(self, _value: Tuple[int,int]):
-    self.level_sp_xy = _value
-
   def setMergeFloatLocationXY(self, _value: Tuple[int,int]):
     self.merge_float_location_xy = _value
 
@@ -293,9 +284,6 @@ class Variable:
 
   def setExtractDiceLuSizeWH(self, _value: Tuple[int,int]):
     self.extract_dice_lu_size_wh = _value
-
-  def setExtractSpLuSizeWH(self, _value: Tuple[int,int]):
-    self.extract_sp_lu_size_wh = _value
 
   def setExtractSummonLuSizeWH(self, _value: Tuple[int,int]):
     self.extract_summon_lu_size_wh = _value
@@ -422,9 +410,6 @@ class Variable:
   def getSummonDiceXY(self):
     return self.summon_dice_xy
 
-  def getLevelSpXY(self):
-    return self.level_sp_xy
-
   def getMergeFloatLocationXY(self):
     return self.merge_float_location_xy
 
@@ -463,9 +448,6 @@ class Variable:
 
   def getExtractDiceLuSizeWH(self):
     return self.extract_dice_lu_size_wh
-
-  def getExtractSpLuSizeWH(self):
-    return self.extract_sp_lu_size_wh
 
   def getExtractSummonLuSizeWH(self):
     return self.extract_summon_lu_size_wh

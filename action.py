@@ -142,7 +142,6 @@ class MyAction(Action):
     location = kwargs['location']
     boardDice = kwargs['boardDice']
     canSummon = kwargs['canSummon']
-    canLevelSp = kwargs['canLevelSp']
     canLevelDice = kwargs['canLevelDice']
     canSpell = kwargs['canSpell']
     countTotal = kwargs['countTotal']
