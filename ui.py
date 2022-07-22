@@ -27,7 +27,7 @@ from resource import *
 
 class UI:
 
-  Version = '1.8.0'
+  Version = '1.8.1'
 
   def __init__(self):
     self.window = tk.Tk()
@@ -65,13 +65,13 @@ class UI:
     self.frame_screenshot = tk.Frame(self.tab_detect)
     self.frame_screenshot.grid(column=2, row=0, columnspan=2)
     self.frame_select_dice = tk.Frame(self.tab_detect, padx=20)
-    self.frame_select_dice.grid(column=0, row=1, columnspan=1)
-    self.frame_resource = tk.Frame(self.tab_detect)
-    self.frame_resource.grid(column=1, row=1, columnspan=1)
+    self.frame_select_dice.grid(column=0, row=1, columnspan=2)
+    self.frame_dashboard = tk.Frame(self.tab_detect)
+    self.frame_dashboard.grid(column=2, row=1, columnspan=2)
     self.frame_log = tk.Frame(self.tab_detect, pady=10, padx=10)
-    self.frame_log.grid(column=0, row=2, columnspan=2)
-    self.frame_screen = tk.Frame(self.tab_detect, pady=10, padx=10)
-    self.frame_screen.grid(column=2, row=1, columnspan=2, rowspan=2)
+    self.frame_log.grid(column=0, row=2, columnspan=4, sticky='we')
+    self.frame_screen = tk.Frame(self.tab_detect)
+    self.frame_screen.grid(column=5, row=0, rowspan=3, sticky='ns')
     self.frame_detect_btn = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_detect_btn.grid(column=4, row=0, rowspan=3, sticky='ns')
     self.frame_setting = tk.Frame(self.tab_setting, pady=10)
@@ -245,15 +245,30 @@ class UI:
       label.pack(side = LEFT)
       self.select_dice_label.append(label)
 
-    # resource
+    # dashboard
+    self.frame_dashboard.grid_columnconfigure(0, minsize=100)
+    self.frame_dashboard.grid_columnconfigure(1, minsize=150)
+    ## cpu
     self.cpu_StringVar = StringVar()
     self.cpu_StringVar.set('CPU: --')
-    label_cpu = tk.Label(self.frame_resource, textvariable=self.cpu_StringVar, anchor="w", justify=LEFT)
-    label_cpu.pack(fill=BOTH, expand=True, side=TOP)
+    label_cpu = tk.Label(self.frame_dashboard, textvariable=self.cpu_StringVar, anchor="w", justify=LEFT)
+    label_cpu.grid(row=0, column=0)
+    ## memory
     self.mem_StringVar = StringVar()
     self.mem_StringVar.set('MEM: --')
-    label_mem = tk.Label(self.frame_resource, textvariable=self.mem_StringVar, anchor="w", justify=LEFT)
-    label_mem.pack(fill=BOTH, expand=True, side=TOP)
+    label_mem = tk.Label(self.frame_dashboard, textvariable=self.mem_StringVar, anchor="w", justify=LEFT)
+    label_mem.grid(row=1, column=0)
+    ## elapsed time
+    self.last_update_time_stamp = None
+    self.elapsed_time_StringVar = StringVar()
+    self.elapsed_time_StringVar.set('Elapsed Time: --')
+    label_elapsed_time = tk.Label(self.frame_dashboard, textvariable=self.elapsed_time_StringVar, anchor="w", justify=LEFT)
+    label_elapsed_time.grid(row=0, column=1)
+    ## wave
+    self.wave_StringVar = StringVar()
+    self.wave_StringVar.set('Wave: --')
+    label_wave = tk.Label(self.frame_dashboard, textvariable=self.wave_StringVar, anchor="w", justify=LEFT)
+    label_wave.grid(row=1, column=1)
 
     # log
     scrollbar_log_y = tk.Scrollbar(self.frame_log)
@@ -261,15 +276,14 @@ class UI:
     self.text_log = tk.Text(self.frame_log, font=('Arial', 12), height=18, width=48)
     scrollbar_log_y.pack(side=tk.RIGHT, fill=tk.Y)
     scrollbar_log_x.pack(side=tk.BOTTOM, fill=tk.X)
-    self.text_log.pack(side=tk.LEFT, fill=tk.Y)
+    self.text_log.pack(side=tk.LEFT, fill=BOTH, expand=True)
     scrollbar_log_y.config(command=self.text_log.yview)
     scrollbar_log_x.config(command=self.text_log.xview)
     self.text_log.config(yscrollcommand=scrollbar_log_y.set, xscrollcommand=scrollbar_log_x.set)
 
     # screen
-    self.label_screen = tk.Label(self.frame_screen, image=zero_img, anchor="e", justify=LEFT)
-    self.label_screen.config(height=420)
-    self.label_screen.pack(fill=BOTH)
+    self.label_screen = tk.Label(self.frame_screen, image=zero_img)
+    self.label_screen.pack(fill=BOTH, expand=True)
     self.label_screen.bind('<Button-1>', self.label_screen_click_event)
     self.label_screen.bind('<B1-Motion>', self.label_screen_move_event)
     self.label_screen.bind('<ButtonRelease-1>', self.label_screen_release_event)
@@ -1034,7 +1048,7 @@ class UI:
           self.btn_connect.config(state=DISABLED, text='Connecting...')
 
           def updateScreen(frame):
-            frame = self.limitImageSize(frame, self.label_screen.winfo_height())
+            frame = self.limitImageSize(frame, self.label_screen.winfo_height()-10)
             frame = self.bg_task.detect.OpenCV2TK(frame)
             self.changeImage(self.label_screen, frame)
             if not hasattr(self.label_screen, 'ratio'):
@@ -1159,6 +1173,22 @@ Min: {min}\n
 Total Gain: {total_offset:+}\n
 Average Gain: {offset:+.2f}""")
 
+  def updateDice(self, board_dice, board_dice_star, detect_board_dice_img):
+    # update ui
+    time_start = time.time()
+    for i, zipped in enumerate(zip(board_dice, board_dice_star, detect_board_dice_img)):
+      name, star, img = zipped
+      # left: predicted dice
+      idx = self.bg_task.detect.dice_name_idx_dict[name]
+      dice_img = self.bg_task.detect.dice_image_tk_resize[idx]
+      self.changeImage(self.label_board_dice[i], dice_img)
+      # left: predicted star
+      self.label_board_star[i].config(text=str(star))
+      # right: screenshot image
+      img = self.bg_task.detect.OpenCV2TK(img)
+      self.changeImage(self.label_detect_board_dice[i], img)
+    print(f'Update Image Time: {time.time() - time_start} s')
+
   def run_bg_task(self):
     def stopDetect():
       self.isRunning = False
@@ -1218,7 +1248,8 @@ Average Gain: {offset:+.2f}""")
 
       # run
       try:
-        self.bg_task.task(self.log, 
+        self.bg_task.task(self.updateDice,
+          self.log, 
           self.autoPlay_booleanVar.get(), 
           self.watchAD_booleanVar.get(),
           battleMode,
@@ -1267,22 +1298,8 @@ Average Gain: {offset:+.2f}""")
           else: 
             self.log(f"API Remain: {remain['API']}, Image Remain: {remain['Image']}, Reset Time: {remain['Reset']}\n")
 
-      # update ui
-      time_start = time.time()
-      for i, zipped in enumerate(zip(self.bg_task.board_dice, self.bg_task.board_dice_star, self.bg_task.detect_board_dice_img)):
-        name, star, img = zipped
-        # left: predicted dice
-        idx = self.bg_task.detect.dice_name_idx_dict[name]
-        dice_img = self.bg_task.detect.dice_image_tk_resize[idx]
-        self.changeImage(self.label_board_dice[i], dice_img)
-        # left: predicted star
-        self.label_board_star[i].config(text=str(star))
-        # right: screenshot image
-        img = self.bg_task.detect.OpenCV2TK(img)
-        self.changeImage(self.label_detect_board_dice[i], img)
-      print(f'Update Image Time: {time.time() - time_start} s')
-
-      # update resource
+      # update dashboard
+      ## update cpu & memory
       if not hasattr(self, 'resource_thread') or not self.resource_thread.is_alive():
         def updateResource():
           self.cpu_StringVar.set(f'CPU: {Resource.getCPU(self.bg_task.variable.getEmulatorMode()):.2f} %')
@@ -1290,6 +1307,12 @@ Average Gain: {offset:+.2f}""")
         self.resource_thread = threading.Thread(target=updateResource)
         self.resource_thread.setDaemon(True)
         self.resource_thread.start()
+      ## update elapsed time
+      elapsed_time_microsecond = int((time.time() - self.last_update_time_stamp) * 1000) if self.last_update_time_stamp is not None else "--"
+      self.elapsed_time_StringVar.set(f'Elapsed Time: {elapsed_time_microsecond} ms')
+      self.last_update_time_stamp = time.time()
+      ## update wave
+      self.wave_StringVar.set(f'Wave: {self.bg_task.wave if hasattr(self.bg_task, "wave") else "--"}')
 
       # check freeze
       if self.bg_task.same_screenshot_cnt >= self.bg_task.variable.getFreezeThreshold():

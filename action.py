@@ -195,7 +195,7 @@ class MyAction(Action):
         if MyAction.hasSummonDiceTimes > midLateGameParam:
           MyAction.midLateGame = True
 
-      if countBlank < 3:
+      if countBlank == 0:
         for name in team:
           if name == 'Growth':
             continue

@@ -3,7 +3,6 @@ import psutil
 from mode import *
 
 class Resource:
-
   @staticmethod
   def get_pid(emu):
     if not hasattr(Resource, 'pid'):

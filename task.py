@@ -141,7 +141,7 @@ class Task:
       self.variable.getTrophyLeftTopXY()[1], 
       self.variable.getExtractTrophySizeWH()[0],
       self.variable.getExtractTrophySizeWH()[1]), ExtractMode.LEFTTOP)
-    number = self.detect.detectTrophy(trophy_img)
+    number = self.detect.detectTrophyNumber(trophy_img)
     if len(self.trophy_statistic) == 0 or number != self.trophy_statistic[-1]: # trophy cannot be the same as previous record after a game
       self.trophy_statistic.append(number)
 
@@ -178,7 +178,7 @@ class Task:
 
     return number
 
-  def task(self, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode, devMode: bool):
+  def task(self, updateDice: Callable, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode, devMode: bool):
 
     screenshot_start = time.time()
     
@@ -254,6 +254,9 @@ class Task:
     detect_start = time.time()
     self.forAllDiceOnBoard(detectDice)
     print(f'Detect Time: {time.time() - detect_start}')
+
+    # updateImage
+    updateDice(self.board_dice, self.board_dice_star, self.detect_board_dice_img)
 
     # detect status
     detect_status_start = time.time()
@@ -340,7 +343,9 @@ class Task:
       elif self.status == Status.LOBBY or self.status == Status.ARCADE:
         MyAction.init()
         self.wave = -1
-        if inWaiting:
+        if inTrophy:
+          self.status = Status.TROPHY
+        elif inWaiting:
           self.status = Status.WAIT
         elif inLobby or inArcade:
           if autoPlay:

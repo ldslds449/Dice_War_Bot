@@ -272,3 +272,12 @@
 
 1. Update action
 2. Remove Sp
+
+## Version 1.8.1
+
+1. Update action
+2. Fix detect trophy bug
+3. Add new dice: Cowboy
+4. Modify the task flow
+5. Add some information: elapsed time & wave
+6. Modify the screen location

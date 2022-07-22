@@ -313,13 +313,13 @@ class Detect:
     return ratio > 0.35
 
   def detectTrophy(self, img):
-    lower = [124, 180, 70]
-    upper = [126, 183, 73]
+    lower = [121, 100, 50]
+    upper = [129, 255, 100]
     ratio = self.colorDetect(img, lower, upper)
 
     print(f'Trophy {ratio}')
 
-    return ratio > 0.90
+    return ratio > 0.8
 
   def detectArcade(self, img):
     lower = [20, 100, 100]
@@ -389,7 +389,7 @@ class Detect:
       number += digit
     return number
 
-  def detectTrophy(self, img):
+  def detectTrophyNumber(self, img):
     h, w = img.shape[:2]
     # resize
     ratio = 19 / h
@@ -572,6 +572,9 @@ class Detect:
     cv2.rectangle(img, leftCorner, 
       tupleAdd(leftCorner, self.variable.getExtractWaveSizeWH()), green, 2)
 
+    # draw damage list
+    cv2.circle(img, self.variable.getDamageListXY(), 5, green, -1)
+
     return img
 
   def detectEnable(self, img):
@@ -615,12 +618,18 @@ class Detect:
     result = False
     inArcade = False
 
+    finish_summon_img = self.extractImage(img, 
+      (self.variable.getSummonDiceXY()[0], self.variable.getSummonDiceXY()[1],
+      self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
+    finish_damage_img = self.extractImage(img, 
+      (self.variable.getDamageListXY()[0], self.variable.getDamageListXY()[1],
+      self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
+
     if self.detectLobby(self.getDiceImage(img, 8)):
       inLobby = True
     if self.detectWaiting(self.getDiceImage(img, 2)):
       inWaiting = True
-    if self.detectFinish(self.getDiceImage(img, 4)) or \
-      self.detectFinish(self.getDiceImage(img, 14)):
+    if self.detectFinish(finish_summon_img) and not self.detectFinish(finish_damage_img):
       inFinish = True
     if self.detectGame(self.extractImage(img, 
       (self.variable.getEmojiDialogXY()[0], self.variable.getEmojiDialogXY()[1],
@@ -628,7 +637,7 @@ class Detect:
       inGame = True
     if self.detectAD(self.getDiceImage(img, 12)):
       hasAD = True
-    if self.detectTrophy(self.getDiceImage(img, 4)):
+    if self.detectTrophy(self.getDiceImage(img, 4)) and self.detectTrophy(finish_damage_img):
       inTrophy = True
     # use middle top of the image
     if self.detectResult(self.extractImage(img, 
