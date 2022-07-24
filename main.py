@@ -1,10 +1,21 @@
-from task import *
-from ui import *
-from screen import *
+if __name__ == '__main__':
+  import sys
 
-print('Starting...')
+  from PySide6.QtWidgets import QApplication, QDialog
+  from update import *
 
-ui = UI()
-ui.RUN()
+  print('Starting...')
 
-print('Exited')
+  app = QApplication(sys.argv)
+  update = Update()
+  update.show()
+  update.run()
+ 
+  if update.exec() == QDialog.Accepted:
+    from ui import *
+    ui = UI()
+    ui.RUN()
+
+  print('Exited')
+  sys.exit(0)
+

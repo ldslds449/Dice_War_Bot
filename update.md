@@ -281,3 +281,8 @@
 4. Modify the task flow
 5. Add some information: elapsed time & wave
 6. Modify the screen location
+
+## Version 1.9.0
+
+1. Add updater
+2. Add max_fps and bitrate to setting

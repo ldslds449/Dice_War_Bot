@@ -27,8 +27,6 @@ from resource import *
 
 class UI:
 
-  Version = '1.8.1'
-
   def __init__(self):
     self.window = tk.Tk()
     self.window.withdraw()
@@ -36,7 +34,7 @@ class UI:
     self.bg_task = Task()
 
     # let the window on top
-    self.window.title(f'Dice Bot {UI.Version}')
+    self.window.title(f'Dice Bot {Program_Version}')
     # call onClosing in when closing the window
     self.window.protocol("WM_DELETE_WINDOW", self.onClosing)
 
@@ -171,6 +169,8 @@ class UI:
       'Check Point End XY': 1,
       'Wave Left Top XY': 1,
       'Extract Wave Size WH': 2,
+      'Max FPS': 0,
+      'BitRate': 0,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -456,7 +456,6 @@ class UI:
     label_line_info_average = tk.Label(self.frame_line_info, textvariable=self.line_info_StringVar, justify=LEFT, font=('Arial', 12), pady=10)
     label_line_info_average.pack(fill=BOTH, side=TOP)
     
-
     self.initAll()
 
   def initAll(self):
@@ -478,15 +477,6 @@ class UI:
     MyAction.init()
 
     self.window.deiconify()
-
-    # check version
-    try:
-      isLatest, latest_version = Version.checkLatest(UI.Version)
-      if isLatest == False:
-        self.log(f'Find New Version {latest_version} !!!\n')
-        messagebox.showinfo('New Version', f'Find New Version {latest_version} !!!', parent=self.window)
-    except:
-      self.log(f'{traceback.format_exc()}\n')
 
   def centerWindowRelativeToParent(self, parent, window):
     x = parent.winfo_x()
@@ -547,6 +537,8 @@ class UI:
       self.setting_stringVar['ADB IP'].set(self.bg_task.variable.getADBIP())
       self.setting_stringVar['ADB Port'].set(dealString(self.bg_task.variable.getADBPort()))
       self.setting_stringVar['ADB ID'].set(self.bg_task.variable.getADBID())
+      self.setting_stringVar['Max FPS'].set(self.bg_task.variable.getMaxFPS())
+      self.setting_stringVar['BitRate'].set(self.bg_task.variable.getBitRate())
       self.setting_stringVar['Random Offset'].set(dealString(self.bg_task.variable.getRandomOffset()))
       self.setting_stringVar['Board Left Top XY'].set(dealString(self.bg_task.variable.getBoardDiceLeftTopXY()))
       self.setting_stringVar['Board Dice Offset XY'].set(dealString(self.bg_task.variable.getBoardDiceOffsetXY()))
@@ -600,6 +592,8 @@ class UI:
       self.bg_task.variable.setADBIP(self.setting_stringVar['ADB IP'].get())
       self.bg_task.variable.setADBPort(dealString(self.setting_stringVar['ADB Port'].get()))
       self.bg_task.variable.setADBID(self.setting_stringVar['ADB ID'].get())
+      self.bg_task.variable.setMaxFPS(dealString(self.setting_stringVar['Max FPS'].get()))
+      self.bg_task.variable.setBitRate(dealString(self.setting_stringVar['BitRate'].get()))
       self.bg_task.variable.setRandomOffset(dealString(self.setting_stringVar['Random Offset'].get()))
       self.bg_task.variable.setBoardDiceLeftTopXY(dealString(self.setting_stringVar['Board Left Top XY'].get()))
       self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar['Board Dice Offset XY'].get()))
@@ -1060,7 +1054,7 @@ class UI:
           s, r = ADB.connect(self.bg_task.variable.getADBMode(), self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort(), self.bg_task.variable.getADBID())
           self.log(s + '\n')
           if r: # success
-            ADB.createClient(self.bg_task.variable.getADBMode(), updateScreen)
+            ADB.createClient(self.bg_task.variable.getADBMode(), self.bg_task.variable.getMaxFPS(), self.bg_task.variable.getBitRate(), updateScreen)
             self.bg_task.init()
             self.enableButton()
             self.btn_connect.config(state=NORMAL, text='Disconnect')

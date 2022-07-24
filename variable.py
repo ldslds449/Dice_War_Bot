@@ -60,6 +60,9 @@ class Variable:
     self.adb_ip = None
     self.adb_id = None
 
+    self.max_fps = None
+    self.bitrate = None
+
     self.battle_mode = None
     self.auto_play = None
     self.top_window = None
@@ -125,6 +128,8 @@ class Variable:
     self.adb_ip = config.get('ADB', 'IP', fallback='127.0.0.1')
     self.adb_port = str2Type(config.get('ADB', 'Port', fallback='5555'), int)
     self.adb_id = str2Type(config.get('ADB', 'ID', fallback=''), str)
+    self.max_fps = str2Type(config.get('ADB', 'MaxFPS', fallback='15'), int)
+    self.bitrate = str2Type(config.get('ADB', 'BitRate', fallback='8000000'), int)
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
     self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
     self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
@@ -195,6 +200,8 @@ class Variable:
     config.set('ADB', 'IP', self.adb_ip)
     config.set('ADB', 'Port', type2Str(self.adb_port))
     config.set('ADB', 'ID', self.adb_id)
+    config.set('ADB', 'MaxFPS', type2Str(self.max_fps))
+    config.set('ADB', 'BitRate', type2Str(self.bitrate))
     config.add_section('Dice')
     config.set('Dice', 'DiceParty', type2Str(tuple(self.dice_party)))
     config.add_section('Detect')
@@ -332,6 +339,12 @@ class Variable:
 
   def setADBID(self, _value: str):
     self.adb_id = _value
+
+  def setMaxFPS(self, _value: int):
+    self.max_fps = _value
+
+  def setBitRate(self, _value: int):
+    self.bitrate = _value
 
   def setDiceParty(self, _value: list):
     self.dice_party = _value
@@ -514,6 +527,12 @@ class Variable:
 
   def getADBID(self):
     return self.adb_id
+
+  def getMaxFPS(self):
+    return self.max_fps
+
+  def getBitRate(self):
+    return self.bitrate
 
   def getDiceParty(self):
     return self.dice_party

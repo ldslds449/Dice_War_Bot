@@ -55,7 +55,7 @@ class ADB:
     return r
 
   @staticmethod
-  def createClient(mode:ADBMode, updateScreen):
+  def createClient(mode:ADBMode, max_fps, bitrate, updateScreen):
     # add screenshot listener
     def on_frame(frame):
       # If you set non-blocking (default) in constructor, the frame event receiver 
@@ -64,8 +64,6 @@ class ADB:
         ADB.frame = frame
         updateScreen(frame)
 
-    max_fps = 15
-    bitrate = 8000000
     ADB.client = scrcpy.Client(device=ADB.d, max_fps=max_fps, bitrate=bitrate, flip=(mode == ADBMode.IP))
     ADB.client.add_listener(scrcpy.EVENT_FRAME, on_frame)
     ADB.client.start(threaded=True)
