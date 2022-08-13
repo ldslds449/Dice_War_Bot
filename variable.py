@@ -91,7 +91,7 @@ class Variable:
         return t(s)
 
     self.board_dice_left_top_xy = str2Type(config.get('Coordinate', 'BoardDiceLeftTopXY', fallback='0 0'))
-    self.board_dice_offset_xy = str2Type(config.get('Coordinate', 'BoardDiceOffsetXY', fallback='0 0'))
+    self.board_dice_offset_xy = str2Type(config.get('Coordinate', 'BoardDiceOffsetXY', fallback='0.0 0.0'), float)
     self.level_dice_left_xy = str2Type(config.get('Coordinate', 'LevelDiceLeftXY', fallback='0 0'))
     self.level_dice_offset_x = str2Type(config.get('Coordinate', 'LevelDiceOffsetX', fallback='0'))
     self.emoji_dialog_xy = str2Type(config.get('Coordinate', 'EmojiDialogXY', fallback='0 0'))
@@ -232,7 +232,7 @@ class Variable:
   def setBoardDiceLeftTopXY(self, _value: Tuple[int,int]):
     self.board_dice_left_top_xy = _value
 
-  def setBoardDiceOffsetXY(self, _value: Tuple[int,int]):
+  def setBoardDiceOffsetXY(self, _value: Tuple[float,float]):
     self.board_dice_offset_xy = _value
 
   def setLevelDiceLeftXY(self, _value: Tuple[int,int]):

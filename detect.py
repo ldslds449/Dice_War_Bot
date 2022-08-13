@@ -30,7 +30,8 @@ class Detect:
     self.dice_name_idx_dict = {}
 
     self.dhash_size = 16
-    self.resize_size = (50, 50)
+    self.resize_size = (50, 50) # xy
+    self.infinite_resize_size = (20, 10) # xy
 
     # dice
     for i, f in enumerate(glob.glob(os.path.join(dice_folder, '*.png'))):
@@ -115,6 +116,7 @@ class Detect:
         result = sorted(rank_dict.items(), key=lambda x : x[1])
       elif mode == DetectDiceMode.HIST:
         result = sorted(result1, key=lambda x : x[1], reverse=True)
+        print(result)
     
     if mode == DetectDiceMode.TEMPLATE:
       img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -156,6 +158,38 @@ class Detect:
         result.append((name, r))
 
       result = sorted(result, key=lambda x : x[1])
+
+    if mode == DetectDiceMode.HIST_RGB:
+      bins = 64
+      histSize = [bins, bins, bins]
+      channels = [0, 1, 2]
+      ranges = [0, 512] + [0, 512] + [0, 512]
+
+      # create mask
+      mask_len = 20
+      mask = np.full(self.resize_size, 255, dtype=np.uint8)
+      x_left = (self.resize_size[0]-mask_len)//2
+      x_right = (self.resize_size[0]+mask_len)//2
+      y_up = (self.resize_size[1]-mask_len)//2
+      y_down = (self.resize_size[1]+mask_len)//2
+      mask[y_up:y_down, x_left:x_right] = 0
+
+      img = cv2.resize(img, self.resize_size)
+      img_hist = cv2.calcHist([img], channels, mask, histSize, ranges, accumulate=False)
+      # cv2.normalize(img_hist, img_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+
+      dice_template = getCandidateImage(self.dice_image_rgb_resize)
+
+      # matching
+      result = []
+      for name, dice in dice_template:
+        dice_hist = cv2.calcHist([dice], channels, mask, histSize, ranges, accumulate=False)
+        # cv2.normalize(dice_hist, dice_hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+        
+        res = cv2.compareHist(img_hist, dice_hist, cv2.HISTCMP_BHATTACHARYYA)
+        result.append((name, res))
+
+      result = sorted(result, key=lambda x : x[1], reverse=False)
 
     if mode == DetectDiceMode.COMBINE:
       result = sorted(score.items(), key=lambda x : x[1])
@@ -253,6 +287,32 @@ class Detect:
       x = np.array(data).reshape((1, -1))
       return self.starModel.predict(x)[0]
 
+  def detectJokerCopy(self, img):
+    img = cv2.resize(img, self.resize_size)
+    img = img[:self.infinite_resize_size[1], -(self.infinite_resize_size[0]):] # extract
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_binary = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,5,0)
+    contours, _ = cv2.findContours(img_binary,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+    # number of contours must > 1
+    if len(contours) <= 1:
+      return False
+
+    found_infinite = False
+    for cnt in contours:
+      area = cv2.contourArea(cnt)
+      (x,y), _ = cv2.minEnclosingCircle(cnt)
+      x,y = (int(x),int(y))
+
+      bias = 4
+      if area > 80:
+        if abs(x-(self.infinite_resize_size[0]//2)) < bias and abs(y-(self.infinite_resize_size[1]//2)) < bias:
+          found_infinite = True
+          break
+
+    # judge
+    return found_infinite
+
   def colorDetect(self, img, lower, upper):
     img = cv2.resize(img, self.resize_size)
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -274,24 +334,28 @@ class Detect:
 
     return ratio > 0.55
 
+  # dice board 8
   def detectWaiting(self, img):
-    lower = [121, 148, 67]
-    upper = [129, 183, 121]
+    lower = [122, 110, 180]
+    upper = [126, 140, 256]
     ratio = self.colorDetect(img, lower, upper)
 
     print(f'Wait {ratio}')
 
-    return ratio > 0.90
+    return ratio > 0.25
 
-  def detectFinish(self, img):
+  # summon button + damage list button
+  def detectFinish(self, img1, img2):
     lower = [125, 161, 69]
     upper = [129, 193, 101]
-    ratio = self.colorDetect(img, lower, upper)
+    ratio1 = self.colorDetect(img1, lower, upper)
+    ratio2 = self.colorDetect(img2, lower, upper)
 
-    print(f'Finish {ratio}')
+    print(f'Finish {ratio1} {ratio2}')
 
-    return ratio > 0.90
+    return ratio1 > 0.9 and not ratio2 > 0.9
 
+  # emoji dialog
   def detectGame(self, img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     h,w = img.shape
@@ -310,16 +374,18 @@ class Detect:
 
     print(f'AD {ratio}')
 
-    return ratio > 0.35
+    return ratio > 0.25
 
-  def detectTrophy(self, img):
+  # dice board 4 + damage list button
+  def detectTrophy(self, img1, img2):
     lower = [121, 100, 50]
     upper = [129, 255, 100]
-    ratio = self.colorDetect(img, lower, upper)
+    ratio1 = self.colorDetect(img1, lower, upper)
+    ratio2 = self.colorDetect(img2, lower, upper)
 
-    print(f'Trophy {ratio}')
+    print(f'Trophy {ratio1} {ratio2}')
 
-    return ratio > 0.8
+    return ratio1 > 0.8 and ratio2 > 0.8
 
   def detectArcade(self, img):
     lower = [20, 100, 100]
@@ -486,6 +552,15 @@ class Detect:
   def save(self, img, fname):
     cv2.imwrite(fname, img)
 
+  def resizeImage(self, img, size):
+    return img.resize(size)
+
+  def loadImage(self, fname, mode="RGB"):
+    return Image.open(fname).convert(mode)
+
+  def saveImage(self, img, fname):
+    img.save(fname)
+
   def getDiceImage(self, img, idx, WH = None):
     x = self.variable.getBoardDiceLeftTopXY()[0]
     y = self.variable.getBoardDiceLeftTopXY()[1]
@@ -500,7 +575,7 @@ class Detect:
     row = idx // self.variable.getCol()
     col = idx % self.variable.getCol()
 
-    dice_xy = (x+col*offset_x, y+row*offset_y)
+    dice_xy = (int(x+col*offset_x), int(y+row*offset_y))
     dice_img = self.extractImage(img, (dice_xy[0], dice_xy[1], w, h), ExtractMode.CENTER)
     return dice_img
 
@@ -518,7 +593,7 @@ class Detect:
       row = i // self.variable.getCol()
       col = i % self.variable.getCol()
       leftCorner = tupleAdd(self.variable.getBoardDiceLeftTopXY(), 
-        (self.variable.getBoardDiceOffsetXY()[0]*col, self.variable.getBoardDiceOffsetXY()[1]*row))
+        (int(self.variable.getBoardDiceOffsetXY()[0]*col), int(self.variable.getBoardDiceOffsetXY()[1]*row)))
       leftCorner = tupleAdd(leftCorner, 
         (-self.variable.getExtractDiceSizeWH()[0]//2, -self.variable.getExtractDiceSizeWH()[1]//2))
       cv2.rectangle(img, leftCorner, 
@@ -617,6 +692,7 @@ class Detect:
     hasAD = False
     result = False
     inArcade = False
+    encouragement = False
 
     finish_summon_img = self.extractImage(img, 
       (self.variable.getSummonDiceXY()[0], self.variable.getSummonDiceXY()[1],
@@ -627,9 +703,9 @@ class Detect:
 
     if self.detectLobby(self.getDiceImage(img, 8)):
       inLobby = True
-    if self.detectWaiting(self.getDiceImage(img, 2)):
+    if self.detectWaiting(self.getDiceImage(img, 8)):
       inWaiting = True
-    if self.detectFinish(finish_summon_img) and not self.detectFinish(finish_damage_img):
+    if self.detectFinish(finish_summon_img, finish_damage_img):
       inFinish = True
     if self.detectGame(self.extractImage(img, 
       (self.variable.getEmojiDialogXY()[0], self.variable.getEmojiDialogXY()[1],
@@ -637,7 +713,7 @@ class Detect:
       inGame = True
     if self.detectAD(self.getDiceImage(img, 12)):
       hasAD = True
-    if self.detectTrophy(self.getDiceImage(img, 4)) and self.detectTrophy(finish_damage_img):
+    if self.detectTrophy(self.getDiceImage(img, 4), finish_damage_img):
       inTrophy = True
     # use middle top of the image
     if self.detectResult(self.extractImage(img, 
@@ -645,6 +721,8 @@ class Detect:
       result = True
     if self.detectArcade(self.getDiceImage(img, 8)):
       inArcade = True
+    if self.detectAD(self.getDiceImage(img, 3)):
+      encouragement = True
 
     return {
       'Lobby': inLobby, 
@@ -654,5 +732,6 @@ class Detect:
       'Trophy': inTrophy,
       'AD': hasAD,
       'Result': result,
-      'Arcade': inArcade
+      'Arcade': inArcade,
+      'Encouragement': encouragement
     }

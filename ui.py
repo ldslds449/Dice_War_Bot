@@ -4,6 +4,7 @@ import traceback
 import win32clipboard
 import matplotlib
 import gc
+import ctypes
 from io import BytesIO
 from functools import partial
 from matplotlib.figure import Figure
@@ -30,6 +31,10 @@ class UI:
   def __init__(self):
     self.window = tk.Tk()
     self.window.withdraw()
+    self.window.iconbitmap("image/icon.ico")
+
+    myappid = f"dice_bot.{Program_Version}" # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     self.bg_task = Task()
 
@@ -63,9 +68,9 @@ class UI:
     self.frame_screenshot = tk.Frame(self.tab_detect)
     self.frame_screenshot.grid(column=2, row=0, columnspan=2)
     self.frame_select_dice = tk.Frame(self.tab_detect, padx=20)
-    self.frame_select_dice.grid(column=0, row=1, columnspan=2)
+    self.frame_select_dice.grid(column=0, row=1, columnspan=1)
     self.frame_dashboard = tk.Frame(self.tab_detect)
-    self.frame_dashboard.grid(column=2, row=1, columnspan=2)
+    self.frame_dashboard.grid(column=1, row=1, columnspan=3)
     self.frame_log = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_log.grid(column=0, row=2, columnspan=4, sticky='we')
     self.frame_screen = tk.Frame(self.tab_detect)
@@ -205,7 +210,7 @@ class UI:
 
     # load screenshot
     self.btn_load_screenshot = tk.Button(self.frame_setting_btn, text='Load\nScreenShot', width=10, height=2, font=('Arial', 12))
-    self.btn_load_screenshot.config(command=self.btn_load_screenshot_event, state=DISABLED)
+    self.btn_load_screenshot.config(command=self.btn_load_screenshot_event)
     self.btn_load_screenshot.grid(row=1, column=1)
     
     # detect
@@ -247,7 +252,7 @@ class UI:
 
     # dashboard
     self.frame_dashboard.grid_columnconfigure(0, minsize=100)
-    self.frame_dashboard.grid_columnconfigure(1, minsize=150)
+    self.frame_dashboard.grid_columnconfigure(1, minsize=180)
     ## cpu
     self.cpu_StringVar = StringVar()
     self.cpu_StringVar.set('CPU: --')
@@ -261,7 +266,7 @@ class UI:
     ## elapsed time
     self.last_update_time_stamp = None
     self.elapsed_time_StringVar = StringVar()
-    self.elapsed_time_StringVar.set('Elapsed Time: --')
+    self.elapsed_time_StringVar.set('Elapsed Time: ------')
     label_elapsed_time = tk.Label(self.frame_dashboard, textvariable=self.elapsed_time_StringVar, anchor="w", justify=LEFT)
     label_elapsed_time.grid(row=0, column=1)
     ## wave
@@ -392,7 +397,7 @@ class UI:
     btn_select_dice.config(command=self.btn_test_dice_event, state=NORMAL)
     btn_select_dice.grid(row=0, column=0)
 
-    # test dice/star view
+    # test dice/star/joker_copy view
     self.label_test_dice_img = tk.Label(self.frame_test_view, image=zero_img, padx=5, pady=5)
     self.label_test_dice_img.config(width=self.bg_task.detect.resize_size[0], height=self.bg_task.detect.resize_size[1])
     self.label_test_dice_img.grid(row=0, column=0)
@@ -473,6 +478,9 @@ class UI:
     self.setCheckBoxFlag()
     self.setSelectDiceField()
     self.setResult()
+
+    self.infinite_img = self.bg_task.detect.loadImage("./image/infinite.png", "RGBA")
+    self.infinite_img = self.bg_task.detect.resizeImage(self.infinite_img, (25,15))
 
     MyAction.init()
 
@@ -596,7 +604,7 @@ class UI:
       self.bg_task.variable.setBitRate(dealString(self.setting_stringVar['BitRate'].get()))
       self.bg_task.variable.setRandomOffset(dealString(self.setting_stringVar['Random Offset'].get()))
       self.bg_task.variable.setBoardDiceLeftTopXY(dealString(self.setting_stringVar['Board Left Top XY'].get()))
-      self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar['Board Dice Offset XY'].get()))
+      self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar['Board Dice Offset XY'].get(), float))
       self.bg_task.variable.setLevelDiceLeftXY(dealString(self.setting_stringVar['Level Dice Left XY'].get()))
       self.bg_task.variable.setLevelDiceOffsetX(dealString(self.setting_stringVar['Level Dice Offset X'].get()))
       self.bg_task.variable.setEmojiDialogXY(dealString(self.setting_stringVar['Emoji Dialog XY'].get()))
@@ -870,6 +878,7 @@ class UI:
       initialdir=initFolder,
       filetypes=filetypes)
     self.log(f'FilePath: {filename}\n')
+    if filename == "": return
 
     try:
       # read image
@@ -879,6 +888,9 @@ class UI:
       self.changeImage(self.label_screenshot, self.bg_task.detect.OpenCV2TK(self.screenshot_image_limit))
     except Exception as e:
       messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
+    finally:
+      # enable other button
+      self.enableButtonByLoadScreenshot()
 
   def btn_detect_event(self):
     self.log('=== Detect Screenshot ===\n')
@@ -899,6 +911,9 @@ class UI:
     label.configure(image=img)
     label.image = img
     label.update()
+
+  def diceAddJoker(self, img):
+    return Draw.addImage(img, self.infinite_img, (13,17))
 
   def press_select_dice_event(self, idx, _):
     # pop window
@@ -978,14 +993,22 @@ class UI:
       initialdir=initFolder,
       filetypes=filetypes)
     self.log(f'FilePath: {filename}\n')
+    if filename == "": return
 
     try:
       # read image
       dice_img = self.bg_task.detect.load(filename)
       self.changeImage(self.label_test_dice_img, self.bg_task.detect.OpenCV2TK(dice_img))
+      # detect joker copy
+      joker_copy = self.bg_task.detect.detectJokerCopy(dice_img)
       # detect dice
       dice_detect = self.bg_task.detect.detectDice(dice_img, None, self.bg_task.variable.getDetectDiceMode())
-      self.changeImage(self.label_test_detect_img, self.bg_task.detect.dice_image_tk_resize[self.bg_task.detect.dice_name_idx_dict[dice_detect[0]]])
+      dice_detect_img = self.bg_task.detect.dice_image_PIL_resize[self.bg_task.detect.dice_name_idx_dict[dice_detect[0]]]
+      # add joker copy
+      if joker_copy:
+        dice_detect_img = self.diceAddJoker(dice_detect_img)
+      dice_detect_img = self.bg_task.detect.Image2TK(dice_detect_img)
+      self.changeImage(self.label_test_detect_img, dice_detect_img)
       # detect star
       star_detect = self.bg_task.detect.detectStar(dice_img)
       self.test_detect_star_StringVar.set(str(star_detect))
@@ -1006,6 +1029,7 @@ class UI:
       initialdir=initFolder,
       filetypes=filetypes)
     self.log(f'FilePath: {filename}\n')
+    if filename == "": return
 
     try:
       # read image
@@ -1089,10 +1113,14 @@ class UI:
     self.btn_BM.config(state=NORMAL)
     self.btn_draw.config(state=NORMAL)
     self.btn_save_screenshot.config(state=NORMAL)
-    self.btn_load_screenshot.config(state=NORMAL)
     self.btn_detect.config(state=NORMAL)
     self.btn_save_extract_images.config(state=NORMAL)
     self.btn_share_board.config(state=NORMAL)
+  
+  def enableButtonByLoadScreenshot(self):
+    self.btn_save_screenshot.config(state=NORMAL)
+    self.btn_detect.config(state=NORMAL)
+    self.btn_draw.config(state=NORMAL)
 
   def log(self, text):
     print(text)
@@ -1167,14 +1195,18 @@ Min: {min}\n
 Total Gain: {total_offset:+}\n
 Average Gain: {offset:+.2f}""")
 
-  def updateDice(self, board_dice, board_dice_star, detect_board_dice_img):
+  def updateDice(self, board_dice, board_dice_star, board_dice_joker_copy, detect_board_dice_img):
     # update ui
     time_start = time.time()
-    for i, zipped in enumerate(zip(board_dice, board_dice_star, detect_board_dice_img)):
-      name, star, img = zipped
+    for i, zipped in enumerate(zip(board_dice, board_dice_star, board_dice_joker_copy, detect_board_dice_img)):
+      name, star, joker_copy, img = zipped
       # left: predicted dice
       idx = self.bg_task.detect.dice_name_idx_dict[name]
-      dice_img = self.bg_task.detect.dice_image_tk_resize[idx]
+      dice_img = self.bg_task.detect.dice_image_PIL_resize[idx]
+      ## add joker copy
+      if joker_copy:
+        dice_img = Draw.addImage(dice_img, self.infinite_img, (13,17))
+      dice_img = self.bg_task.detect.Image2TK(dice_img)
       self.changeImage(self.label_board_dice[i], dice_img)
       # left: predicted star
       self.label_board_star[i].config(text=str(star))
@@ -1302,8 +1334,8 @@ Average Gain: {offset:+.2f}""")
         self.resource_thread.setDaemon(True)
         self.resource_thread.start()
       ## update elapsed time
-      elapsed_time_microsecond = int((time.time() - self.last_update_time_stamp) * 1000) if self.last_update_time_stamp is not None else "--"
-      self.elapsed_time_StringVar.set(f'Elapsed Time: {elapsed_time_microsecond} ms')
+      elapsed_time_microsecond = str(int((time.time() - self.last_update_time_stamp) * 1000)).rjust(6) + ' ms' if self.last_update_time_stamp is not None else "   --   "
+      self.elapsed_time_StringVar.set(f'Elapsed Time: {elapsed_time_microsecond}')
       self.last_update_time_stamp = time.time()
       ## update wave
       self.wave_StringVar.set(f'Wave: {self.bg_task.wave if hasattr(self.bg_task, "wave") else "--"}')

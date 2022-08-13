@@ -19,6 +19,7 @@ class DetectDiceMode(IntEnum):
   MSSSIM = 3
   COMBINE = 4
   HIST_COMBINE = 5
+  HIST_RGB = 6
 
 class DetectStarMode(IntEnum):
   COMPUTER_VERSION = 0

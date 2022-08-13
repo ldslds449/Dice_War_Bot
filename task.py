@@ -22,8 +22,9 @@ class Task:
   def __init__(self):
     self.board_dice = []
     self.detect_board_dice_img = []
-    self.detect_board_dice_star = []
     self.board_dice_lu = []
+    self.board_dice_joker_copy = []
+
     self.windowID = None
 
     self.variable = Variable()
@@ -215,6 +216,7 @@ class Task:
     self.detect_board_dice_img = []
     self.board_dice_star = []
     self.board_dice_lu = []
+    self.board_dice_joker_copy = []
     def detectDice(i):
       img = self.detect.getDiceImage(im, i)
       img2 = self.detect.getDiceImage(im2, i)
@@ -229,6 +231,7 @@ class Task:
       res = self.detect.detectDice(img.copy(), self.variable.getDiceParty() + ['Blank'], self.variable.getDetectDiceMode())
       res_star = self.detect.detectStar(img.copy())
       res2_star = self.detect.detectStar(img2.copy())
+      res_joker_copy = self.detect.detectJokerCopy(img.copy())
 
       # select the max value of star
       if res_star == 7 or res2_star == 7:
@@ -243,10 +246,11 @@ class Task:
       self.board_dice_star.append(dice_star)
       self.board_dice.append(res[0])
       self.board_dice_lu.append(dice_lu)
+      self.board_dice_joker_copy.append(res_joker_copy)
 
       if i != 0 and i % self.variable.getCol() == 0 :
         print("")
-      print(f"{res[0]:10}({res_star}/{res2_star})", end="")
+      print(f"{res[0]:10}({res_star}/{res2_star}){'C' if res_joker_copy else ' '}", end="")
       if i+1 == self.variable.getBoardSize():
         print("")
 
@@ -256,7 +260,7 @@ class Task:
     print(f'Detect Time: {time.time() - detect_start}')
 
     # updateImage
-    updateDice(self.board_dice, self.board_dice_star, self.detect_board_dice_img)
+    updateDice(self.board_dice, self.board_dice_star, self.board_dice_joker_copy, self.detect_board_dice_img)
 
     # detect status
     detect_status_start = time.time()
@@ -271,6 +275,7 @@ class Task:
     hasAD = status_result['AD']
     result = status_result['Result']
     inArcade = status_result['Arcade']
+    encouragement = status_result['Encouragement']
 
     self.result = None
     self.result_screenshot = None
@@ -292,7 +297,7 @@ class Task:
         elif inArcade:
           self.status = Status.ARCADE
         elif inWaiting:
-          time.sleep(0.5)
+          pass
       elif self.status == Status.GAME:
         if inLobby:
           self.status = Status.LOBBY
@@ -300,6 +305,7 @@ class Task:
           self.status = Status.ARCADE
         else:
           self.status = Status.FINISH_ANIMATION
+          time.sleep(10)
       elif self.status == Status.FINISH:
         if inLobby:
           self.status = Status.LOBBY
@@ -340,13 +346,15 @@ class Task:
             time.sleep(0.5)
             self.diceControl.skip() # click again
             time.sleep(5)
+        elif encouragement:
+          self.diceControl.castSpell() # skip ad
       elif self.status == Status.LOBBY or self.status == Status.ARCADE:
         MyAction.init()
         self.wave = -1
-        if inTrophy:
-          self.status = Status.TROPHY
-        elif inWaiting:
+        if inWaiting:
           self.status = Status.WAIT
+        elif inTrophy:
+          self.status = Status.TROPHY
         elif inLobby or inArcade:
           if autoPlay:
             self.diceControl.battle(battleMode) # start battle
@@ -399,6 +407,7 @@ class Task:
     if prev_wave is not None:
       if wave < prev_wave:
         wave = prev_wave
+        self.wave = wave
     print(f'Wave: {wave}')
 
     sys.stdout.flush()
@@ -407,18 +416,19 @@ class Task:
     MyAction.action(
       diceControl=self.diceControl, 
       findMergeDice=self.findMergeDice,
-      count=count, 
-      count_sorted=count_sorted, 
-      location=location, 
-      boardDice=self.board_dice, 
+      count=count.copy(), 
+      count_sorted=count_sorted.copy(), 
+      location=location.copy(), 
+      boardDice=self.board_dice.copy(), 
       canSummon=canSummon, 
       canLevelDice=canLevel,
       canSpell=canSpell,
       countTotal=countTotal, 
       passCheckPoint=(passCheckPointStart, passCheckPointEnd),
-      boardDiceStar=self.board_dice_star,
+      boardDiceStar=self.board_dice_star.copy(),
       team=self.variable.getDiceParty().copy(),
-      wave=wave
+      wave=wave,
+      jokerCopy=self.board_dice_joker_copy.copy()
     )
 
     # save extract images

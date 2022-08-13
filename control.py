@@ -108,7 +108,7 @@ class DiceControl(Control):
     leftTopDice_y = self.modifyZoom(self.variable.getBoardDiceLeftTopXY()[1])
     offset_x = self.modifyZoom(self.variable.getBoardDiceOffsetXY()[0])
     offset_y = self.modifyZoom(self.variable.getBoardDiceOffsetXY()[1])
-    return self.randomOffset((leftTopDice_x+idx_c*offset_x, leftTopDice_y+idx_r*offset_y))
+    return self.randomOffset((int(leftTopDice_x+idx_c*offset_x), int(leftTopDice_y+idx_r*offset_y)))
 
   def getLevelDiceXY(self, idx: int):
     leftDice_x = self.modifyZoom(self.variable.getLevelDiceLeftXY()[0])
@@ -162,8 +162,12 @@ class DiceControl(Control):
 
   def battle(self, battleMode: BattleMode):
     if battleMode == BattleMode.BATTLE_1V1:
+      self.tap(self.getLevelDiceXY(2))
+      time.sleep(1)
       self.tap(self.getBoardDiceXY(5))
     elif battleMode == BattleMode.BATTLE_2V2:
+      self.tap(self.getLevelDiceXY(2))
+      time.sleep(1)
       self.tap(self.getBoardDiceXY(9))
     elif battleMode == BattleMode.BATTLE_ARCADE:
       self.castSpell()

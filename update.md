@@ -286,3 +286,17 @@
 
 1. Add updater
 2. Add max_fps and bitrate to setting
+
+## Version 1.10.0
+
+1. Add icon
+2. Board Dice Offset XY now can set as float type
+3. Modify dashboard format
+4. Fix load image bug
+5. Add new dice detect mode
+6. Add joker copy detecter
+7. Add encouragement stage
+8. Fix stage change bug
+9. Modify the delay between stages
+10. Fix detect AD bug
+11. Update action to greedy
