@@ -300,3 +300,8 @@
 9. Modify the delay between stages
 10. Fix detect AD bug
 11. Update action to greedy
+
+## Version 1.10.1
+
+1. Add new dice (Angel, Cannon, Gear, Mafia, Sacrifice, and Target)
+2. Fix the bug showing old version after updating to latest version

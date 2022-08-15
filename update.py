@@ -8,7 +8,7 @@ import shutil
 import glob
 import os
 
-from version import *
+import version as v
 
 class Update(QDialog):
 
@@ -51,6 +51,7 @@ class Update(QDialog):
     self.checktask.launch_btn_signal.connect(self.enableLaunchBtn)
     self.checktask.launch_btn_text_signal.connect(self.setLaunchBtnText)
     self.checktask.launch_btn_click_signal.connect(self.launch)
+    self.checktask.return_latest_version.connect(self.returnLatestVersion)
 
   def run(self):
     self.checktask.start()
@@ -76,11 +77,15 @@ class Update(QDialog):
   def setLaunchBtnText(self, text:str):
     self.launch_btn.setText(text)
 
+  def returnLatestVersion(self, version:str):
+    self.latestVersion = version
+
   def launch(self):
     self.accept()
 
   def runUpdate(self):
     self.enableUpdateBtn(False)
+    self.enableLaunchBtn(False)
     self.setUpdateBtnText("Updating...")
     self.setPbar(0)
 
@@ -88,6 +93,8 @@ class Update(QDialog):
     self.task.pbar_set_signal.connect(self.setPbar)
     self.task.log_signal.connect(self.log)
     self.task.update_btn_text_signal.connect(self.setUpdateBtnText)
+    self.task.launch_btn_signal.connect(self.enableLaunchBtn)
+    self.task.update_version = self.latestVersion
     self.task.start()
 
 
@@ -99,12 +106,14 @@ class CheckUpdateTask(QThread):
   launch_btn_signal = Signal(bool)
   launch_btn_text_signal = Signal(str)
   launch_btn_click_signal = Signal()
+  return_latest_version = Signal(str)
 
   def run(self):
     time.sleep(0.5)
 
     # version
     islatest, latestVersion = self.checkVersion()
+    self.return_latest_version.emit(latestVersion)
     self.pbar_set_signal.emit(100)
     if not islatest and latestVersion != "?":
       self.launch_btn_signal.emit(True)
@@ -116,13 +125,13 @@ class CheckUpdateTask(QThread):
 
   def checkVersion(self):
     self.log_signal.emit("======= Check Version =======")
-    self.log_signal.emit(f"URL: {Version.updateMDurl}")
+    self.log_signal.emit(f"URL: {v.Version.updateMDurl}")
     self.pbar_set_signal.emit(30)
     try:
-      islatest, latestVersion = Version.checkLatest()
+      islatest, latestVersion = v.Version.checkLatest()
       self.pbar_set_signal.emit(50)
       self.log_signal.emit(f"Latest Version: {latestVersion}")
-      self.log_signal.emit(f"Your Version: {Program_Version}")
+      self.log_signal.emit(f"Your Version: {v.Program_Version}")
       self.log_signal.emit(f"Version ----- {'Latest' if islatest else 'Need update'}")
     except:
       self.log_signal.emit(f"Version ----- Failed to check version")
@@ -135,8 +144,14 @@ class UpdateTask(QThread):
   pbar_set_signal = Signal(int)
   log_signal = Signal(str)
   update_btn_text_signal = Signal(str)
+  launch_btn_signal = Signal(bool)
+
+  update_version = None
 
   updateURL = "https://github.com/ldslds449/Dice_War_Bot/archive/refs/heads/master.zip"
+
+  def download_hook(self, chunk_number, max_size_chunk_read, read_total_size):
+    pass
 
   def run(self):
     zipFile = "code.zip"
@@ -144,10 +159,10 @@ class UpdateTask(QThread):
     unzipFolder = os.path.join(zipFolder, "Dice_War_Bot-master")
 
     self.log_signal.emit("======= Updating =======")
-    self.log_signal.emit("Download...")
 
     # download
-    urllib.request.urlretrieve(self.updateURL, zipFile)
+    self.log_signal.emit("Download...")
+    urllib.request.urlretrieve(self.updateURL, zipFile, reporthook=self.download_hook)
     self.pbar_set_signal.emit(50)
 
     # unzip
@@ -166,8 +181,12 @@ class UpdateTask(QThread):
 
     # remove file
     os.remove(zipFile)
-    shutil.rmtree(unzipFolder)
+    shutil.rmtree(zipFolder)
     self.pbar_set_signal.emit(100)
     self.log_signal.emit("Finish Deleting Temporary Files")
 
     self.update_btn_text_signal.emit("Finish Updating")
+    self.launch_btn_signal.emit(True)
+
+    # change program version to latest version
+    v.Program_Version = self.update_version
