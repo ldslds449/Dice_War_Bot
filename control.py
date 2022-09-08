@@ -51,7 +51,7 @@ class Control:
     elif self.mode == ControlMode.ADB:
       pass
 
-  def drag(self, src: Tuple[int, int], dst: Tuple[int, int]):
+  def drag(self, src: Tuple[int, int], dst: Tuple[int, int], time_scale: int):
     if self.mode == ControlMode.WIN32API:
       self.drag_press(src, dst)
       self.drag_up(dst)
@@ -59,7 +59,7 @@ class Control:
       offset_x = src[0] - dst[0]
       offset_y = src[1] - dst[1]
       dist = math.sqrt(abs(offset_x)**2 + abs(offset_y)**2)
-      duration = (dist / 3) * 5 / 1000
+      duration = dist / time_scale
       ADB.swipe(src, dst, duration)
 
   def back(self):
@@ -124,7 +124,7 @@ class DiceControl(Control):
   def mergeDice(self, src: int, dst: int):
     src_xy = self.getBoardDiceXY(src-1) # rescale [1~15] to [0~14]
     dst_xy = self.getBoardDiceXY(dst-1) # rescale [1~15] to [0~14]
-    self.drag(src_xy, dst_xy)
+    self.drag(src_xy, dst_xy, self.variable.getDragTimeScale())
 
   def dragPressDice(self, src: int):
     src_xy = self.getBoardDiceXY(src-1) # rescale [1~15] to [0~14]

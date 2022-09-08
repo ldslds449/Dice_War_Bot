@@ -12,6 +12,7 @@ if __name__ == '__main__':
   update.run()
  
   if update.exec() == QDialog.Accepted:
+    # run ui
     from ui import *
     ui = UI()
     ui.RUN()

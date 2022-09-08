@@ -277,7 +277,7 @@ class Detect:
       if star_count_binary_global == 1 and star_count_edge == 0:
         max_star_value = binary_detect(img_gray, False, False)
       
-      return 7 if max_star_value == 0 else max_star_value
+      return 7 if max_star_value == 0 else min(max_star_value, 7)
 
     elif self.variable.getDetectStarMode() == DetectStarMode.ML_SVC:
       img = self.OpenCV2Image(img)

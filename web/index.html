@@ -1,0 +1,23 @@
+<!doctype html> 
+<html lang="en">  
+  <head>  
+    <meta charset="utf-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1">  
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap-5.2.0-dist/css/bootstrap.min.css') }}"> 
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}">
+    <title>Dice Bot</title>  
+  </head>  
+  <body>  
+    <div class="container">
+      <div class="row">
+        <div class="col-xl-6 col-md-6"><img id="screen" class="center-fit" src="{{ url_for('video_feed') }}" alt="Please Connect to the Emulator First" draggable="false"></div>
+        <div class="col-xl-6 col-md-6">
+          <!-- <button type="button" class="btn btn-success">Start</button> -->
+        </div>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='bootstrap-5.2.0-dist/js/bootstrap.bundle.min.js') }}"></script> 
+    <script src="{{ url_for('static', filename='socket/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='index.js') }}"></script> 
+  </body> 
+</html> 

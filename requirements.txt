@@ -13,3 +13,5 @@ readerwriterlock
 scrcpy-client
 psutil
 PySide6
+flask
+flask-socketio

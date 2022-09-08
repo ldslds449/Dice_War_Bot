@@ -41,6 +41,8 @@ class Variable:
     self.screenshot_delay = None
     self.freeze_threshold = None
     self.focus_threshold = None
+    self.wait_time_limit = None
+    self.drag_time_scale = None
 
     self.col = 5 # constant
     self.row = 3 # constant
@@ -64,7 +66,7 @@ class Variable:
     self.bitrate = None
 
     self.battle_mode = None
-    self.auto_play = None
+    self.last_game = None
     self.top_window = None
     self.watch_ad = None
     self.restart_app = None
@@ -136,9 +138,11 @@ class Variable:
     self.screenshot_delay = str2Type(config.get('Detect', 'ScreenshotDelay', fallback='0.0'), float)
     self.freeze_threshold = str2Type(config.get('Detect', 'FreezeThreshold', fallback='50'))
     self.focus_threshold = config.get('Detect', 'FocusThreshold', fallback='5') 
+    self.wait_time_limit = config.get('Detect', 'WaitTimeLimit', fallback='90') 
+    self.drag_time_scale = config.get('Control', 'DragTimeScale', fallback='600') 
     self.battle_mode = config.get('Flag', 'BattleMode', fallback='2v2') 
     # eval('True') = True, eval('False') = False
-    self.auto_play = str2Type(config.get('Flag', 'AutoPlay', fallback='False'), eval) 
+    self.last_game = str2Type(config.get('Flag', 'LastGame', fallback='False'), eval) 
     self.top_window = str2Type(config.get('Flag', 'TopWindow', fallback='False'), eval)
     self.watch_ad = str2Type(config.get('Flag', 'WatchAD', fallback='False'), eval)
     self.restart_app = str2Type(config.get('Flag', 'RestartApp', fallback='False'), eval)
@@ -210,9 +214,12 @@ class Variable:
     config.set('Detect', 'ScreenshotDelay', type2Str(self.screenshot_delay))
     config.set('Detect', 'FreezeThreshold', type2Str(self.freeze_threshold))
     config.set('Detect', 'FocusThreshold', type2Str(self.focus_threshold))
+    config.set('Detect', 'WaitTimeLimit', type2Str(self.wait_time_limit))
+    config.add_section('Control')
+    config.set('Control', 'DragTimeScale', type2Str(self.drag_time_scale))
     config.add_section('Flag')
     config.set('Flag', 'BattleMode', self.battle_mode)
-    config.set('Flag', 'AutoPlay', type2Str(self.auto_play))
+    config.set('Flag', 'LastGame', type2Str(self.last_game))
     config.set('Flag', 'TopWindow', type2Str(self.top_window))
     config.set('Flag', 'WatchAD', type2Str(self.watch_ad))
     config.set('Flag', 'RestartApp', type2Str(self.restart_app))
@@ -367,11 +374,17 @@ class Variable:
   def setFocusThreshold(self, _value: int):
     self.focus_threshold = _value
 
+  def setWaitTimeLimit(self, _value: int):
+    self.wait_time_limit = _value
+
+  def setDragTimeScale(self, _value: int):
+    self.drag_time_scale = _value
+
   def setBattleMode(self, _value: str):
     self.battle_mode = _value
 
-  def setAutoPlay(self, _value: bool):
-    self.auto_play = _value
+  def setLastGame(self, _value: bool):
+    self.last_game = _value
 
   def setTopWindow(self, _value: bool):
     self.top_window = _value
@@ -558,11 +571,17 @@ class Variable:
   def getFocusThreshold(self):
     return self.focus_threshold
 
+  def getWaitTimeLimit(self):
+    return self.wait_time_limit
+
+  def getDragTimeScale(self):
+    return self.drag_time_scale
+
   def getBattleMode(self):
     return self.battle_mode
 
-  def getAutoPlay(self):
-    return self.auto_play
+  def getLastGame(self):
+    return self.last_game
 
   def getTopWindow(self):
     return self.top_window

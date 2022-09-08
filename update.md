@@ -305,3 +305,13 @@
 
 1. Add new dice (Angel, Cannon, Gear, Mafia, Sacrifice, and Target)
 2. Fix the bug showing old version after updating to latest version
+
+## Version 1.11.0
+
+1. Rename dice (Squad -> Commando)
+2. Add new dice (Jet)
+3. Now can use browser to control the emulator
+4. Add a setting to adjust the drag speed
+5. Fix the bug that the dice star can be recognized greater than 7
+6. Restart the app while waiting for a long time
+7. Change auto play to default setting, add last game to stop the game

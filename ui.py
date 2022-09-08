@@ -25,6 +25,8 @@ from mode import *
 from version import *
 from draw import *
 from resource import *
+from stream import *
+
 
 class UI:
 
@@ -176,6 +178,8 @@ class UI:
       'Extract Wave Size WH': 2,
       'Max FPS': 0,
       'BitRate': 0,
+      'Wait Time Limit': 0,
+      'Drag Time Scale': 0,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -328,10 +332,10 @@ class UI:
     self.btn_share_board.grid(row=1, column=1, sticky='ewns')
 
     # auto play
-    self.autoPlay_booleanVar = tk.BooleanVar() 
-    self.autoPlay_booleanVar.set(False)
-    checkBtn_autoPlay = tk.Checkbutton(self.frame_detect_btn, text='Auto Play', var=self.autoPlay_booleanVar, pady=5) 
-    checkBtn_autoPlay.pack(fill=BOTH, expand=True, side=TOP)
+    self.last_game_booleanVar = tk.BooleanVar() 
+    self.last_game_booleanVar.set(False)
+    checkBtn_lastGame = tk.Checkbutton(self.frame_detect_btn, text='Last Game', var=self.last_game_booleanVar, pady=5) 
+    checkBtn_lastGame.pack(fill=BOTH, expand=True, side=TOP)
 
     # top Window
     self.topWindow_booleanVar = tk.BooleanVar() 
@@ -366,6 +370,14 @@ class UI:
     self.checkBtn_devMode = tk.Checkbutton(self.frame_detect_btn, text='Dev Mode', var=self.devMode_booleanVar, pady=5) 
     self.checkBtn_devMode.pack(fill=BOTH, expand=True, side=TOP)
     self.checkBtn_devMode.config(state=NORMAL)
+
+    # stream server
+    self.stream_booleanVar = tk.BooleanVar() 
+    self.stream_booleanVar.set(False)
+    self.checkBtn_stream = tk.Checkbutton(self.frame_detect_btn, text='Stream', var=self.stream_booleanVar, pady=5, command=self.checkBtn_stream) 
+    self.checkBtn_stream.pack(fill=BOTH, expand=True, side=TOP)
+    self.checkBtn_stream.config(state=NORMAL)
+    self.streamServer = None
     
     # Status Label
     self.status_StringVar = StringVar()
@@ -381,12 +393,14 @@ class UI:
     label_result = tk.Label(self.frame_detect_btn, padx=5, pady=5, textvariable=self.result_StringVar)
     label_result.pack(fill=BOTH, expand=True, side=TOP)
 
-    # button
+    # start button
     self.btn_run = tk.Button(self.frame_detect_btn, text='Start', width=15, height=2, font=('Arial', 12))
     self.btn_run.pack(fill=BOTH, side=BOTTOM, expand=True)
     self.btn_run.config(command=self.btn_run_event, state=DISABLED)
     self.isRunning = False
     self.thread_bg_task = None
+
+    # connect button
     self.btn_connect = tk.Button(self.frame_detect_btn, text='Connect', width=15, height=2, font=('Arial', 12))
     self.btn_connect.config(command=self.btn_ADB_connect_event)
     self.btn_connect.pack(fill=BOTH, side=BOTTOM, expand=True)
@@ -507,7 +521,7 @@ class UI:
     if self.bg_task is None:
       raise Exception('setCheckBoxFlag:: Need to set task variable first')
     else:
-      self.autoPlay_booleanVar.set(self.bg_task.variable.getAutoPlay())
+      self.last_game_booleanVar.set(self.bg_task.variable.getLastGame())
       self.topWindow_booleanVar.set(self.bg_task.variable.getTopWindow())
       self.watchAD_booleanVar.set(self.bg_task.variable.getWatchAD())
       self.restartApp_booleanVar.set(self.bg_task.variable.getRestartApp())
@@ -519,7 +533,7 @@ class UI:
     if self.bg_task is None:
       raise Exception('getCheckBoxFlag:: Need to set task variable first')
     else:
-      self.bg_task.variable.setAutoPlay(self.autoPlay_booleanVar.get())
+      self.bg_task.variable.setLastGame(self.last_game_booleanVar.get())
       self.bg_task.variable.setTopWindow(self.topWindow_booleanVar.get())
       self.bg_task.variable.setWatchAD(self.watchAD_booleanVar.get())
       self.bg_task.variable.setRestartApp(self.restartApp_booleanVar.get())
@@ -582,6 +596,8 @@ class UI:
       self.setting_stringVar['Screenshot Delay'].set(dealString(self.bg_task.variable.getScreenshotDelay()))
       self.setting_stringVar['Freeze Threshold'].set(dealString(self.bg_task.variable.getFreezeThreshold()))
       self.setting_stringVar['Focus Threshold'].set(dealString(self.bg_task.variable.getFocusThreshold()))
+      self.setting_stringVar['Wait Time Limit'].set(dealString(self.bg_task.variable.getWaitTimeLimit()))
+      self.setting_stringVar['Drag Time Scale'].set(dealString(self.bg_task.variable.getDragTimeScale()))
       self.setting_stringVar['Line Notify Token'].set(self.bg_task.variable.getLineNotifyToken())
 
   def getSettingInputField(self):
@@ -637,6 +653,8 @@ class UI:
       self.bg_task.variable.setScreenshotDelay(dealString(self.setting_stringVar['Screenshot Delay'].get(), float))
       self.bg_task.variable.setFreezeThreshold(dealString(self.setting_stringVar['Freeze Threshold'].get()))
       self.bg_task.variable.setFocusThreshold(dealString(self.setting_stringVar['Focus Threshold'].get()))
+      self.bg_task.variable.setWaitTimeLimit(dealString(self.setting_stringVar['Wait Time Limit'].get()))
+      self.bg_task.variable.setDragTimeScale(dealString(self.setting_stringVar['Drag Time Scale'].get()))
       self.bg_task.variable.setLineNotifyToken(self.setting_stringVar['Line Notify Token'].get())
     
   def btn_run_event(self):
@@ -1041,6 +1059,16 @@ class UI:
     except:
       messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
     
+  def checkBtn_stream(self):
+    if self.stream_booleanVar.get() == True:
+      # run stream server
+      self.streamServer = StreamServer()
+      self.streamServer.run_in_bg()
+      # show message
+      messagebox.showinfo('Stream Server', 'You can enter "127.0.0.1:8787" to the url field in any browser.')
+    else:
+      self.streamServer.stop()
+      self.streamServer = None
 
   def btn_ADB_connect_event(self):
     if self.isConnected == False:
@@ -1228,6 +1256,7 @@ Average Gain: {offset:+.2f}""")
 
     hasRecordResult = False
     hasNotify = False
+    waitStartTimeStamp = None
 
     while self.isRunning:
       # detect dice war app
@@ -1276,12 +1305,16 @@ Average Gain: {offset:+.2f}""")
       try:
         self.bg_task.task(self.updateDice,
           self.log, 
-          self.autoPlay_booleanVar.get(), 
+          not self.last_game_booleanVar.get(), 
           self.watchAD_booleanVar.get(),
           battleMode,
           self.devMode_booleanVar.get())
       except Exception:
         self.log(f'Run Task Error: {traceback.format_exc()}\n')
+        # send notify
+        if self.notifyResult_booleanVar.get() == True:
+          self.log('=== Send Notify ===\n')
+          Line.notify(self.bg_task.variable.getLineNotifyToken(), traceback.format_exc())
         stopDetect()
         break
       
@@ -1351,15 +1384,27 @@ Average Gain: {offset:+.2f}""")
           stopDetect()
           break
 
+      # check waiting time
+      if previous_status != self.bg_task.status and self.bg_task.status == Status.WAIT and waitStartTimeStamp is None:
+        waitStartTimeStamp = time.time()
+      elif previous_status != self.bg_task.status and self.bg_task.status == Status.GAME:
+        waitStartTimeStamp = None
+      if self.bg_task.status == Status.WAIT and waitStartTimeStamp is not None:
+        if self.bg_task.variable.getWaitTimeLimit() <= (time.time() - waitStartTimeStamp):
+          waitStartTimeStamp = None
+          # waiting too long
+          self.log("Error: Wait too long\n")
+          self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
+          restartApp()
+          time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
+        
+
       if self.bg_task.status == Status.LOBBY or self.bg_task.status == Status.ARCADE:
-        # initial
-        if previous_status == Status.LOBBY or previous_status == Status.ARCADE:
-          self.bg_task.diceControl.battle(battleMode)
-        else:
-          if not self.autoPlay_booleanVar.get():
-            self.log('Detect Lobby / Arcade, stop detecting\n')
-            stopDetect()
-            break
+        if self.last_game_booleanVar.get():
+          self.log('Detect Lobby / Arcade, stop detecting\n')
+          stopDetect()
+          self.last_game_booleanVar.set(False)
+          break
 
       # detect delay
       time.sleep(self.bg_task.variable.getDetectDelay())
