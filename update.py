@@ -7,6 +7,8 @@ import zipfile
 import shutil
 import glob
 import os
+import hashlib
+import subprocess
 
 import version as v
 
@@ -46,7 +48,6 @@ class Update(QDialog):
     self.checktask = CheckUpdateTask()
     self.checktask.pbar_set_signal.connect(self.setPbar)
     self.checktask.log_signal.connect(self.log)
-    self.checktask.message_signal.connect(self.showMessage)
     self.checktask.update_btn_signal.connect(self.enableUpdateBtn)
     self.checktask.launch_btn_signal.connect(self.enableLaunchBtn)
     self.checktask.launch_btn_text_signal.connect(self.setLaunchBtnText)
@@ -62,8 +63,18 @@ class Update(QDialog):
   def setPbar(self, value:int):
     self.pbar.setValue(value)
 
-  def showMessage(self, title:str, message:str):
-    QMessageBox.information(self, title, message, QMessageBox.Ok)
+  def showMessage(self, title:str, message:str, buttonText: str = "OK", needClose = False):
+    box = QMessageBox()
+    box.setIcon(QMessageBox.Information)
+    box.setWindowTitle(title)
+    box.setText(message)
+    box.setStandardButtons(QMessageBox.Ok)
+    buttonY = box.button(QMessageBox.Ok)
+    buttonY.setText(buttonText)
+    box.exec()
+    
+    if needClose:
+      self.closeApp()
 
   def enableUpdateBtn(self, value:bool):
     self.update_btn.setEnabled(value)
@@ -83,6 +94,10 @@ class Update(QDialog):
   def launch(self):
     self.accept()
 
+  def closeApp(self):
+    self.close()
+    print("QQ")
+
   def runUpdate(self):
     self.enableUpdateBtn(False)
     self.enableLaunchBtn(False)
@@ -95,13 +110,14 @@ class Update(QDialog):
     self.task.update_btn_text_signal.connect(self.setUpdateBtnText)
     self.task.launch_btn_signal.connect(self.enableLaunchBtn)
     self.task.update_version = self.latestVersion
+    self.task.message_signal.connect(self.showMessage)
+    self.task.close_signal.connect(self.closeApp)
     self.task.start()
 
 
 class CheckUpdateTask(QThread):
   pbar_set_signal = Signal(int)
   log_signal = Signal(str)
-  message_signal = Signal(str,str)
   update_btn_signal = Signal(bool)
   launch_btn_signal = Signal(bool)
   launch_btn_text_signal = Signal(str)
@@ -145,6 +161,8 @@ class UpdateTask(QThread):
   log_signal = Signal(str)
   update_btn_text_signal = Signal(str)
   launch_btn_signal = Signal(bool)
+  message_signal = Signal(str,str,str,bool)
+  close_signal = Signal()
 
   update_version = None
 
@@ -152,6 +170,23 @@ class UpdateTask(QThread):
 
   def download_hook(self, chunk_number, max_size_chunk_read, read_total_size):
     pass
+
+  def is_same(self, file1, file2):
+    def sha256(file):
+      h  = hashlib.sha256()
+      b  = bytearray(128*1024)
+      mv = memoryview(b)
+      with open(file, 'rb', buffering=0) as f:
+        for n in iter(lambda : f.readinto(mv), 0):
+          h.update(mv[:n])
+      return h.hexdigest()
+
+    return sha256(file1) == sha256(file2)
+
+  def delete_files(self, zipFile, zipFolder):
+    os.remove(zipFile)
+    shutil.rmtree(zipFolder)
+    self.log_signal.emit("Finish Deleting Temporary Files")
 
   def run(self):
     zipFile = "code.zip"
@@ -163,30 +198,63 @@ class UpdateTask(QThread):
     # download
     self.log_signal.emit("Download...")
     urllib.request.urlretrieve(self.updateURL, zipFile, reporthook=self.download_hook)
-    self.pbar_set_signal.emit(50)
+    self.pbar_set_signal.emit(30)
 
     # unzip
     with zipfile.ZipFile(zipFile, "r") as zip_ref:
       zip_ref.extractall(zipFolder)
-    self.pbar_set_signal.emit(70)
+    self.pbar_set_signal.emit(50)
     self.log_signal.emit("Finish Extracting")
 
-    # move file
+    # create folder
+    for file in glob.glob(os.path.join(zipFolder, "**", "*"), recursive=True):
+      if os.path.isdir(file):
+        folder_path = os.path.relpath(file, unzipFolder)
+        if not os.path.exists(folder_path):
+          print(f"Create Folder: {folder_path}")
+          os.mkdirs(folder_path)
+    self.pbar_set_signal.emit(60)
+    self.log_signal.emit("Finish Creating Folders")
+
+    # update update.py first
+    needRestart = False
     for file in glob.glob(os.path.join(zipFolder, "**", "*"), recursive=True):
       if not os.path.isdir(file):
-        print(file, os.path.relpath(file, unzipFolder))
-        shutil.move(file, os.path.relpath(file, unzipFolder))
-    self.pbar_set_signal.emit(90)
-    self.log_signal.emit("Finish Copy")
+        if os.path.basename(__file__) == os.path.basename(file):
+          if not self.is_same(__file__, file):
+            print(f"Need to update {os.path.basename(__file__)} !")
+            shutil.move(file, os.path.relpath(file, unzipFolder))
+            needRestart = True
+            break
+    self.pbar_set_signal.emit(70)
+    
+    if needRestart:
+      self.delete_files(zipFile, zipFolder) # remove file
+      self.log_signal.emit("You need to restart the app to continue updating...")
+      self.message_signal.emit("Restart App", "You need to restart the app to continue updating...", "Restart", True)
+    else:
+      # move files
+      for file in glob.glob(os.path.join(zipFolder, "**", "*"), recursive=True):
+        if not os.path.isdir(file):
+          print(file, os.path.relpath(file, unzipFolder))
+          shutil.move(file, os.path.relpath(file, unzipFolder))
+      self.pbar_set_signal.emit(90)
+      self.log_signal.emit("Finish Copy")
 
-    # remove file
-    os.remove(zipFile)
-    shutil.rmtree(zipFolder)
-    self.pbar_set_signal.emit(100)
-    self.log_signal.emit("Finish Deleting Temporary Files")
+      # install modules
+      r = subprocess.run(["python.exe", "-m", "pip", "install", "-r", "requirements.txt"], capture_output=True)
+      print(r.stdout)
+      if r.returncode != 0:
+        self.delete_files(zipFile, zipFolder) # remove file
+        self.log_signal.emit("Install Modules Error")
+        self.message_signal.emit("Error", "Install Modules Error", "OK", True)
+      else:
+      # remove file
+        self.delete_files(zipFile, zipFolder)
 
-    self.update_btn_text_signal.emit("Finish Updating")
-    self.launch_btn_signal.emit(True)
+        self.pbar_set_signal.emit(100)
+        self.update_btn_text_signal.emit("Finish Updating")
+        self.launch_btn_signal.emit(True)
 
-    # change program version to latest version
-    v.Program_Version = self.update_version
+        # change program version to latest version
+        v.Program_Version = self.update_version

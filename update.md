@@ -315,3 +315,7 @@
 5. Fix the bug that the dice star can be recognized greater than 7
 6. Restart the app while waiting for a long time
 7. Change auto play to default setting, add last game to stop the game
+
+## Version 1.11.1
+
+1. Fix the update bug
