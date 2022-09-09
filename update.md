@@ -319,3 +319,7 @@
 ## Version 1.11.1
 
 1. Fix the update bug
+
+## Version 1.11.2
+
+1. Fix the update bug

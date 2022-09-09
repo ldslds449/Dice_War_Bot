@@ -212,7 +212,7 @@ class UpdateTask(QThread):
         folder_path = os.path.relpath(file, unzipFolder)
         if not os.path.exists(folder_path):
           print(f"Create Folder: {folder_path}")
-          os.mkdirs(folder_path)
+          os.makedirs(folder_path)
     self.pbar_set_signal.emit(60)
     self.log_signal.emit("Finish Creating Folders")
 
@@ -231,7 +231,7 @@ class UpdateTask(QThread):
     if needRestart:
       self.delete_files(zipFile, zipFolder) # remove file
       self.log_signal.emit("You need to restart the app to continue updating...")
-      self.message_signal.emit("Restart App", "You need to restart the app to continue updating...", "Restart", True)
+      self.message_signal.emit("Restart App", "You need to restart the app to continue updating...", "Close", True)
     else:
       # move files
       for file in glob.glob(os.path.join(zipFolder, "**", "*"), recursive=True):
@@ -243,7 +243,7 @@ class UpdateTask(QThread):
 
       # install modules
       r = subprocess.run(["python.exe", "-m", "pip", "install", "-r", "requirements.txt"], capture_output=True)
-      print(r.stdout)
+      print(r.stdout.decode("utf-8"))
       if r.returncode != 0:
         self.delete_files(zipFile, zipFolder) # remove file
         self.log_signal.emit("Install Modules Error")
