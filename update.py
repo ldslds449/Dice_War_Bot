@@ -96,7 +96,6 @@ class Update(QDialog):
 
   def closeApp(self):
     self.close()
-    print("QQ")
 
   def runUpdate(self):
     self.enableUpdateBtn(False)

@@ -326,13 +326,13 @@ class Detect:
     return ratio
 
   def detectLobby(self, img):
-    lower = [100, 100, 100]
+    lower = [100, 50, 50]
     upper = [105, 255, 255]
     ratio = self.colorDetect(img, lower, upper)
 
     print(f'Lobby {ratio}')
 
-    return ratio > 0.55
+    return ratio > 0.3
 
   # dice board 8
   def detectWaiting(self, img):

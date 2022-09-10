@@ -67,17 +67,24 @@ class MyAction(Action):
   def strictOrderMerge(diceControl: DiceControl, findMergeDice: Callable,
     count, location, boardDice, boardDiceStar, mergeDice, dice_level, exceptDice, order):
     if count[mergeDice] <= 0: return
+    # random select a target dice
     rdidx = rd.randrange(count[mergeDice])
     srcidx_ = location[mergeDice][rdidx]
     src_star = MyAction.get_star(srcidx_, boardDiceStar)
     srcidx = srcidx_ + 1
     
+    # check star of the dice
     if src_star > dice_level and 'Growth' in order:
-      order.remove('Growth')
-      exceptDice += ['Growth']
+      if 'Joker' in order:
+        order.insert(order.index('Joker'), order.pop(order.index('Growth')))
+      else:
+        order.append(order.pop(order.index('Growth')))
 
+    # find all dices that the dice can merge
     merge_dice_location = findMergeDice(srcidx, exceptDice)
+    rd.shuffle(merge_dice_location) # shuffle
     
+    # select one dice in order to merge
     if len(merge_dice_location) > 0:
       merge_dice_location = sorted(merge_dice_location, key= lambda x: 99999 if boardDice[x] not in order else order.index(boardDice[x]))
       dstidx = merge_dice_location[0] + 1
@@ -108,11 +115,15 @@ class MyAction(Action):
   def orderMerge(diceControl: DiceControl, findMergeDice: Callable,
     count, location, boardDice, mergeDice, exceptDice, order):
     if count[mergeDice] <= 0: return
+    # random select a target dice
     rdidx = rd.randrange(count[mergeDice])
     srcidx = location[mergeDice][rdidx] + 1
 
+    # find all dices that the dice can merge
     merge_dice_location = findMergeDice(srcidx, exceptDice)
+    rd.shuffle(merge_dice_location) # shuffle
     
+    # select one dice in order to merge
     if len(merge_dice_location) > 0:
       merge_dice_location = sorted(merge_dice_location, key= lambda x: 99999 if boardDice[x] not in order else order.index(boardDice[x]))
       dstidx = merge_dice_location[0] + 1

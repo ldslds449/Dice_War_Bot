@@ -921,6 +921,7 @@ class UI:
           [f'{key}: {val}' for key, val in status_result.items()])
         messagebox.showinfo('Detect Result', string, parent=self.window)
       except:
+        print(traceback.format_exc())
         messagebox.showerror('Detect Error', 'Need screenshot first', parent=self.window)
       self.btn_detect.config(state=NORMAL, text='Detect')
     threading.Thread(target = event).start()
@@ -1305,7 +1306,6 @@ Average Gain: {offset:+.2f}""")
       try:
         self.bg_task.task(self.updateDice,
           self.log, 
-          not self.last_game_booleanVar.get(), 
           self.watchAD_booleanVar.get(),
           battleMode,
           self.devMode_booleanVar.get())

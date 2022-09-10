@@ -179,7 +179,7 @@ class Task:
 
     return number
 
-  def task(self, updateDice: Callable, log: Callable, autoPlay: bool, watchAD: bool, battleMode: BattleMode, devMode: bool):
+  def task(self, updateDice: Callable, log: Callable, watchAD: bool, battleMode: BattleMode, devMode: bool):
 
     screenshot_start = time.time()
     
@@ -356,8 +356,7 @@ class Task:
         elif inTrophy:
           self.status = Status.TROPHY
         elif inLobby or inArcade:
-          if autoPlay:
-            self.diceControl.battle(battleMode) # start battle
+          self.diceControl.battle(battleMode) # start battle
       elif self.status == Status.TROPHY:
         if inLobby:
           self.status = Status.LOBBY

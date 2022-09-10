@@ -323,3 +323,8 @@
 ## Version 1.11.2
 
 1. Fix the update bug
+
+## Version 1.11.3
+
+1. Fix detect lobby bug
+2. Modify the joker copy limit
