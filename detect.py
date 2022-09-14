@@ -6,6 +6,7 @@ import dhash
 import joblib
 from sewar import *
 from typing import Tuple
+from functools import cmp_to_key
 from PIL import Image, ImageTk
 
 from variable import *
@@ -474,6 +475,58 @@ class Detect:
     lower = np.array([0,0,0])
     upper = np.array([180,255,200])
     return self.detectNumber(img, lower, upper, (25, 90), (12, 14), reverse=True)
+
+  def findCloseButton(self, img):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    # find white pixel
+    sensitivity = 10
+    lower = np.array([0,0,255-sensitivity])
+    upper = np.array([255,sensitivity,255])
+    hsv_color1 = np.array(lower)
+    hsv_color2 = np.array(upper)
+    mask = cv2.inRange(img_hsv, hsv_color1, hsv_color2)
+    white_img = cv2.bitwise_and(img, img, mask=mask)
+
+    # find oblique line
+    kernel_1 = np.array([
+      [ 1, 0, 0],
+      [ 0, 1, 0],
+      [ 0, 0, 1],
+    ], dtype=np.uint8)
+    kernel_2 = np.array([
+      [ 0, 0, 1],
+      [ 0, 1, 0],
+      [ 1, 0, 0],
+    ], dtype=np.uint8)
+    erode1_img = cv2.erode(white_img, kernel_1, iterations = 5)
+    erode2_img = cv2.erode(white_img, kernel_2, iterations = 5)
+
+    # get intersection
+    intersection_img = cv2.bitwise_and(erode1_img, erode2_img)
+
+    # find connected components
+    _, _, stats, _ = cv2.connectedComponentsWithStats(intersection_img[:,:,0], connectivity=8)
+
+    # calculate center
+    center = [(int(x+w/2),int(y+h/2)) for x,y,w,h,_ in stats[1:]]
+
+    # sorting centroid in order: y(min) -> x(max)
+    def compare(item1, item2):
+      if item1[1] < item2[1]:
+        return -1
+      elif item1[1] > item2[1]:
+        return 1
+      else:
+        if item1[0] > item2[0]:
+          return -1
+        elif item1[0] < item2[0]:
+          return 1
+        else:
+          return 0
+    center_sort = sorted(center, key=cmp_to_key(compare))
+    
+    return center_sort[0]
 
   def canSummon(self, luminance: float):
     if luminance >= 180:

@@ -50,6 +50,9 @@ class Task:
     # wave image queue
     self.wave_q = deque(maxlen = 2)
 
+    # use for record no mode times
+    self.noModeCount = 0
+
   def init(self):
     self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID)
     self.diceControl = DiceControl(self.variable.getControlMode(), _hwnd=self.windowID)
@@ -276,6 +279,23 @@ class Task:
     result = status_result['Result']
     inArcade = status_result['Arcade']
     encouragement = status_result['Encouragement']
+
+    # check if we are in any one of mode
+    detectAtLeastOneMode = any(list(status_result.values()))
+    if not detectAtLeastOneMode:
+      self.noModeCount += 1
+      print(f"No Mode Count: {self.noModeCount}")
+      if self.noModeCount > self.variable.getCloseDialogThreshold():
+        log("No Mode Detect !!! Press Close Button\n")
+        # try to find a close button and press it
+        closeButtonLoc = self.detect.findCloseButton(im.copy())
+        # press it
+        pressLoc = self.diceControl.modifyZoom(closeButtonLoc)
+        self.diceControl.tap(pressLoc)
+        print(f"Press: {pressLoc}")
+        time.sleep(2) # delay for 2 seconds
+    else:
+      self.noModeCount = 0
 
     self.result = None
     self.result_screenshot = None

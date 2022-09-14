@@ -43,6 +43,7 @@ class Variable:
     self.focus_threshold = None
     self.wait_time_limit = None
     self.drag_time_scale = None
+    self.close_dialog_threshold = None
 
     self.col = 5 # constant
     self.row = 3 # constant
@@ -140,6 +141,7 @@ class Variable:
     self.focus_threshold = config.get('Detect', 'FocusThreshold', fallback='5') 
     self.wait_time_limit = config.get('Detect', 'WaitTimeLimit', fallback='90') 
     self.drag_time_scale = config.get('Control', 'DragTimeScale', fallback='600') 
+    self.close_dialog_threshold = config.get('Detect', 'CloseDialogThreshold', fallback='30') 
     self.battle_mode = config.get('Flag', 'BattleMode', fallback='2v2') 
     # eval('True') = True, eval('False') = False
     self.last_game = str2Type(config.get('Flag', 'LastGame', fallback='False'), eval) 
@@ -215,6 +217,7 @@ class Variable:
     config.set('Detect', 'FreezeThreshold', type2Str(self.freeze_threshold))
     config.set('Detect', 'FocusThreshold', type2Str(self.focus_threshold))
     config.set('Detect', 'WaitTimeLimit', type2Str(self.wait_time_limit))
+    config.set('Detect', 'CloseDialogThreshold', type2Str(self.close_dialog_threshold))
     config.add_section('Control')
     config.set('Control', 'DragTimeScale', type2Str(self.drag_time_scale))
     config.add_section('Flag')
@@ -379,6 +382,9 @@ class Variable:
 
   def setDragTimeScale(self, _value: int):
     self.drag_time_scale = _value
+    
+  def setCloseDialogThreshold(self, _value: int):
+    self.close_dialog_threshold = _value
 
   def setBattleMode(self, _value: str):
     self.battle_mode = _value
@@ -576,6 +582,9 @@ class Variable:
 
   def getDragTimeScale(self):
     return self.drag_time_scale
+
+  def getCloseDialogThreshold(self):
+    return self.close_dialog_threshold
 
   def getBattleMode(self):
     return self.battle_mode

@@ -180,6 +180,7 @@ class UI:
       'BitRate': 0,
       'Wait Time Limit': 0,
       'Drag Time Scale': 0,
+      'Close Dialog Threshold': 0,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -598,6 +599,7 @@ class UI:
       self.setting_stringVar['Focus Threshold'].set(dealString(self.bg_task.variable.getFocusThreshold()))
       self.setting_stringVar['Wait Time Limit'].set(dealString(self.bg_task.variable.getWaitTimeLimit()))
       self.setting_stringVar['Drag Time Scale'].set(dealString(self.bg_task.variable.getDragTimeScale()))
+      self.setting_stringVar['Close Dialog Threshold'].set(dealString(self.bg_task.variable.getCloseDialogThreshold()))
       self.setting_stringVar['Line Notify Token'].set(self.bg_task.variable.getLineNotifyToken())
 
   def getSettingInputField(self):
@@ -655,6 +657,7 @@ class UI:
       self.bg_task.variable.setFocusThreshold(dealString(self.setting_stringVar['Focus Threshold'].get()))
       self.bg_task.variable.setWaitTimeLimit(dealString(self.setting_stringVar['Wait Time Limit'].get()))
       self.bg_task.variable.setDragTimeScale(dealString(self.setting_stringVar['Drag Time Scale'].get()))
+      self.bg_task.variable.setCloseDialogThreshold(dealString(self.setting_stringVar['Close Dialog Threshold'].get()))
       self.bg_task.variable.setLineNotifyToken(self.setting_stringVar['Line Notify Token'].get())
     
   def btn_run_event(self):

@@ -328,3 +328,7 @@
 
 1. Fix detect lobby bug
 2. Modify the joker copy limit
+
+## Version 1.11.4
+
+1. Fix the bot will halt when announcement/daily dialog pop up
