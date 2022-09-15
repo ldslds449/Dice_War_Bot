@@ -332,3 +332,8 @@
 ## Version 1.11.4
 
 1. Fix the bot will halt when announcement/daily dialog pop up
+
+## Version 1.11.5
+
+1. Fix close button bug
+2. Modify the right top corner distance function

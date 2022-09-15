@@ -289,10 +289,11 @@ class Task:
         log("No Mode Detect !!! Press Close Button\n")
         # try to find a close button and press it
         closeButtonLoc = self.detect.findCloseButton(im.copy())
-        # press it
-        pressLoc = self.diceControl.modifyZoom(closeButtonLoc)
-        self.diceControl.tap(pressLoc)
-        print(f"Press: {pressLoc}")
+        if closeButtonLoc is not None:
+          # press it
+          pressLoc = self.diceControl.modifyZoom(closeButtonLoc)
+          self.diceControl.tap(pressLoc)
+          print(f"Press: {pressLoc}")
         time.sleep(2) # delay for 2 seconds
     else:
       self.noModeCount = 0

@@ -6,7 +6,6 @@ import dhash
 import joblib
 from sewar import *
 from typing import Tuple
-from functools import cmp_to_key
 from PIL import Image, ImageTk
 
 from variable import *
@@ -511,22 +510,10 @@ class Detect:
     # calculate center
     center = [(int(x+w/2),int(y+h/2)) for x,y,w,h,_ in stats[1:]]
 
-    # sorting centroid in order: y(min) -> x(max)
-    def compare(item1, item2):
-      if item1[1] < item2[1]:
-        return -1
-      elif item1[1] > item2[1]:
-        return 1
-      else:
-        if item1[0] > item2[0]:
-          return -1
-        elif item1[0] < item2[0]:
-          return 1
-        else:
-          return 0
-    center_sort = sorted(center, key=cmp_to_key(compare))
+    # sorting centroid in order: width-x+y (from small -> big)
+    center_sort = sorted(center, key=lambda x : img.shape[1]-x[0]+x[1])
     
-    return center_sort[0]
+    return center_sort[0] if len(center_sort) > 0 else None
 
   def canSummon(self, luminance: float):
     if luminance >= 180:
