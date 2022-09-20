@@ -332,7 +332,7 @@ class Detect:
 
     print(f'Lobby {ratio}')
 
-    return ratio > 0.3
+    return ratio > 0.55
 
   # dice board 8
   def detectWaiting(self, img):

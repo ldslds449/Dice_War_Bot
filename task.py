@@ -383,6 +383,8 @@ class Task:
           self.status = Status.LOBBY
         elif inArcade:
           self.status = Status.ARCADE
+        elif inFinish:
+          self.status = Status.FINISH
         elif inTrophy:
           self.diceControl.skip()
       elif self.status == Status.FINISH_ANIMATION:

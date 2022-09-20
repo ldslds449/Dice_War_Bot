@@ -337,3 +337,8 @@
 
 1. Fix close button bug
 2. Modify the right top corner distance function
+
+## Version 1.11.6
+
+1. Add new dice (Blizzard, EMP)
+2. Fix trophy detect bug
