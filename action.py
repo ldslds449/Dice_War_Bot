@@ -74,11 +74,16 @@ class MyAction(Action):
     srcidx = srcidx_ + 1
     
     # check star of the dice
-    if src_star > dice_level and 'Growth' in order:
-      if 'Joker' in order:
-        order.insert(order.index('Joker'), order.pop(order.index('Growth')))
-      else:
-        order.append(order.pop(order.index('Growth')))
+    if src_star != 7:
+      if src_star > dice_level and 'Growth' in order:
+        if 'Joker' in order:
+          order.insert(order.index('Joker'), order.pop(order.index('Growth')))
+        else:
+          order.append(order.pop(order.index('Growth')))
+    else: # do not copy any growth when joker star is 7
+      if 'Growth' in order:
+        order.remove('Growth')
+        exceptDice.append('Growth')
 
     # find all dices that the dice can merge
     merge_dice_location = findMergeDice(srcidx, exceptDice)
@@ -263,25 +268,29 @@ class MyAction(Action):
     def allowMerge(wave:int, count:dict, boardDice:list, boardDiceStar:list):
       valid_joker_count = count['Joker']
 
-      # find max star
-      max_star = 0
+      # count
+      count_non_joker = [0,0,0,0,0,0,0,0]
+      count_joker = [0,0,0,0,0,0,0,0]
+      highest_star_joker = 0
+      highest_star_non_joker = 0
+      lowest_star_joker = 8
+      lowest_star_non_joker = 8
       for dice,star in zip(boardDice, boardDiceStar):
         if dice != 'Blank':
-          max_star = max(max_star, star)
-
-      # find max star joker
-      highest_star_joker_count = 0
-      highest_star_non_joker_count = 0
-      for dice,star in zip(boardDice, boardDiceStar):
-        if star == max_star:
           if dice == 'Joker':
-            highest_star_joker_count += 1
-          elif dice != 'Blank':
-            highest_star_non_joker_count += 1
+            count_joker[star] += 1
+            highest_star_joker = max(highest_star_joker, star)
+            lowest_star_joker = min(lowest_star_joker, star)
+          else:
+            count_non_joker[star] += 1
+            highest_star_non_joker = max(highest_star_non_joker, star)
+            lowest_star_non_joker = min(lowest_star_non_joker, star)
 
-      # check if there is a joker with highest star
-      if highest_star_non_joker_count == 0 and highest_star_joker_count == 1:
-        valid_joker_count -= 1 # do not count this type of joker
+      # find valid joker
+      if highest_star_joker > highest_star_non_joker and count_joker[highest_star_joker] == 1: # star of joker is too large
+        valid_joker_count -= 1 # do not count
+      if lowest_star_joker < lowest_star_non_joker and count_joker[lowest_star_joker] == 1: # star of joker is too small
+        valid_joker_count -= 1 # do not count
 
       return (count['Growth'] + valid_joker_count) < getNoMinionLimit(wave)
 

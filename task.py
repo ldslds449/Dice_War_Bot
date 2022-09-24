@@ -368,7 +368,7 @@ class Task:
             self.diceControl.skip() # click again
             time.sleep(5)
         elif encouragement:
-          self.diceControl.castSpell() # skip ad
+          self.status = Status.ENCOURAGEMENT
       elif self.status == Status.LOBBY or self.status == Status.ARCADE:
         MyAction.init()
         self.wave = -1
@@ -376,6 +376,8 @@ class Task:
           self.status = Status.WAIT
         elif inTrophy:
           self.status = Status.TROPHY
+        elif encouragement and self.status == Status.LOBBY:
+          self.status = Status.ENCOURAGEMENT
         elif inLobby or inArcade:
           self.diceControl.battle(battleMode) # start battle
       elif self.status == Status.TROPHY:
@@ -395,6 +397,18 @@ class Task:
           self.status = Status.LOBBY
         elif inArcade:
           self.status = Status.ARCADE
+      elif self.status == Status.ENCOURAGEMENT:
+        if inLobby:
+          self.status = Status.LOBBY
+        elif inArcade:
+          self.status = Status.ARCADE
+        elif encouragement:
+          log("Encouragement Box !!! Press Close Button\n")
+          closeButtonLoc = self.detect.findCloseButton(im.copy())
+          if closeButtonLoc is not None:
+            pressLoc = self.diceControl.modifyZoom(closeButtonLoc)
+            self.diceControl.tap(pressLoc)
+          time.sleep(2) # delay for 2 seconds
 
 
     if self.status != Status.GAME:

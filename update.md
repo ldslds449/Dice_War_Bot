@@ -342,3 +342,13 @@
 
 1. Add new dice (Blizzard, EMP)
 2. Fix trophy detect bug
+
+## Version 1.12.0
+
+1. Add new dice (Firework)
+2. Add video recording feature
+3. Add flip screen option
+4. Add adaptive dice detect mode
+5. Add encouragement mode
+6. Modify valid joker algorithm
+7. Modify joker copy algorithm

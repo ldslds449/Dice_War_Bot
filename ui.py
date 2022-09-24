@@ -26,7 +26,7 @@ from version import *
 from draw import *
 from resource import *
 from stream import *
-
+from video import *
 
 class UI:
 
@@ -178,6 +178,7 @@ class UI:
       'Extract Wave Size WH': 2,
       'Max FPS': 0,
       'BitRate': 0,
+      'Flip Screen': 0,
       'Wait Time Limit': 0,
       'Drag Time Scale': 0,
       'Close Dialog Threshold': 0,
@@ -312,25 +313,30 @@ class UI:
     optionMenu_battle.pack(fill=BOTH, expand=True, side=TOP)
 
     # detect button
-    self.btn_save_extract_images = tk.Button(self.frame_detect_btn, text='Save Extract Images', width=15, height=2, font=('Arial', 10))
-    self.btn_save_extract_images.config(command=self.btn_save_extract_images_event, state=DISABLED)
-    self.btn_save_extract_images.pack(fill=BOTH, expand=True)
     frame_function = tk.Frame(self.frame_detect_btn)
     frame_function.pack(fill=BOTH, expand=True, side=TOP)
     frame_function.columnconfigure(0, weight=1)
     frame_function.columnconfigure(1, weight=1)
+    self.btn_save_extract_images = tk.Button(frame_function, text='Save\nImages', width=10, height=2, font=('Arial', 10))
+    self.btn_save_extract_images.config(command=self.btn_save_extract_images_event, state=DISABLED)
+    self.btn_save_extract_images.grid(row=0, column=0, sticky='ewns')
+    self.btn_start_record = tk.Button(frame_function, text='Start\nRecording', width=10, height=2, font=('Arial', 10))
+    self.btn_start_record.config(command=self.btn_start_record_event, state=DISABLED)
+    self.btn_start_record.grid(row=0, column=1, sticky='ewns')
+    self.record_list = []
+    self.isRecording = False
     self.btn_BM = tk.Button(frame_function, text='BM', height=2, font=('Arial', 10))
     self.btn_BM.config(command=self.btn_bm_event, state=DISABLED)
-    self.btn_BM.grid(row=0, column=0, sticky='ewns')
+    self.btn_BM.grid(row=1, column=0, sticky='ewns')
     self.btn_result = tk.Button(frame_function, text='Reset\nResult', height=2, font=('Arial', 10))
     self.btn_result.config(command=self.btn_reset_event, state=NORMAL)
-    self.btn_result.grid(row=0, column=1, sticky='ewns')
+    self.btn_result.grid(row=1, column=1, sticky='ewns')
     self.btn_share_party = tk.Button(frame_function, text='Share\nParty', height=2, font=('Arial', 10))
     self.btn_share_party.config(command=self.btn_share_party_event, state=NORMAL)
-    self.btn_share_party.grid(row=1, column=0, sticky='ewns')
+    self.btn_share_party.grid(row=2, column=0, sticky='ewns')
     self.btn_share_board = tk.Button(frame_function, text='Share\nBoard', height=2, font=('Arial', 10))
     self.btn_share_board.config(command=self.btn_share_board_event, state=DISABLED)
-    self.btn_share_board.grid(row=1, column=1, sticky='ewns')
+    self.btn_share_board.grid(row=2, column=1, sticky='ewns')
 
     # auto play
     self.last_game_booleanVar = tk.BooleanVar() 
@@ -562,6 +568,7 @@ class UI:
       self.setting_stringVar['ADB ID'].set(self.bg_task.variable.getADBID())
       self.setting_stringVar['Max FPS'].set(self.bg_task.variable.getMaxFPS())
       self.setting_stringVar['BitRate'].set(self.bg_task.variable.getBitRate())
+      self.setting_stringVar['Flip Screen'].set(self.bg_task.variable.getFlipScreen())
       self.setting_stringVar['Random Offset'].set(dealString(self.bg_task.variable.getRandomOffset()))
       self.setting_stringVar['Board Left Top XY'].set(dealString(self.bg_task.variable.getBoardDiceLeftTopXY()))
       self.setting_stringVar['Board Dice Offset XY'].set(dealString(self.bg_task.variable.getBoardDiceOffsetXY()))
@@ -620,6 +627,7 @@ class UI:
       self.bg_task.variable.setADBID(self.setting_stringVar['ADB ID'].get())
       self.bg_task.variable.setMaxFPS(dealString(self.setting_stringVar['Max FPS'].get()))
       self.bg_task.variable.setBitRate(dealString(self.setting_stringVar['BitRate'].get()))
+      self.bg_task.variable.setFlipScreen(dealString(self.setting_stringVar['Flip Screen'].get()))
       self.bg_task.variable.setRandomOffset(dealString(self.setting_stringVar['Random Offset'].get()))
       self.bg_task.variable.setBoardDiceLeftTopXY(dealString(self.setting_stringVar['Board Left Top XY'].get()))
       self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar['Board Dice Offset XY'].get(), float))
@@ -863,6 +871,27 @@ class UI:
       self.btn_save_extract_images.config(state=NORMAL, text='Save Extract Images')
     threading.Thread(target = event).start()
 
+  def btn_start_record_event(self):
+    if self.isRecording == False:
+      self.btn_start_record.config(text="Stop\nRecording", bg="#ff9999")
+      self.isRecording = True
+    else:
+      self.btn_start_record.config(text="Saving...", bg="#f0f0f0", state=DISABLED)
+      self.isRecording = False
+      # save video
+      def save_video():
+        try:
+          Video.createVideo(self.record_list, ADB.getResolution(), self.bg_task.variable.getMaxFPS())
+        except:
+          self.log(traceback.format_exc())
+        self.record_list = [] # release memory
+        gc.collect()
+        self.btn_start_record.config(text="Start\nRecording", bg="#f0f0f0", state=NORMAL)
+      # run in thread
+      t = threading.Thread(target = save_video)
+      t.setDaemon(True)
+      t.start()
+
   def btn_save_screenshot_event(self):
     self.log('=== Save Screenshot Image ===\n')
     def event():
@@ -1098,6 +1127,8 @@ class UI:
           self.btn_connect.config(state=DISABLED, text='Connecting...')
 
           def updateScreen(frame):
+            if self.isRecording:
+              self.record_list.append(frame.copy())
             frame = self.limitImageSize(frame, self.label_screen.winfo_height()-10)
             frame = self.bg_task.detect.OpenCV2TK(frame)
             self.changeImage(self.label_screen, frame)
@@ -1110,7 +1141,7 @@ class UI:
           s, r = ADB.connect(self.bg_task.variable.getADBMode(), self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort(), self.bg_task.variable.getADBID())
           self.log(s + '\n')
           if r: # success
-            ADB.createClient(self.bg_task.variable.getADBMode(), self.bg_task.variable.getMaxFPS(), self.bg_task.variable.getBitRate(), updateScreen)
+            ADB.createClient(self.bg_task.variable.getMaxFPS(), self.bg_task.variable.getBitRate(), self.bg_task.variable.getFlipScreen(), updateScreen)
             self.bg_task.init()
             self.enableButton()
             self.btn_connect.config(state=NORMAL, text='Disconnect')
@@ -1148,6 +1179,7 @@ class UI:
     self.btn_detect.config(state=NORMAL)
     self.btn_save_extract_images.config(state=NORMAL)
     self.btn_share_board.config(state=NORMAL)
+    self.btn_start_record.config(state=NORMAL)
   
   def enableButtonByLoadScreenshot(self):
     self.btn_save_screenshot.config(state=NORMAL)
@@ -1323,7 +1355,7 @@ Average Gain: {offset:+.2f}""")
       
       # status changed
       if previous_status != self.bg_task.status:
-        status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy', 'Finish Animation', 'Arcade']
+        status_str = ['Lobby', 'Wait', 'Game', 'Finish', 'Trophy', 'Finish Animation', 'Arcade', 'Encouragement']
         self.log(f'=== Detect {status_str[int(self.bg_task.status)]} ===\n')
         self.status_StringVar.set(status_str[int(self.bg_task.status)].replace(" ","\n"))
 

@@ -65,6 +65,7 @@ class Variable:
 
     self.max_fps = None
     self.bitrate = None
+    self.flip_screen = None
 
     self.battle_mode = None
     self.last_game = None
@@ -133,6 +134,7 @@ class Variable:
     self.adb_id = str2Type(config.get('ADB', 'ID', fallback=''), str)
     self.max_fps = str2Type(config.get('ADB', 'MaxFPS', fallback='15'), int)
     self.bitrate = str2Type(config.get('ADB', 'BitRate', fallback='8000000'), int)
+    self.flip_screen = str2Type(config.get('Window', 'FlipScreen', fallback='1'))
     self.dice_party = list(str2Type(config.get('Dice', 'DiceParty', fallback=''), str))
     self.detect_delay = str2Type(config.get('Detect', 'DetectDelay', fallback='0.0'), float)
     self.restart_delay = str2Type(config.get('Detect', 'RestartDelay', fallback='10.0'), float)
@@ -196,6 +198,7 @@ class Variable:
     config.set('Coordinate', 'RandomOffset', type2Str(self.random_offset))
     config.add_section('Window')
     config.set('Window', 'ZoomRatio', type2Str(self.zoom_ratio))
+    config.set('Window', 'FlipScreen', type2Str(self.flip_screen))
     config.add_section('Mode')
     config.set('Mode', 'Emulator', type2Str(int(self.emulator_mode)))
     config.set('Mode', 'ControlMode', type2Str(int(self.control_mode)))
@@ -355,6 +358,9 @@ class Variable:
 
   def setBitRate(self, _value: int):
     self.bitrate = _value
+
+  def setFlipScreen(self, _value: int):
+    self.flip_screen = _value
 
   def setDiceParty(self, _value: list):
     self.dice_party = _value
@@ -552,6 +558,9 @@ class Variable:
 
   def getBitRate(self):
     return self.bitrate
+
+  def getFlipScreen(self):
+    return self.flip_screen
 
   def getDiceParty(self):
     return self.dice_party

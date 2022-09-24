@@ -22,8 +22,9 @@ class DetectDiceMode(IntEnum):
   HIST_RGB = 6
 
 class DetectStarMode(IntEnum):
-  COMPUTER_VERSION = 0
-  ML_SVC = 1
+  COMPUTER_VERSION_MIX = 0
+  COMPUTER_VERSION_ADAPTIVE = 1
+  ML_SVC = 2
 
 class BattleMode(IntEnum):
   BATTLE_1V1 = 0
@@ -38,6 +39,7 @@ class Status(IntEnum):
   TROPHY = 4
   FINISH_ANIMATION = 5
   ARCADE = 6
+  ENCOURAGEMENT = 7
 
 class ADBMode(IntEnum):
   IP = 0
