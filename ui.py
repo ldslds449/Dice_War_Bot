@@ -868,7 +868,7 @@ class UI:
               self.bg_task.detect.save(img, os.path.join('extract', f'{name}_{star}_{getTimeStamp()}{i:02d}.png'))
       except:
         self.log(f'Save Extract Images Error\n{traceback.format_exc()}')
-      self.btn_save_extract_images.config(state=NORMAL, text='Save Extract Images')
+      self.btn_save_extract_images.config(state=NORMAL, text='Save\nImages')
     threading.Thread(target = event).start()
 
   def btn_start_record_event(self):

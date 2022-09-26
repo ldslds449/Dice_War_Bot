@@ -352,3 +352,8 @@
 5. Add encouragement mode
 6. Modify valid joker algorithm
 7. Modify joker copy algorithm
+
+## Version 1.12.1
+
+1. Modify the text of button
+2. Add video folder to save the video
