@@ -357,3 +357,8 @@
 
 1. Modify the text of button
 2. Add video folder to save the video
+
+## Version 1.12.2
+
+1. Fix the error during closing the bot
+2. Modify the window size

@@ -179,6 +179,7 @@ class UI:
       'Max FPS': 0,
       'BitRate': 0,
       'Flip Screen': 0,
+      'Show Screen': 0,
       'Wait Time Limit': 0,
       'Drag Time Scale': 0,
       'Close Dialog Threshold': 0,
@@ -284,7 +285,7 @@ class UI:
     # log
     scrollbar_log_y = tk.Scrollbar(self.frame_log)
     scrollbar_log_x = tk.Scrollbar(self.frame_log, orient='horizontal')
-    self.text_log = tk.Text(self.frame_log, font=('Arial', 12), height=18, width=48)
+    self.text_log = tk.Text(self.frame_log, font=('Arial', 12), height=22, width=48)
     scrollbar_log_y.pack(side=tk.RIGHT, fill=tk.Y)
     scrollbar_log_x.pack(side=tk.BOTTOM, fill=tk.X)
     self.text_log.pack(side=tk.LEFT, fill=BOTH, expand=True)
@@ -569,6 +570,7 @@ class UI:
       self.setting_stringVar['Max FPS'].set(self.bg_task.variable.getMaxFPS())
       self.setting_stringVar['BitRate'].set(self.bg_task.variable.getBitRate())
       self.setting_stringVar['Flip Screen'].set(self.bg_task.variable.getFlipScreen())
+      self.setting_stringVar['Show Screen'].set(self.bg_task.variable.getShowScreen())
       self.setting_stringVar['Random Offset'].set(dealString(self.bg_task.variable.getRandomOffset()))
       self.setting_stringVar['Board Left Top XY'].set(dealString(self.bg_task.variable.getBoardDiceLeftTopXY()))
       self.setting_stringVar['Board Dice Offset XY'].set(dealString(self.bg_task.variable.getBoardDiceOffsetXY()))
@@ -628,6 +630,7 @@ class UI:
       self.bg_task.variable.setMaxFPS(dealString(self.setting_stringVar['Max FPS'].get()))
       self.bg_task.variable.setBitRate(dealString(self.setting_stringVar['BitRate'].get()))
       self.bg_task.variable.setFlipScreen(dealString(self.setting_stringVar['Flip Screen'].get()))
+      self.bg_task.variable.setShowScreen(dealString(self.setting_stringVar['Show Screen'].get()))
       self.bg_task.variable.setRandomOffset(dealString(self.setting_stringVar['Random Offset'].get()))
       self.bg_task.variable.setBoardDiceLeftTopXY(dealString(self.setting_stringVar['Board Left Top XY'].get()))
       self.bg_task.variable.setBoardDiceOffsetXY(dealString(self.setting_stringVar['Board Dice Offset XY'].get(), float))
@@ -677,6 +680,7 @@ class UI:
           self.getSelectDiceField()
           self.isRunning = True
           self.thread_bg_task = threading.Thread(target = self.run_bg_task)
+          self.thread_bg_task.setDaemon(True)
           self.thread_bg_task.start()
           self.btn_run.config(text='Stop')
           self.log('=== Start Detecting ===\n')
@@ -1141,7 +1145,7 @@ class UI:
           s, r = ADB.connect(self.bg_task.variable.getADBMode(), self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort(), self.bg_task.variable.getADBID())
           self.log(s + '\n')
           if r: # success
-            ADB.createClient(self.bg_task.variable.getMaxFPS(), self.bg_task.variable.getBitRate(), self.bg_task.variable.getFlipScreen(), updateScreen)
+            ADB.createClient(self.bg_task.variable.getMaxFPS(), self.bg_task.variable.getBitRate(), self.bg_task.variable.getFlipScreen(), updateScreen if self.bg_task.variable.getShowScreen() == 1 else None)
             self.bg_task.init()
             self.enableButton()
             self.btn_connect.config(state=NORMAL, text='Disconnect')

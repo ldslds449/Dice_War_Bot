@@ -62,7 +62,8 @@ class ADB:
       # may receive None to avoid blocking event.
       if frame is not None:
         ADB.frame = frame
-        updateScreen(frame)
+        if updateScreen is not None:
+          updateScreen(frame)
 
     ADB.client = scrcpy.Client(device=ADB.d, max_fps=max_fps, bitrate=bitrate, flip=(flip_screen == 1))
     ADB.client.add_listener(scrcpy.EVENT_FRAME, on_frame)
