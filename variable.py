@@ -83,6 +83,10 @@ class Variable:
 
     self.line_notify_token = None
 
+    self.emulator_name = None
+    self.emulator_path = None
+    self.run_emulator_delay = None
+
   ### read from config file ###
   def loadFromConfigFile(self):
     config = ConfigParser()
@@ -157,6 +161,9 @@ class Variable:
     self.win = str2Type(config.get('Record', 'Win', fallback='0'))
     self.lose = str2Type(config.get('Record', 'Lose', fallback='0'))
     self.line_notify_token = config.get('Notify', 'LineNotifyToken', fallback='')
+    self.emulator_name = config.get('Emulator', 'EmulatorName', fallback='BlueStacks')
+    self.emulator_path = config.get('Emulator', 'EmulatorPath', fallback='')
+    self.run_emulator_delay = str2Type(config.get('Emulator', 'RunEmulatorDelay', fallback='60'), int)
 
   ### write to config file ###
   def saveToConfigFile(self):
@@ -239,6 +246,10 @@ class Variable:
     config.set('Record', 'Lose', type2Str(self.lose))
     config.add_section('Notify')
     config.set('Notify', 'LineNotifyToken', self.line_notify_token)
+    config.add_section('Emulator')
+    config.set('Emulator', 'EmulatorName', self.emulator_name)
+    config.set('Emulator', 'EmulatorPath', self.emulator_path)
+    config.set('Emulator', 'RunEmulatorDelay', type2Str(self.run_emulator_delay))
 
     with open(self.config_file_name, 'w') as f:
       config.write(f)
@@ -427,6 +438,15 @@ class Variable:
 
   def setLineNotifyToken(self, _value: str):
     self.line_notify_token = _value
+
+  def setEmulatorName(self, _value: str):
+    self.emulator_name = _value
+  
+  def setEmulatorPath(self, _value: str):
+    self.emulator_path = _value
+
+  def setRunEmulatorDelay(self, _value: str):
+    self.run_emulator_delay = _value
 
   ### get ###
 
@@ -633,3 +653,12 @@ class Variable:
 
   def getLineNotifyToken(self):
     return self.line_notify_token
+
+  def getEmulatorName(self):
+    return self.emulator_name
+
+  def getEmulatorPath(self):
+    return self.emulator_path
+
+  def getRunEmulatorDelay(self):
+    return self.run_emulator_delay

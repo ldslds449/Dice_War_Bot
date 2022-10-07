@@ -5,8 +5,9 @@ class ControlMode(IntEnum):
   ADB = 1
 
 class Emulator(IntEnum):
-  BLUESTACKS = 0
-  NOX = 1
+  NONE = 0
+  BLUESTACKS = 1
+  NOX = 2
 
 class ExtractMode(IntEnum):
   LEFTTOP = 0

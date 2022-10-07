@@ -10,11 +10,14 @@ class Resource:
         name = 'HD-Player.exe'
       elif emu == Emulator.NOX:
         name = '夜神模擬器'
+      elif emu == Emulator.NONE:
+        name = None
 
       Resource.pid = None
-      for proc in psutil.process_iter():
-        if proc.name() == name:
-          Resource.pid = proc.pid
+      if name is not None:
+        for proc in psutil.process_iter():
+          if proc.name() == name:
+            Resource.pid = proc.pid
 
     return Resource.pid
 

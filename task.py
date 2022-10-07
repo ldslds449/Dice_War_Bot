@@ -1,6 +1,4 @@
 import sys
-import win32gui
-import win32con
 import time
 import dhash
 import threading
@@ -17,6 +15,7 @@ from mode import *
 from action import *
 from notify import *
 from utils import *
+from window import *
 
 class Task:
   def __init__(self):
@@ -24,8 +23,6 @@ class Task:
     self.detect_board_dice_img = []
     self.board_dice_lu = []
     self.board_dice_joker_copy = []
-
-    self.windowID = None
 
     self.variable = Variable()
     self.variable.loadFromConfigFile()
@@ -54,21 +51,14 @@ class Task:
     self.noModeCount = 0
 
   def init(self):
-    self.screen = Screen(self.variable.getControlMode(), _hwnd=self.windowID)
-    self.diceControl = DiceControl(self.variable.getControlMode(), _hwnd=self.windowID)
+    # check
+    if self.variable.getEmulatorMode() == Emulator.NONE and self.variable.getControlMode() == ControlMode.WIN32API:
+      raise Exception("Please set Emulator Mode")
+    if self.variable.getEmulatorMode() != Emulator.NONE:
+      Window.getWindowID(self.variable.getEmulatorMode(), self.variable.getEmulatorName())
+    self.screen = Screen(self.variable.getControlMode(), _hwnd=Window.windowID)
+    self.diceControl = DiceControl(self.variable.getControlMode(), _hwnd=Window.windowID)
     self.diceControl.setVariable(self.variable)
-
-  def getWindowID(self):
-    if self.variable.getEmulatorMode() == Emulator.BLUESTACKS:
-      hwnd = win32gui.FindWindow(None, "BlueStacks")
-      hwndChild = win32gui.GetWindow(hwnd, win32con.GW_CHILD)
-      self.windowID = hwndChild
-    elif self.variable.getEmulatorMode() == Emulator.NOX:
-      hwnd = win32gui.FindWindow(None, "夜神模擬器")
-      self.windowID = hwnd
-    # check if is valid
-    if self.windowID == 0:
-      raise RuntimeError('Window Not Found !!!')
 
   def forAllDiceOnBoard(self, function):
     for i in range(self.variable.getBoardSize()):

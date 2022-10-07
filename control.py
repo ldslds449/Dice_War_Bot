@@ -59,7 +59,9 @@ class Control:
       offset_x = src[0] - dst[0]
       offset_y = src[1] - dst[1]
       dist = math.sqrt(abs(offset_x)**2 + abs(offset_y)**2)
-      duration = dist / time_scale
+      duration = (dist / time_scale)
+      # smooth
+      duration = math.tanh(duration-1)+0.88 if duration < 1 else duration
       ADB.swipe(src, dst, duration)
 
   def back(self):

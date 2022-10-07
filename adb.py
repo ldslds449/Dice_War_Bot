@@ -1,7 +1,6 @@
 import scrcpy
 from typing import Tuple
 from adbutils import adb
-from adbutils import device
 
 from mode import *
 
@@ -62,8 +61,7 @@ class ADB:
       # may receive None to avoid blocking event.
       if frame is not None:
         ADB.frame = frame
-        if updateScreen is not None:
-          updateScreen(frame)
+        updateScreen(frame)
 
     ADB.client = scrcpy.Client(device=ADB.d, max_fps=max_fps, bitrate=bitrate, flip=(flip_screen == 1))
     ADB.client.add_listener(scrcpy.EVENT_FRAME, on_frame)

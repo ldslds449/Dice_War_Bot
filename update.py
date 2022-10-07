@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QDialog, QTextEdit, QProgressBar, QVBoxLayout, QMe
 from PySide6.QtCore import QThread, Signal, Qt
   
 import time
-import urllib.request
+import requests
 import zipfile
 import shutil
 import glob
@@ -188,15 +188,24 @@ class UpdateTask(QThread):
     self.log_signal.emit("Finish Deleting Temporary Files")
 
   def run(self):
-    zipFile = "code.zip"
     zipFolder = "tmp"
     unzipFolder = os.path.join(zipFolder, "Dice_War_Bot-master")
 
     self.log_signal.emit("======= Updating =======")
 
     # download
+    r = requests.get(self.updateURL, stream=True)
+    zipFile = r.headers.get("content-disposition")[r.headers.get("content-disposition").rfind("=")+1:]
+    self.log_signal.emit(f"FileName: {zipFile}")
+    fileSize = 13000000 # fake
+    totalSave = 0
     self.log_signal.emit("Download...")
-    urllib.request.urlretrieve(self.updateURL, zipFile, reporthook=self.download_hook)
+    with open(zipFile, 'wb') as f:
+      for chunk in r.iter_content(chunk_size=1024):
+        if chunk: 
+          f.write(chunk)
+          totalSave += 1024
+          self.pbar_set_signal.emit(min((totalSave / fileSize)*30, 30))
     self.pbar_set_signal.emit(30)
 
     # unzip

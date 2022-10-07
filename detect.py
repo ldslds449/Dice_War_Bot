@@ -4,6 +4,7 @@ import os
 import numpy as np
 import dhash
 import joblib
+import queue
 from sewar import *
 from typing import Tuple
 from PIL import Image, ImageTk
@@ -203,7 +204,7 @@ class Detect:
       def binary_detect(input_img, apply_erosion_dilation, threshold_use_adaptive):
         if threshold_use_adaptive:
           # use adaptive mean threshold
-          img_binary = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 40)
+          img_binary = cv2.adaptiveThreshold(input_img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 40)
         else:
           # use global threshold
           _, img_binary = cv2.threshold(input_img, 130, 255, cv2.THRESH_BINARY)
@@ -264,6 +265,50 @@ class Detect:
               centers.append(center)
         return star_count
 
+      # flood (distinguish between star 1 or star 7)
+      # input_img: original image, not gray image
+      def flood(input_img):
+        h, w = input_img.shape[:2]
+        center = (h//2, w//2)
+        target_color = input_img[center[0]][center[1]]
+        # Delta E
+        def deltaE(a, b):
+          a = np.array([[a]], dtype=np.float32)
+          b = np.array([[b]], dtype=np.float32)
+          a = cv2.cvtColor(a/255, cv2.COLOR_BGR2LAB) 
+          b = cv2.cvtColor(b/255, cv2.COLOR_BGR2LAB) 
+          diff = cv2.add(a,-b)
+          diff_L = diff[:,:,0]
+          diff_A = diff[:,:,1]
+          diff_B = diff[:,:,2]
+          delta_e = np.mean( np.sqrt(diff_L*diff_L + diff_A*diff_A + diff_B*diff_B) )
+          return delta_e
+        # BFS
+        total = 0
+        visited = np.zeros(input_img.shape[:2], dtype=bool)
+        q = queue.Queue()
+        q.put(center)
+        while not q.empty():
+          coord = q.get()
+          # out of image
+          if coord[0] < 0 or coord[0] >= h or coord[1] < 0 or coord[1] >= w:
+            continue
+          # visited
+          if visited[coord[0], coord[1]]:
+            continue
+          # color different
+          diff = deltaE(input_img[coord[0]][coord[1]], target_color)
+          if diff > 8:
+            continue
+          total += 1
+          visited[coord[0], coord[1]] = True
+          q.put((coord[0]+1, coord[1]))
+          q.put((coord[0], coord[1]-1))
+          q.put((coord[0]-1, coord[1]))
+          q.put((coord[0], coord[1]+1))
+        # judge
+        return total < 35
+
       # change color & size
       img_resize = cv2.resize(img, self.resize_size)
       img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
@@ -279,7 +324,7 @@ class Detect:
 
         # star 7 detection (distinguish between star 1 or star 7)
         if star_count_binary_global == 1 and star_count_edge == 0:
-          max_star_value = binary_detect(img_gray, False, False)
+          max_star_value = 1 if flood(img_resize) else 0
         
         return 7 if max_star_value == 0 else min(max_star_value, 7)
 
@@ -363,7 +408,7 @@ class Detect:
 
     print(f'Finish {ratio1} {ratio2}')
 
-    return ratio1 > 0.9 and not ratio2 > 0.9
+    return (ratio1 > 0.9) and (not (ratio2 > 0.9))
 
   # emoji dialog
   def detectGame(self, img):

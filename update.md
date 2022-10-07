@@ -362,3 +362,17 @@
 
 1. Fix the error during closing the bot
 2. Modify the window size
+
+## Version 1.13.0
+
+1. Modify the action delay to random
+2. Now ignore those Joker dice which cannot be merged
+3. Modify the midLateGame parameter
+4. Stop merging the dice when wave >= 29
+5. Support those teams without Joker
+6. Use new fomula to mimic the human speed while swipping
+7. Fix the bug of treating 7-star Growth as 1-star Growth
+8. Now can detect the emulator to restart it when it crashes
+9. Add some animation when downloading the file
+10. Reduce the memory usage significantly when recording the video
+11. Now can restart the app when no mode appears a certain number of times in a row

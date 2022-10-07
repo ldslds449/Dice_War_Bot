@@ -1,3 +1,4 @@
+import enum
 from typing import Callable, Dict, List
 import abc
 import time
@@ -59,19 +60,27 @@ class MyAction(Action):
       dstidx = merge_dice_location[rd.randrange(0, len(merge_dice_location))] + 1
       if srcidx != dstidx:
         diceControl.mergeDice(srcidx, dstidx)
-        time.sleep(1)
+        time.sleep(np.random.uniform(0.2,0.6,1)) # random delay
         return (True, src_star)
     return (False, 0)
   
   @staticmethod
   def strictOrderMerge(diceControl: DiceControl, findMergeDice: Callable,
-    count, location, boardDice, boardDiceStar, mergeDice, dice_level, exceptDice, order):
-    if count[mergeDice] <= 0: return
-    # random select a target dice
-    rdidx = rd.randrange(count[mergeDice])
-    srcidx_ = location[mergeDice][rdidx]
-    src_star = MyAction.get_star(srcidx_, boardDiceStar)
-    srcidx = srcidx_ + 1
+    count, location, boardDice, boardDiceStar, mergeDice, mergeList, dice_level, exceptDice, order):
+    if mergeDice is not None: 
+      if count[mergeDice] <= 0: return False
+      # random select a target dice
+      rdidx = rd.randrange(count[mergeDice])
+      srcidx_ = location[mergeDice][rdidx]
+      src_star = MyAction.get_star(srcidx_, boardDiceStar)
+      srcidx = srcidx_ + 1
+    else:
+      if len(mergeList) == 0: return False
+      # random select a target dice in list
+      rdidx = rd.randrange(len(mergeList))
+      srcidx_ = mergeList[rdidx]
+      src_star = MyAction.get_star(srcidx_, boardDiceStar)
+      srcidx = srcidx_ + 1
     
     # check star of the dice
     if src_star != 7:
@@ -95,7 +104,7 @@ class MyAction(Action):
       dstidx = merge_dice_location[0] + 1
       if srcidx != dstidx:
         diceControl.mergeDice(srcidx, dstidx)
-        time.sleep(1)
+        time.sleep(np.random.uniform(0.2,0.6,1)) # random delay
         return True
     return False
   
@@ -112,7 +121,7 @@ class MyAction(Action):
       dstidx = merge_dice_location[rd.randrange(0, len(merge_dice_location))] + 1
       if srcidx != dstidx:
         diceControl.mergeDice(srcidx, dstidx)
-        time.sleep(1)
+        time.sleep(np.random.uniform(0.2,0.6,1)) # random delay
         return True
     return False
 
@@ -134,7 +143,7 @@ class MyAction(Action):
       dstidx = merge_dice_location[0] + 1
       if srcidx != dstidx:
         diceControl.mergeDice(srcidx, dstidx)
-        time.sleep(1)
+        time.sleep(np.random.uniform(0.2,0.6,1)) # random delay
         return True
     return False
 
@@ -185,7 +194,7 @@ class MyAction(Action):
         loc = np.concatenate((loc_joker_copy, loc_no_joker_copy), axis=0)
         # merge
         diceControl.mergeDice(int(loc[0])+1, int(loc[1])+1)
-        time.sleep(np.random.uniform(0.5,1,1)) # random delay
+        time.sleep(np.random.uniform(0.2,0.6,1)) # random delay
 
         return (True, dice, star)
     return (False, "", 0)    
@@ -220,11 +229,11 @@ class MyAction(Action):
     if countBlank == 15:
       # summon dice four times
       diceControl.summonDice()
-      time.sleep(0.3)
+      time.sleep(0.2)
       diceControl.summonDice()
-      time.sleep(0.3)
+      time.sleep(0.2)
       diceControl.summonDice()
-      time.sleep(0.3)
+      time.sleep(0.2)
       diceControl.summonDice()
       MyAction.hasSummonDiceTimes += 4
       return
@@ -235,7 +244,7 @@ class MyAction(Action):
     
     countTotal = sum([v for k, v in count.items() if k != 'Blank'])
     earlyGame = countTotal <= 12
-    midLateGameParam = 20
+    midLateGameParam = 15
     hasJoker = 'Joker' in team
 
     if MyAction.hasSummonDiceTimes > midLateGameParam:
@@ -256,8 +265,10 @@ class MyAction(Action):
         return 3
       elif wave < 25:
         return 2
-      else:
+      elif wave < 29:
         return 1
+      else:
+        return 0
 
     def getMergeLimit(wave:int):
       if wave < 20:
@@ -266,38 +277,40 @@ class MyAction(Action):
         return 5
 
     def allowMerge(wave:int, count:dict, boardDice:list, boardDiceStar:list):
-      valid_joker_count = count['Joker']
+      valid_joker_count = count['Joker'] if 'Joker' in count else 0
+      valid_growth_count = count['Growth'] if 'Growth' in count else 0
 
-      # count
-      count_non_joker = [0,0,0,0,0,0,0,0]
-      count_joker = [0,0,0,0,0,0,0,0]
-      highest_star_joker = 0
-      highest_star_non_joker = 0
-      lowest_star_joker = 8
-      lowest_star_non_joker = 8
-      for dice,star in zip(boardDice, boardDiceStar):
-        if dice != 'Blank':
-          if dice == 'Joker':
-            count_joker[star] += 1
-            highest_star_joker = max(highest_star_joker, star)
-            lowest_star_joker = min(lowest_star_joker, star)
-          else:
-            count_non_joker[star] += 1
-            highest_star_non_joker = max(highest_star_non_joker, star)
-            lowest_star_non_joker = min(lowest_star_non_joker, star)
+      if 'Joker' in count:
+        # count
+        count_non_joker = [0,0,0,0,0,0,0,0]
+        count_joker = [0,0,0,0,0,0,0,0]
+        highest_star_joker = 0
+        highest_star_non_joker = 0
+        lowest_star_joker = 8
+        lowest_star_non_joker = 8
+        for dice,star in zip(boardDice, boardDiceStar):
+          if dice != 'Blank':
+            if dice == 'Joker':
+              count_joker[star] += 1
+              highest_star_joker = max(highest_star_joker, star)
+              lowest_star_joker = min(lowest_star_joker, star)
+            else:
+              count_non_joker[star] += 1
+              highest_star_non_joker = max(highest_star_non_joker, star)
+              lowest_star_non_joker = min(lowest_star_non_joker, star)
 
-      # find valid joker
-      if highest_star_joker > highest_star_non_joker and count_joker[highest_star_joker] == 1: # star of joker is too large
-        valid_joker_count -= 1 # do not count
-      if lowest_star_joker < lowest_star_non_joker and count_joker[lowest_star_joker] == 1: # star of joker is too small
-        valid_joker_count -= 1 # do not count
+        # find valid joker
+        if highest_star_joker > highest_star_non_joker and count_joker[highest_star_joker] == 1: # star of joker is too large
+          valid_joker_count -= 1 # do not count
+        if lowest_star_joker < lowest_star_non_joker and count_joker[lowest_star_joker] == 1: # star of joker is too small
+          valid_joker_count -= 1 # do not count
 
-      return (count['Growth'] + valid_joker_count) < getNoMinionLimit(wave)
+      return (valid_growth_count + valid_joker_count) < getNoMinionLimit(wave)
 
     
     if hasJoker:
       # joker copy
-      if count['Growth'] > 3:
+      if 'Growth' in count and count['Growth'] > 3:
         other = [dice for dice in team if dice not in ['Growth', 'Joker']]
         order = other + ['Joker']
         excepted = ['Growth']
@@ -306,8 +319,17 @@ class MyAction(Action):
         order = ['Growth'] + other + ['Joker']
         excepted = []
 
-      hasJokerCopy = MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice,
-                                                boardDiceStar, 'Joker', 4, excepted, order)
+      dice_count_by_star = [0,0,0,0,0,0,0,0]
+      jokerMergeList = []
+      for dice,star in zip(boardDice, boardDiceStar):
+        if dice != 'Blank':
+          dice_count_by_star[star] += 1
+      for i,(dice,star) in enumerate(zip(boardDice, boardDiceStar)):
+        if dice == 'Joker':
+          if dice_count_by_star[star] > 1:
+            jokerMergeList.append(i)
+
+      hasJokerCopy = MyAction.strictOrderMerge(diceControl, findMergeDice, count, location, boardDice, boardDiceStar, None, jokerMergeList, 4, excepted, order)
 
       # if joker has copied
       if hasJokerCopy:
@@ -316,32 +338,32 @@ class MyAction(Action):
           MyAction.hasSummonDiceTimes += 1
         return # detect dices again
 
-      # summon a dice
-      if canSummon:
-        diceControl.summonDice()
-        MyAction.hasSummonDiceTimes += 1
+    # summon a dice
+    if canSummon:
+      diceControl.summonDice()
+      MyAction.hasSummonDiceTimes += 1
 
-      # merge other dice
-      if countBlank == 0 and allowMerge(wave, count, boardDice, boardDiceStar):
-        other = [dice for dice in team if dice not in ['Growth', 'Joker']]
-        MyAction.greedyMerge(diceControl, location, boardDiceStar, jokerCopy, other, getMergeLimit(wave))
-        diceControl.summonDice()
-        MyAction.hasSummonDiceTimes += 1
+    # merge other dice
+    if countBlank == 0 and allowMerge(wave, count, boardDice, boardDiceStar):
+      other = [dice for dice in team if dice not in ['Growth', 'Joker']]
+      MyAction.greedyMerge(diceControl, location, boardDiceStar, jokerCopy, other, getMergeLimit(wave))
+      diceControl.summonDice()
+      MyAction.hasSummonDiceTimes += 1
 
-      # merge growth
-      if countBlank == 0 and count['Growth'] > 1 and wave > 25:
-        MyAction.greedyMerge(diceControl, location, boardDiceStar, jokerCopy, ['Growth'], 3)
-        diceControl.summonDice()
-        MyAction.hasSummonDiceTimes += 1
+    # merge growth
+    if countBlank == 0 and 'Growth' in count and count['Growth'] > 1 and wave > 25:
+      MyAction.greedyMerge(diceControl, location, boardDiceStar, jokerCopy, ['Growth'], 3)
+      diceControl.summonDice()
+      MyAction.hasSummonDiceTimes += 1
           
-      if MyAction.midLateGame:
-        for d,_ in count_sorted:
-          # skip Joker, Growth and Blank 
-          if d == 'Joker' or d == 'Growth' or d == 'Blank':
-            continue
-          # get location of the dice in team list
-          level_location = team.index(d)
-          # check whether can level up
-          if canLevelDice[level_location]:
-            diceControl.levelUpDice(level_location+1) # 1: offset
-            break
+    if MyAction.midLateGame:
+      for d,_ in count_sorted:
+        # skip Joker, Growth and Blank 
+        if d == 'Joker' or d == 'Growth' or d == 'Blank':
+          continue
+        # get location of the dice in team list
+        level_location = team.index(d)
+        # check whether can level up
+        if canLevelDice[level_location]:
+          diceControl.levelUpDice(level_location+1) # 1: offset
+          break

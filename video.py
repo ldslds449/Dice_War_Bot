@@ -1,12 +1,17 @@
 import cv2
 import os
 
+from readerwriterlock import rwlock
+
 from utils import *
 
 class Video:
+
+  video = None
+  lock = rwlock.RWLockFairD()
   
   @staticmethod
-  def createVideo(images, image_size, fps):
+  def createVideo(image_size, fps):
     video_folder = "video"
     # create folder
     if not os.path.exists(video_folder):
@@ -17,9 +22,18 @@ class Video:
     
     width, height = image_size
     fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-    video = cv2.VideoWriter(video_name, fourcc, fps, (width,height))
+    Video.video = cv2.VideoWriter(video_path, fourcc, fps, (width,height))
 
-    for image in images:
-      video.write(image)
+  @staticmethod
+  def addImages(images):
+    if Video.video is not None:
+      with Video.lock.gen_wlock():
+        for image in images:
+          Video.video.write(image)
 
-    video.release()
+  @staticmethod
+  def saveVideo():
+    if Video.video is not None:
+      with Video.lock.gen_rlock():
+        Video.video.release()
+        Video.video = None

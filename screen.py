@@ -4,7 +4,6 @@ import win32ui
 import traceback
 from ctypes import windll
 from PIL import Image
-from typing import Tuple
 
 from control import *
 
@@ -23,15 +22,6 @@ class Screen:
         w = right - left
         h = bot - top
         return (left, top, w, h)
-
-    def resizeWindow(self, size: Tuple[int,int]):
-        old_info = self.getWindowSizeInfo()
-        w_offset = size[0] - old_info[2]
-        h_offset = size[1] - old_info[3]
-        win32gui.MoveWindow(self.hwnd, 
-            old_info[0] - w_offset//2, 
-            old_info[1] - h_offset//2, 
-            size[0], size[1], True)
 
     # return isSuccess, image
     def getScreenShot(self, zoom_ratio: float):

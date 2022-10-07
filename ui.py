@@ -5,6 +5,7 @@ import win32clipboard
 import matplotlib
 import gc
 import ctypes
+import subprocess
 from io import BytesIO
 from functools import partial
 from matplotlib.figure import Figure
@@ -27,6 +28,7 @@ from draw import *
 from resource import *
 from stream import *
 from video import *
+from window import *
 
 class UI:
 
@@ -79,6 +81,7 @@ class UI:
     self.frame_screen.grid(column=5, row=0, rowspan=3, sticky='ns')
     self.frame_detect_btn = tk.Frame(self.tab_detect, pady=10, padx=10)
     self.frame_detect_btn.grid(column=4, row=0, rowspan=3, sticky='ns')
+    self.tab_detect.rowconfigure(2, weight=1)
     self.frame_setting = tk.Frame(self.tab_setting, pady=10)
     self.frame_setting.grid(column=0, row=0, sticky='nswe')
     self.frame_setting_page_btn = tk.Frame(self.tab_setting, pady=5)
@@ -89,6 +92,7 @@ class UI:
     self.frame_setting_view.grid(column=1, row=0, rowspan=3)
     self.tab_setting.columnconfigure(0, weight=1)
     self.tab_setting.columnconfigure(1, weight=2)
+    self.tab_setting.rowconfigure(0, weight=1)
     self.frame_statistic_chart = tk.Frame(self.tab_statistic)
     self.frame_statistic_chart.pack(side=LEFT, fill="both")
     self.frame_statistic_info = tk.Frame(self.tab_statistic, padx=20)
@@ -103,7 +107,7 @@ class UI:
     self.frame_test_btn.grid(column=0, row=1)
     
 
-    self.setting_page_size = 3
+    self.setting_page_size = 4
     self.now_page_idx = 0
     self.frame_setting_pages = []
     for i in range(self.setting_page_size):
@@ -183,6 +187,9 @@ class UI:
       'Wait Time Limit': 0,
       'Drag Time Scale': 0,
       'Close Dialog Threshold': 0,
+      'Emulator Name': 3,
+      'Emulator Path': 3,
+      'Run Emulator Delay': 3,
     }
     for i,(label,page) in enumerate(SettingLabelDict.items()):
       getSettingLabel(label, i, page)
@@ -324,7 +331,6 @@ class UI:
     self.btn_start_record = tk.Button(frame_function, text='Start\nRecording', width=10, height=2, font=('Arial', 10))
     self.btn_start_record.config(command=self.btn_start_record_event, state=DISABLED)
     self.btn_start_record.grid(row=0, column=1, sticky='ewns')
-    self.record_list = []
     self.isRecording = False
     self.btn_BM = tk.Button(frame_function, text='BM', height=2, font=('Arial', 10))
     self.btn_BM.config(command=self.btn_bm_event, state=DISABLED)
@@ -610,6 +616,9 @@ class UI:
       self.setting_stringVar['Drag Time Scale'].set(dealString(self.bg_task.variable.getDragTimeScale()))
       self.setting_stringVar['Close Dialog Threshold'].set(dealString(self.bg_task.variable.getCloseDialogThreshold()))
       self.setting_stringVar['Line Notify Token'].set(self.bg_task.variable.getLineNotifyToken())
+      self.setting_stringVar['Emulator Name'].set(self.bg_task.variable.getEmulatorName())
+      self.setting_stringVar['Emulator Path'].set(self.bg_task.variable.getEmulatorPath())
+      self.setting_stringVar['Run Emulator Delay'].set(dealString(self.bg_task.variable.getRunEmulatorDelay()))
 
   def getSettingInputField(self):
     if self.bg_task is None:
@@ -670,6 +679,9 @@ class UI:
       self.bg_task.variable.setDragTimeScale(dealString(self.setting_stringVar['Drag Time Scale'].get()))
       self.bg_task.variable.setCloseDialogThreshold(dealString(self.setting_stringVar['Close Dialog Threshold'].get()))
       self.bg_task.variable.setLineNotifyToken(self.setting_stringVar['Line Notify Token'].get())
+      self.bg_task.variable.setEmulatorName(self.setting_stringVar['Emulator Name'].get())
+      self.bg_task.variable.setEmulatorPath(self.setting_stringVar['Emulator Path'].get())
+      self.bg_task.variable.setRunEmulatorDelay(dealString(self.setting_stringVar['Run Emulator Delay'].get()))
     
   def btn_run_event(self):
     if self.isRunning == False: # enable
@@ -760,6 +772,7 @@ class UI:
     share_window.update_idletasks()
     share_window.deiconify()
     self.centerWindowRelativeToParent(self.window, share_window)
+    share_window.attributes('-topmost', 'true')
     share_window.attributes('-alpha', 1.0)
 
   def btn_share_board_event(self):
@@ -878,6 +891,7 @@ class UI:
   def btn_start_record_event(self):
     if self.isRecording == False:
       self.btn_start_record.config(text="Stop\nRecording", bg="#ff9999")
+      Video.createVideo(ADB.getResolution(), self.bg_task.variable.getMaxFPS())
       self.isRecording = True
     else:
       self.btn_start_record.config(text="Saving...", bg="#f0f0f0", state=DISABLED)
@@ -885,11 +899,9 @@ class UI:
       # save video
       def save_video():
         try:
-          Video.createVideo(self.record_list, ADB.getResolution(), self.bg_task.variable.getMaxFPS())
+          Video.saveVideo()
         except:
           self.log(traceback.format_exc())
-        self.record_list = [] # release memory
-        gc.collect()
         self.btn_start_record.config(text="Start\nRecording", bg="#f0f0f0", state=NORMAL)
       # run in thread
       t = threading.Thread(target = save_video)
@@ -999,6 +1011,9 @@ class UI:
     select_dice_window.attributes('-alpha', 0.0)
     select_dice_window.deiconify()
     self.centerWindowRelativeToParent(self.window, select_dice_window)
+    select_dice_window.grab_set()
+    select_dice_window.lift()
+    select_dice_window.attributes('-topmost', 'true')
     select_dice_window.attributes('-alpha', 1.0)
     
   def getSelectDiceField(self):
@@ -1112,9 +1127,9 @@ class UI:
       if self.bg_task.variable.getControlMode() == ControlMode.WIN32API:
         self.btn_connect.config(state=DISABLED, text='Connecting...')
         try:
-          self.bg_task.getWindowID()
-          self.log(f'WindowID: {self.bg_task.windowID}\n')
           self.bg_task.init()
+          self.log(f'MainWindowID: {Window.mainWindowID}\n')
+          self.log(f'WindowID: {Window.windowID}\n')
           self.enableButton()
           self.btn_connect.config(state=NORMAL, text='Disconnect')
           self.isConnected = True
@@ -1132,21 +1147,30 @@ class UI:
 
           def updateScreen(frame):
             if self.isRecording:
-              self.record_list.append(frame.copy())
-            frame = self.limitImageSize(frame, self.label_screen.winfo_height()-10)
-            frame = self.bg_task.detect.OpenCV2TK(frame)
-            self.changeImage(self.label_screen, frame)
-            if not hasattr(self.label_screen, 'ratio'):
-              orig = ADB.getResolution()
-              self.label_screen.ratio = orig[1] / self.label_screen.image.height()
+                t = threading.Thread(target = Video.addImages([frame.copy()]))
+                t.setDaemon(True)
+                t.start()
+            if self.bg_task.variable.getShowScreen() == 1:
+              frame = self.limitImageSize(frame, self.label_screen.winfo_height()-10)
+              frame = self.bg_task.detect.OpenCV2TK(frame)
+              self.changeImage(self.label_screen, frame)
+              if not hasattr(self.label_screen, 'ratio'):
+                orig = ADB.getResolution()
+                self.label_screen.ratio = orig[1] / self.label_screen.image.height()
           
           # initial value
           r = True
           s, r = ADB.connect(self.bg_task.variable.getADBMode(), self.bg_task.variable.getADBIP(), self.bg_task.variable.getADBPort(), self.bg_task.variable.getADBID())
           self.log(s + '\n')
           if r: # success
-            ADB.createClient(self.bg_task.variable.getMaxFPS(), self.bg_task.variable.getBitRate(), self.bg_task.variable.getFlipScreen(), updateScreen if self.bg_task.variable.getShowScreen() == 1 else None)
-            self.bg_task.init()
+            ADB.createClient(self.bg_task.variable.getMaxFPS(), self.bg_task.variable.getBitRate(), self.bg_task.variable.getFlipScreen(), updateScreen)
+            try:
+              self.bg_task.init()
+            except Exception as error:
+              messagebox.showerror('Connect Error', error, parent=self.window)
+              self.btn_connect.config(state=NORMAL, text='Connect')
+            self.log(f'MainWindowID: {Window.mainWindowID}\n')
+            self.log(f'WindowID: {Window.windowID}\n')
             self.enableButton()
             self.btn_connect.config(state=NORMAL, text='Disconnect')
             self.isConnected = True
@@ -1291,6 +1315,17 @@ Average Gain: {offset:+.2f}""")
 
     def restartApp():
       ADB.restart()
+      self.bg_task.status = Status.LOBBY
+
+    def runEmulator():
+      self.log("Error: Emulator not found\n")
+      self.log(f"Info: run emulator and continue after {self.bg_task.variable.getRunEmulatorDelay()} seconds\n")
+      subprocess.call(f'start "" {self.bg_task.variable.getEmulatorPath()}', shell=True) # run emulator
+      time.sleep(self.bg_task.variable.getRunEmulatorDelay()) # wait for delay
+      if self.isConnected:
+        self.btn_ADB_connect_event() # disconnect
+      self.btn_ADB_connect_event() # connect
+      self.bg_task.status = Status.LOBBY
       
     # ---------------------------------------- #
 
@@ -1302,33 +1337,42 @@ Average Gain: {offset:+.2f}""")
       # detect dice war app
       notInDiceWarCount = 0
       stopRunning = False
-      while True:
-        if self.bg_task.variable.getControlMode() == ControlMode.ADB:
-          inDiceWar,message = ADB.detectDiceWar()
-          if not inDiceWar:
-            notInDiceWarCount += 1
-            self.log(f"Not In Dice War App Count: {notInDiceWarCount}\n")
-            if notInDiceWarCount >= self.bg_task.variable.getFocusThreshold():
-              self.log(message)
-              self.log("Error: Focus app is not Dice War App\n")
-              if self.restartApp_booleanVar.get() == True:
-                self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
-                restartApp()
-                time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
+      try:
+        while True:
+          if self.bg_task.variable.getControlMode() == ControlMode.ADB:
+            inDiceWar,message = ADB.detectDiceWar()
+            if not inDiceWar:
+              notInDiceWarCount += 1
+              self.log(f"Not In Dice War App Count: {notInDiceWarCount}\n")
+              if notInDiceWarCount >= self.bg_task.variable.getFocusThreshold():
+                self.log(message)
+                self.log("Error: Focus app is not Dice War App\n")
+                if self.restartApp_booleanVar.get() == True:
+                  self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
+                  restartApp()
+                  time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
+                else:
+                  stopDetect()
+                  stopRunning = True
+                break
               else:
-                stopDetect()
-                stopRunning = True
-              break
+                time.sleep(0.5)
+                continue
             else:
-              time.sleep(0.5)
-              continue
+              break
           else:
             break
-        else:
+        if stopRunning:
           break
-      if stopRunning:
-        break
-      
+      except:
+        if self.isConnected == True:
+          self.log(f"Detect APP Error: {traceback.format_exc()}")
+          if not Window.existWindow(Window.windowID):
+            runEmulator()
+          else:
+            stopDetect()
+            break
+
       # record previous state
       previous_status = self.bg_task.status
 
@@ -1354,8 +1398,17 @@ Average Gain: {offset:+.2f}""")
         if self.notifyResult_booleanVar.get() == True:
           self.log('=== Send Notify ===\n')
           Line.notify(self.bg_task.variable.getLineNotifyToken(), traceback.format_exc())
-        stopDetect()
+        # check emulator
+        if not Window.existWindow(Window.windowID):
+          runEmulator()
+        else:
+          stopDetect()
         break
+
+      # check emulator exist
+      if self.bg_task.variable.getEmulatorMode() != Emulator.NONE and \
+        not Window.existWindow(Window.windowID):
+        runEmulator()
       
       # status changed
       if previous_status != self.bg_task.status:
@@ -1423,8 +1476,19 @@ Average Gain: {offset:+.2f}""")
           stopDetect()
           break
 
+      # check no mode
+      if self.bg_task.noModeCount >= 2*self.bg_task.variable.getCloseDialogThreshold():
+        self.log("Error: Dice War App No Mode\n")
+        if self.restartApp_booleanVar.get() == True:
+          self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
+          restartApp()
+          time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
+        else:
+          stopDetect()
+          break
+
       # check waiting time
-      if previous_status != self.bg_task.status and self.bg_task.status == Status.WAIT and waitStartTimeStamp is None:
+      if previous_status != self.bg_task.status and self.bg_task.status == Status.WAIT:
         waitStartTimeStamp = time.time()
       elif previous_status != self.bg_task.status and self.bg_task.status == Status.GAME:
         waitStartTimeStamp = None
@@ -1436,7 +1500,6 @@ Average Gain: {offset:+.2f}""")
           self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
           restartApp()
           time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
-        
 
       if self.bg_task.status == Status.LOBBY or self.bg_task.status == Status.ARCADE:
         if self.last_game_booleanVar.get():
@@ -1461,8 +1524,10 @@ Average Gain: {offset:+.2f}""")
 
   def close(self):
     self.isRunning = False
-    if self.bg_task.variable.getControlMode() == ControlMode.ADB:
-      ADB.disconnect()
+    if self.isConnected == True:
+      self.isConnected = False
+      if self.bg_task.variable.getControlMode() == ControlMode.ADB:
+        ADB.disconnect()
     self.btn_save_config_event()
 
     # wait thread finish

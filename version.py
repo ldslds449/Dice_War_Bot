@@ -2,7 +2,7 @@ import re
 import requests
 from packaging import version
 
-Program_Version = '1.12.2'
+Program_Version = '1.13.0'
 
 class Version:
 
