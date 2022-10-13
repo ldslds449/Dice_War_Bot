@@ -267,8 +267,10 @@ class MyAction(Action):
         return 2
       elif wave < 29:
         return 1
-      else:
+      elif wave <= 30:
         return 0
+      else: # some error happen
+        return 3
 
     def getMergeLimit(wave:int):
       if wave < 20:
@@ -284,26 +286,18 @@ class MyAction(Action):
         # count
         count_non_joker = [0,0,0,0,0,0,0,0]
         count_joker = [0,0,0,0,0,0,0,0]
-        highest_star_joker = 0
-        highest_star_non_joker = 0
-        lowest_star_joker = 8
-        lowest_star_non_joker = 8
         for dice,star in zip(boardDice, boardDiceStar):
           if dice != 'Blank':
             if dice == 'Joker':
               count_joker[star] += 1
-              highest_star_joker = max(highest_star_joker, star)
-              lowest_star_joker = min(lowest_star_joker, star)
             else:
               count_non_joker[star] += 1
-              highest_star_non_joker = max(highest_star_non_joker, star)
-              lowest_star_non_joker = min(lowest_star_non_joker, star)
 
         # find valid joker
-        if highest_star_joker > highest_star_non_joker and count_joker[highest_star_joker] == 1: # star of joker is too large
-          valid_joker_count -= 1 # do not count
-        if lowest_star_joker < lowest_star_non_joker and count_joker[lowest_star_joker] == 1: # star of joker is too small
-          valid_joker_count -= 1 # do not count
+        for dice,star in zip(boardDice, boardDiceStar):
+          if dice == 'Joker':
+            if count_non_joker[star] == 0 and count_joker[star] < 2:
+              valid_joker_count -= 1
 
       return (valid_growth_count + valid_joker_count) < getNoMinionLimit(wave)
 

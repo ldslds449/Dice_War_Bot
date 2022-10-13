@@ -791,10 +791,10 @@ class Detect:
 
     finish_summon_img = self.extractImage(img, 
       (self.variable.getSummonDiceXY()[0], self.variable.getSummonDiceXY()[1],
-      self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
+      self.variable.getExtractDiceSizeWH()[0]//2, self.variable.getExtractDiceSizeWH()[1]//2), ExtractMode.CENTER)
     finish_damage_img = self.extractImage(img, 
       (self.variable.getDamageListXY()[0], self.variable.getDamageListXY()[1],
-      self.variable.getExtractDiceSizeWH()[0], self.variable.getExtractDiceSizeWH()[1]), ExtractMode.CENTER)
+      self.variable.getExtractDiceSizeWH()[0]//2, self.variable.getExtractDiceSizeWH()[1]//2), ExtractMode.CENTER)
 
     if self.detectLobby(self.getDiceImage(img, 8)):
       inLobby = True

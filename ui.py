@@ -354,7 +354,7 @@ class UI:
     # top Window
     self.topWindow_booleanVar = tk.BooleanVar() 
     self.topWindow_booleanVar.set(False)
-    checkBtn_topWindow = tk.Checkbutton(self.frame_detect_btn, text='Top Window', var=self.topWindow_booleanVar, command=self.checkBtn_topWindow, pady=5) 
+    checkBtn_topWindow = tk.Checkbutton(self.frame_detect_btn, text='Top Window', var=self.topWindow_booleanVar, command=self.checkBtn_topWindow_click, pady=5) 
     checkBtn_topWindow.pack(fill=BOTH, expand=True, side=TOP)
     
     # watch AD
@@ -381,14 +381,14 @@ class UI:
     # dev mode
     self.devMode_booleanVar = tk.BooleanVar() 
     self.devMode_booleanVar.set(False)
-    self.checkBtn_devMode = tk.Checkbutton(self.frame_detect_btn, text='Dev Mode', var=self.devMode_booleanVar, pady=5) 
+    self.checkBtn_devMode = tk.Checkbutton(self.frame_detect_btn, text='Dev Mode', var=self.devMode_booleanVar, pady=5, command=self.checkBtn_devMode_click) 
     self.checkBtn_devMode.pack(fill=BOTH, expand=True, side=TOP)
     self.checkBtn_devMode.config(state=NORMAL)
 
     # stream server
     self.stream_booleanVar = tk.BooleanVar() 
     self.stream_booleanVar.set(False)
-    self.checkBtn_stream = tk.Checkbutton(self.frame_detect_btn, text='Stream', var=self.stream_booleanVar, pady=5, command=self.checkBtn_stream) 
+    self.checkBtn_stream = tk.Checkbutton(self.frame_detect_btn, text='Stream', var=self.stream_booleanVar, pady=5, command=self.checkBtn_stream_click) 
     self.checkBtn_stream.pack(fill=BOTH, expand=True, side=TOP)
     self.checkBtn_stream.config(state=NORMAL)
     self.streamServer = None
@@ -1025,7 +1025,7 @@ class UI:
       dice_idx = self.bg_task.detect.dice_name_idx_dict[dice]
       self.changeImage(self.select_dice_label[i], self.bg_task.detect.dice_image_tk_resize[dice_idx])
 
-  def checkBtn_topWindow(self):
+  def checkBtn_topWindow_click(self):
     self.window.call('wm', 'attributes', '.', '-topmost', self.topWindow_booleanVar.get())
 
   def label_screen_click_event(self, event):
@@ -1111,7 +1111,7 @@ class UI:
     except:
       messagebox.showerror('Load Error', traceback.format_exc(), parent=self.window)
     
-  def checkBtn_stream(self):
+  def checkBtn_stream_click(self):
     if self.stream_booleanVar.get() == True:
       # run stream server
       self.streamServer = StreamServer()
@@ -1121,6 +1121,12 @@ class UI:
     else:
       self.streamServer.stop()
       self.streamServer = None
+
+  def checkBtn_devMode_click(self):
+    if self.devMode_booleanVar.get() == True:
+      MsgBox = messagebox.askquestion('Enable Dev Mode','Are you sure you want to enable dev mode?',icon = 'warning')
+    if MsgBox != 'yes':
+      self.devMode_booleanVar.set(False)
 
   def btn_ADB_connect_event(self):
     if self.isConnected == False:
@@ -1482,8 +1488,10 @@ Average Gain: {offset:+.2f}""")
         if self.restartApp_booleanVar.get() == True:
           self.log(f"Info: Restart app and continue after {self.bg_task.variable.getRestartDelay()} seconds\n")
           restartApp()
+          self.bg_task.noModeCount = 0
           time.sleep(self.bg_task.variable.getRestartDelay()) # wait for delay
         else:
+          self.bg_task.noModeCount = 0
           stopDetect()
           break
 

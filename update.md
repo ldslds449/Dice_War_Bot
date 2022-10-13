@@ -376,3 +376,11 @@
 9. Add some animation when downloading the file
 10. Reduce the memory usage significantly when recording the video
 11. Now can restart the app when no mode appears a certain number of times in a row
+
+## Version 1.13.1
+
+1. Modify the limit when the wave detect error occurs
+2. Modify the limit algorithm
+3. Reduce the color extraction area during finish mode
+4. Add the confirm window when enable the dev mode
+5. Fix the bug keep detecting no mode after restart the app
