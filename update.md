@@ -384,3 +384,7 @@
 3. Reduce the color extraction area during finish mode
 4. Add the confirm window when enable the dev mode
 5. Fix the bug keep detecting no mode after restart the app
+
+## Version 1.13.2
+
+1. Add new dice (Atomic, Explode, and Teleport)
