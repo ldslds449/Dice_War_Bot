@@ -1,4 +1,5 @@
 import scrcpy
+import threading
 from typing import Tuple
 from adbutils import adb
 
@@ -61,7 +62,11 @@ class ADB:
       # may receive None to avoid blocking event.
       if frame is not None:
         ADB.frame = frame
-        updateScreen(frame)
+        if not hasattr(ADB, 'updateThread') or not ADB.updateThread.isAlive():
+          t = threading.Thread(target=updateScreen, args=(frame,))
+          t.setDaemon(True)
+          t.start()
+          ADB.updateThread = t
 
     ADB.client = scrcpy.Client(device=ADB.d, max_fps=max_fps, bitrate=bitrate, flip=(flip_screen == 1))
     ADB.client.add_listener(scrcpy.EVENT_FRAME, on_frame)

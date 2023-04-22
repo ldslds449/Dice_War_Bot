@@ -388,3 +388,7 @@
 ## Version 1.13.2
 
 1. Add new dice (Atomic, Explode, and Teleport)
+
+## Version 1.13.3
+
+1. Fix images delay updating
